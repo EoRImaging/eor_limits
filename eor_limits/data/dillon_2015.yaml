@@ -1,0 +1,9 @@
+telescope: MWA phase I
+author: Dillon
+year: 2015
+doi: 10.1103/PhysRevD.91.123011
+type: point
+delta_squared: [3.8e4, 3.69e4, 4.67e4]
+k: [.18, .18, .16]
+redshift: [6.4, 6.8, 7.25]
+marker: v #TRIANGLE_DOWN

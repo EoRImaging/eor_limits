@@ -1,0 +1,10 @@
+telescope: MWA phase I
+author: Beardsley
+year: 2016
+doi: 10.3847/1538-4357/833/1/102
+type: point
+delta_squared: [3.67e4, 2.70e4, 3.56e4, 3.02e4, 4.70e4, 3.22e4, 3.2e4, 2.6e4,
+                2.5e4]
+k: [.231, .27, .24, .24, .20, .24, .16, .14, .14]
+redshift: [7.1, 7.1, 6.8, 6.8, 6.5, 6.5, 7.1, 6.8, 6.5]
+marker: P # filled plus

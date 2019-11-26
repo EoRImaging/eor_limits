@@ -1,0 +1,9 @@
+telescope: PAPER
+author: Kolopanis
+year: 2019
+doi: 10.3847/1538-4357/ab3e3a
+type: point
+delta_squared: [8.09e4, 1.28e5, 3.61e4, 1.46e5, 3.8e6, 2.41e6]
+k: [0.39, 0.53, 0.31, 0.36, 0.334, 0.33]
+redshift: [7.49, 8.13, 8.37, 8.68, 9.93, 10.88]
+marker: s # SQUARE

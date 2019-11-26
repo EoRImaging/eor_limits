@@ -1,0 +1,9 @@
+telescope: GMRT
+author: Paciga
+year: 2013
+doi: 10.1093/mnras/stt753
+type: point
+delta_squared: [6.15e4]
+k: [.5]
+redshift: [8.6]
+marker: D #diamond
