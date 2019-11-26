@@ -22,7 +22,7 @@ on the github repository.
 
 # Installation
 Clone the repository using
-```git clone https://github.com/bhazelton/eor_limits```
+```git clone https://github.com/EoRImaging/eor_limits```
 
 Change directories into the `eor_limits` folder and run ```pip install .```
 
