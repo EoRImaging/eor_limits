@@ -60,7 +60,7 @@ def read_data_yaml(paper_name):
 
 def plot_eor_limits(papers=None, plot_filename='eor_limits.pdf',
                     delta_squared_range=[1e3, 1e6], colormap='Spectral_r',
-                    bold_papers=None):
+                    bold_papers=None, fontsize=15):
     """
     Plot the current EoR Limits as a function of k and redshift.
 
@@ -121,7 +121,9 @@ def plot_eor_limits(papers=None, plot_filename='eor_limits.pdf',
     norm = colors.Normalize(vmin=redshift_list[0], vmax=redshift_list[-1])
     scalarMap = cmx.ScalarMappable(norm=norm, cmap=colormap)
 
-    fig = plt.figure(figsize=(20, 10))
+    fig_height = 10
+    fig_width = 20
+    fig = plt.figure(figsize=(fig_width, fig_height))
     legend_names = []
     lines = []
     for paper_i, paper in enumerate(paper_list):
@@ -132,7 +134,7 @@ def plot_eor_limits(papers=None, plot_filename='eor_limits.pdf',
         label_end = '}$'
         label = (label_start + '\ '.join(paper['telescope'].split(' '))
                  + '\ (' + paper['author'] + ',\ '
-                 + str(paper['year']) + ')' + label_end) # noqa
+                 + str(paper['year']) + ')' + label_end)   # noqa
         legend_names.append(label)
         if paper['type'] == 'point':
             line = plt.scatter(paper['k'], paper['delta_squared'],
@@ -164,29 +166,49 @@ def plot_eor_limits(papers=None, plot_filename='eor_limits.pdf',
                 if ind == 0:
                     lines.append(line)
 
-    label_font_size = 22
-    plt.rcParams.update({'font.size': 15})
-    plt.xlabel('k ($h Mpc^{-1}$)', fontsize=label_font_size)
-    plt.ylabel('$\Delta^2$ ($mK^2$)', fontsize=label_font_size) # noqa
+    point_size = 1 / 72.  # typography standard (points/inch)
+    font_inch = fontsize * point_size
+
+    plt.rcParams.update({'font.size': fontsize})
+    plt.xlabel('k ($h Mpc^{-1}$)', fontsize=fontsize)
+    plt.ylabel('$\Delta^2$ ($mK^2$)', fontsize=fontsize)  # noqa
     plt.yscale('log')
     plt.xscale('log')
     plt.ylim(*delta_squared_range)
+    plt.tick_params(labelsize=fontsize)
     cb = plt.colorbar(fraction=.1, pad=0.08, label='Redshift')
     cb.ax.yaxis.set_label_position('left')
     cb.ax.yaxis.set_ticks_position('left')
-    cb.set_label(label='Redshift', fontsize=label_font_size)
+    cb.set_label(label='Redshift', fontsize=fontsize)
     plt.grid(axis='y')
 
+    if fontsize > 20:
+        leg_columns = 2
+    else:
+        leg_columns = 3
+
+    leg_rows = int(np.ceil(len(paper_list) / leg_columns))
+
+    legend_height = (2 * leg_rows) * font_inch
+
+    legend_height_norm = legend_height / fig_height  # 0.25
+
+    axis_height = 3 * fontsize * point_size
+    axis_height_norm = axis_height / fig_height
+    plot_bottom = legend_height_norm + axis_height_norm
+
     leg = plt.legend(lines, legend_names,
-                     bbox_to_anchor=(0.75, 0),
-                     loc="lower right",
-                     bbox_transform=fig.transFigure, ncol=3,
+                     bbox_to_anchor=(0.45, legend_height_norm / 2.),
+                     loc="center",
+                     bbox_transform=fig.transFigure,
+                     ncol=leg_columns,
                      frameon=False)
 
     for ind in range(len(paper_list)):
         leg.legendHandles[ind].set_color('gray')
-    plt.subplots_adjust(bottom=0.25)
-    plt.savefig('limit_compare.pdf')
+    plt.subplots_adjust(bottom=plot_bottom)
+    fig.tight_layout()
+    plt.savefig(plot_filename)
 
 
 if __name__ == '__main__':
@@ -211,10 +233,15 @@ if __name__ == '__main__':
     parser.add_argument('--bold', type=str, nargs='+',
                         help='List of papers to bold in caption.',
                         default=None)
+    parser.add_argument('--fontsize', type=int,
+                        help='Font size to use.',
+                        default=15)
 
     args = parser.parse_args()
 
     plot_eor_limits(papers=args.papers,
                     delta_squared_range=args.range,
-                    colormap=args.colormap, plot_filename=args.file,
-                    bold_papers=args.bold)
+                    colormap=args.colormap,
+                    plot_filename=args.file,
+                    bold_papers=args.bold,
+                    fontsize=args.fontsize)
