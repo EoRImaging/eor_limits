@@ -1,3 +1,4 @@
+#! /usr/bin/env python
 # -*- mode: python; coding: utf-8 -*
 # Copyright (c) 2019 Nichole Barry, Bryna Hazelton
 # Licensed under the 2-clause BSD License
@@ -11,7 +12,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.cm as cmx
 import matplotlib.colors as colors
-
 
 from eor_limits.data import DATA_PATH
 
@@ -58,9 +58,9 @@ def read_data_yaml(paper_name):
     return paper_dict
 
 
-def plot_eor_limits(papers=None, plot_filename='eor_limits.pdf',
-                    delta_squared_range=[1e3, 1e6], colormap='Spectral_r',
-                    bold_papers=None, fontsize=15):
+def make_plot(papers=None, plot_filename='eor_limits.pdf',
+              delta_squared_range=[1e3, 1e6], colormap='Spectral_r',
+              bold_papers=None, fontsize=15):
     """
     Plot the current EoR Limits as a function of k and redshift.
 
@@ -220,7 +220,7 @@ if __name__ == '__main__':
                         help='Papers to include on plot '
                         '(must be in data directory). Defaults to all papers '
                         'in the data directory.')
-    parser.add_argument('--file', type=str,
+    parser.add_argument('--file', type=str, dest='filename',
                         help='Filename to save plot to.',
                         default='eor_limits.pdf')
     parser.add_argument('--range', type=float,
@@ -239,9 +239,9 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    plot_eor_limits(papers=args.papers,
-                    delta_squared_range=args.range,
-                    colormap=args.colormap,
-                    plot_filename=args.file,
-                    bold_papers=args.bold,
-                    fontsize=args.fontsize)
+    make_plot(papers=args.papers,
+              delta_squared_range=args.range,
+              colormap=args.colormap,
+              plot_filename=args.filename,
+              bold_papers=args.bold,
+              fontsize=args.fontsize)

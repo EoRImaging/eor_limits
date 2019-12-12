@@ -26,7 +26,7 @@ Clone the repository using
 
 Change directories into the `eor_limits` folder and run ```pip install .```
 
-To install without dependencies, run `pip install --no-deps .`
+To install without dependencies, run `pip install --no-deps .` (including the dot).
 
 ## Dependencies
 If you prefer to manage dependencies outside of pip (e.g. via conda), you will
@@ -41,3 +41,10 @@ Call the plotting script as ```plot_eor_limits.py``` to make the default
 plot (including all the papers in the data folder). There are a number of
 options to customize the plot, use ```plot_eor_limits.py --help```
 to see the various options.
+
+Alternatively, to make the plot within an interactive environment like a
+Jupyter notebook, run:
+```
+import eor_limits
+eor_limits.make_plot()
+```

@@ -20,7 +20,7 @@ setup_args = {
     'long_description': readme,
     'long_description_content_type': 'text/markdown',
     'package_dir': {'eor_limits': 'eor_limits'},
-    'packages': ['eor_limits'],
+    'packages': ['eor_limits', 'eor_limits.data'],
     'scripts': ['eor_limits/plot_eor_limits.py'],
     'version': version,
     'include_package_data': True,
