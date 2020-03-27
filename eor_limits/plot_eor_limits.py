@@ -69,7 +69,7 @@ def make_plot(papers=None, plot_filename='eor_limits.pdf',
     papers : list of str
         List of papers to include in the plot (specified as 'author_year',
         must be present in the data folder).
-        Defaults to including all papers in the data folder.
+        Defaults to `None` meaning include all papers in the data folder.
     delta_squared_range : list of float
         Range of delta squared values to include in plot (yaxis range). Must be
         length 2 with second element greater than first element.
@@ -109,7 +109,10 @@ def make_plot(papers=None, plot_filename='eor_limits.pdf',
         if paper['type'] == 'point':
             delta_array = np.array(paper['delta_squared'])
             inds_use = np.nonzero(delta_array <= delta_squared_range[1])
-            redshift_list += list(np.array(paper['redshift'])[inds_use])
+            paper_redshifts = np.array(paper['redshift'])
+            if paper_redshifts.size == 1 and delta_array.size > 1:
+                paper_redshifts = np.repeat(paper_redshifts[0], delta_array.size)
+            redshift_list += list(paper_redshifts[inds_use])
         else:
             for ind, elem in enumerate(paper['redshift']):
                 delta_array = np.array(paper['delta_squared'][ind])
@@ -137,6 +140,8 @@ def make_plot(papers=None, plot_filename='eor_limits.pdf',
                  + str(paper['year']) + ')' + label_end)   # noqa
         legend_names.append(label)
         if paper['type'] == 'point':
+            if len(paper['redshift']) == 1 and len(paper['delta_squared']) > 1:
+                paper['redshift'] = paper['redshift'] * len(paper['delta_squared'])
             line = plt.scatter(paper['k'], paper['delta_squared'],
                                marker=paper['marker'],
                                c=paper['redshift'], cmap=colormap, norm=norm,
