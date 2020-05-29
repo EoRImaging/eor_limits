@@ -1,0 +1,10 @@
+telescope: LOFAR
+author: Mertens
+year: 2020
+doi: 10.1093/mnras/staa327
+type: point
+delta_squared: [72.86**2., 106.65**2., 153.00**2., 246.92**2., 370.18**2.,
+                520.33**2., 683.2**2.]
+k: [.075, .100, .133, .179, .238, .319, .432]
+redshift: [9.1]
+marker: H # hexagon2
