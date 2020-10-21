@@ -4,4 +4,4 @@
 
 """Init file."""
 
-from .plot_eor_limits import make_plot
+from .plot_eor_limits import make_plot  # noqa

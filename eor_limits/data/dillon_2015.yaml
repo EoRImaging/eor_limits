@@ -5,5 +5,8 @@ doi: 10.1103/PhysRevD.91.123011
 type: point
 delta_squared: [3.8e4, 3.69e4, 4.67e4]
 k: [.18, .18, .16]
+# These k bounds are taken by eye from the plots in the paper. Not authoritative.
+k_lower: [.14, .132, .13]
+k_upper: [.22, .22, .17]
 redshift: [6.4, 6.8, 7.25]
 marker: v #TRIANGLE_DOWN
