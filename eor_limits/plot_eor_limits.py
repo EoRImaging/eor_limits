@@ -16,7 +16,7 @@ import matplotlib.colors as colors
 from eor_limits.data import DATA_PATH
 
 
-def read_data_yaml(paper_name):
+def read_data_yaml(paper_name, theory=False):
     """
     Read in the data from a paper yaml file.
 
@@ -25,6 +25,8 @@ def read_data_yaml(paper_name):
     paper_name : str
         Short name of paper (usually author_year) which corresponds to a file
         in the data directory named <paper_name>.yaml
+    theory : bool
+        Flag that this is a theory paper and so is in the theory folder.
 
     Returns
     -------
@@ -32,7 +34,10 @@ def read_data_yaml(paper_name):
         Dictionary with the parsed yaml for use in the plotting code.
 
     """
-    file_name = os.path.join(DATA_PATH, paper_name + ".yaml")
+    if theory:
+        file_name = os.path.join(DATA_PATH, "theory", paper_name + ".yaml")
+    else:
+        file_name = os.path.join(DATA_PATH, paper_name + ".yaml")
 
     with open(file_name, "r") as pfile:
         paper_dict = yaml.safe_load(pfile)
@@ -72,12 +77,15 @@ def read_data_yaml(paper_name):
 
 def make_plot(
     papers=None,
+    include_theory=True,
+    theories=None,
     plot_as_points=["patil_2017", "mertens_2020"],
     plot_filename="eor_limits.pdf",
-    delta_squared_range=[1e3, 1e6],
+    delta_squared_range=None,
     redshift_range=None,
     k_range=None,
     shade_limits="generational",
+    shade_theory="flat",
     colormap="Spectral_r",
     bold_papers=None,
     fontsize=15,
@@ -91,12 +99,20 @@ def make_plot(
         List of papers to include in the plot (specified as 'author_year',
         must be present in the data folder).
         Defaults to `None` meaning include all papers in the data folder.
+    include_theory : bool
+        Flag to include theory lines on plots.
+    theories : list of str
+        List of theory models to include on the plot (specified by file name of model
+        excluding the .yaml extension), must be present in the data folder.
+        Defaults to `None` meaning include all theories. Only used if
+        `include_theory` is True.
     plot_as_points : list of str
         List of papers that have a line type data model to be plotted as points rather
         that a line.
     delta_squared_range : list of float
         Range of delta squared values to include in plot (yaxis range). Must be
-        length 2 with second element greater than first element.
+        length 2 with second element greater than first element. Defaults to [1e3, 1e6]
+        if include_theory is False and [1e0, 1e6] otherwise.
     redshift_range : list of float
         Range of redshifts to include in the plot. Must be length 2 with the second
         element greater than the first element.
@@ -108,6 +124,10 @@ def make_plot(
         all generation 1 papers and light grey for later generation papers. 'alpha'
         shading shades all papers with semi-transparent grey. Setting this to False
         results in no shading.
+    shade_theory : {'flat', 'alpha', False}
+        How to shade below theory lines. 'flat' shading shades light grey below all
+        theory lines. 'alpha' shading shades below all theory lines with
+        semi-transparent grey. Setting this to False results in no shading.
     colormap : str
         Matplotlib colormap to use for redshift.
     plot_filename : str
@@ -126,6 +146,22 @@ def make_plot(
     else:
         # if a list is passed in by hand, don't reorder it
         papers_sorted = True
+
+    if include_theory:
+        if theories is None:
+            # use all the theories. This gives weird ordering which we will fix later
+            theory_papers = [
+                os.path.splitext(os.path.basename(p))[0]
+                for p in glob.glob(os.path.join(DATA_PATH, "theory", "*.yaml"))
+            ]
+        else:
+            theory_papers = theories
+
+    if delta_squared_range is None:
+        if include_theory:
+            delta_squared_range = [1e0, 1e6]
+        else:
+            delta_squared_range = [1e3, 1e6]
 
     if bold_papers is None:
         bold_papers = []
@@ -155,6 +191,11 @@ def make_plot(
         paper_list.append(paper_dict)
     if not papers_sorted:
         paper_list.sort(key=lambda paper_list: paper_list["year"])
+
+    theory_paper_list = []
+    for paper_name in theory_papers:
+        paper_dict = read_data_yaml(paper_name, theory=True)
+        theory_paper_list.append(paper_dict)
 
     if redshift_range is not None:
         norm = colors.Normalize(vmin=redshift_range[0], vmax=redshift_range[1])
@@ -204,7 +245,7 @@ def make_plot(
         norm = colors.Normalize(vmin=redshift_list[0], vmax=redshift_list[-1])
     scalar_map = cmx.ScalarMappable(norm=norm, cmap=colormap)
 
-    fig_height = 10
+    fig_height = 20
     fig_width = 20
     fig = plt.figure(figsize=(fig_width, fig_height))
     legend_names = []
@@ -386,6 +427,61 @@ def make_plot(
                     lines.append(line)
         legend_names.append(label)
 
+    if include_theory:
+        # we want to supress legend labels for theories with linewidth=0
+        # which are only used for shading
+        # fix ordering to put them at the end
+        linewidths = [paper["linewidth"] for paper in theory_paper_list]
+        ordering = np.flip(np.argsort(linewidths))
+        theory_paper_list = [theory_paper_list[p] for p in ordering]
+
+        theory_line_inds = []
+        for paper in theory_paper_list:
+            label_start = " $\\bf{Theory:} \\rm{ "
+            label_end = "}$"
+            label = (
+                label_start
+                + r"\ ".join(paper["model"].split(" "))
+                + r"\ ("
+                + paper["author"]
+                + r",\ "
+                + str(paper["year"])
+                + ")"
+                + label_end
+            )
+            k_vals = paper["k"]
+            delta_squared = paper["delta_squared"]
+
+            (line,) = plt.plot(
+                k_vals,
+                delta_squared,
+                c="black",
+                linewidth=paper["linewidth"],
+                linestyle=paper["linestyle"],
+                zorder=2,
+            )
+            if shade_theory is not False:
+                if shade_theory == "flat":
+                    color_use = "moccasin"
+                    zorder = 0
+                    alpha = 1
+                else:
+                    color_use = "orange"
+                    zorder = 0
+                    alpha = 1.0 / len(theory_paper_list)
+                plt.fill_between(
+                    k_vals,
+                    delta_squared,
+                    delta_squared_range[0],
+                    color=color_use,
+                    alpha=alpha,
+                    zorder=zorder,
+                )
+            theory_line_inds.append(len(lines))
+            lines.append(line)
+            if paper["linewidth"] > 0:
+                legend_names.append(label)
+
     point_size = 1 / 72.0  # typography standard (points/inch)
     font_inch = fontsize * point_size
 
@@ -439,7 +535,8 @@ def make_plot(
     )
 
     for ind in range(len(leg.legendHandles)):
-        leg.legendHandles[ind].set_color("gray")
+        if ind not in theory_line_inds:
+            leg.legendHandles[ind].set_color("gray")
     plt.subplots_adjust(bottom=plot_bottom)
     fig.tight_layout()
     plt.savefig(plot_filename)
@@ -461,6 +558,23 @@ if __name__ == "__main__":
         "in the data directory.",
     )
     parser.add_argument(
+        "--include_theory",
+        action="store_true",
+        default=True,
+        help="Flag to plot theory lines as well as limits. If True, default range is "
+        "modified.",
+    )
+    parser.add_argument(
+        "--theories",
+        type=str,
+        nargs="+",
+        default=None,
+        help="Theory models to include on the plot (specified by file name of model"
+        "excluding the .yaml extension), must be present in the data folder."
+        "Defaults to `None` meaning include all theories. Only used if"
+        "`include_theory` is True.",
+    )
+    parser.add_argument(
         "--file",
         type=str,
         dest="filename",
@@ -477,8 +591,9 @@ if __name__ == "__main__":
     parser.add_argument(
         "--range",
         type=float,
-        help="Range of Delta Squared to include on plot (yaxis range).",
-        default=[1e3, 1e6],
+        help="Range of Delta Squared to include on plot (yaxis range). "
+        "Defaults to [1e3, 1e6] if include_theory is false and [1e0, 1e6] otherwise",
+        default=None,
         nargs="+",
     )
     parser.add_argument(
@@ -496,10 +611,18 @@ if __name__ == "__main__":
         nargs="+",
     )
     parser.add_argument(
-        "--shading",
+        "--shade_limits",
         type=str,
         default="generational",
-        help="Type of shading to apply, one of: 'generational', 'alpha' or False.",
+        help="Type of shading above limits to apply, one of: 'generational', 'alpha' "
+        "or False.",
+    )
+    parser.add_argument(
+        "--shade_theory",
+        type=str,
+        default="flat",
+        help="Type of shading below theories to apply, one of: 'flat', 'alpha' "
+        "or False.",
     )
     parser.add_argument(
         "--colormap", type=str, help="Matplotlib colormap to use.", default="Spectral_r"
@@ -515,16 +638,21 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    if args.shading == "False":
-        args.shading = False
+    if args.shade_limits == "False":
+        args.shade_limits = False
+    if args.shade_theory == "False":
+        args.shade_theory = False
 
     make_plot(
         papers=args.papers,
+        include_theory=args.include_theory,
+        theories=args.theories,
         plot_as_points=args.aspoints,
         delta_squared_range=args.range,
         redshift_range=args.redshift,
         k_range=args.k_range,
-        shade_limits=args.shading,
+        shade_limits=args.shade_limits,
+        shade_theory=args.shade_theory,
         colormap=args.colormap,
         plot_filename=args.filename,
         bold_papers=args.bold,
