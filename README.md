@@ -13,6 +13,10 @@ quickly compare on a 'standard' plot.
 
 This code snippet is fully open source (BSD). Feel free to use the resulting plots in papers or presentations as you see fit.
 
+We show a sample plot below, the appearence is highly customizable through keywords.
+
+![example EoR Limit plot](eor_limits.png)
+
 # Community Guidelines
 We welcome pull requests to add new data sets or simulations. We require that
 data and simulations come from peer-reviewed published papers. If you would
@@ -51,7 +55,7 @@ plot (including all the papers in the data folder). There are a number of
 options to customize the plot, use ```plot_eor_limits.py --help```
 to see the various options.
 
-For example, ```plot_eor_limits.py --bold barry_2019 kolopanis_2019 li_2019``` would bold the references to the papers published in 2019
+For example, ```plot_eor_limits.py --bold barry_2019 kolopanis_2019 li_2019``` would bold the references to the papers published in 2019.
 
 
 ### Notebook
@@ -64,4 +68,4 @@ eor_limits.make_plot()
 ```
 and the plot should appear inline
 
-To see the options type ```eor_limits.make_plot?``` in the environment. For example ```eor_limits.make_plot(bold_papers='barry_2019 kolopanis_2019 li_2019')``` will give also bold the 2019 results.
+To see the options type ```eor_limits.make_plot?``` in the environment. For example ```eor_limits.make_plot(bold_papers='barry_2019 kolopanis_2019 li_2019')``` would bold the references to the papers published in 2019.
