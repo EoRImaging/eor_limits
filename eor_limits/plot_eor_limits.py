@@ -192,10 +192,11 @@ def make_plot(
     if not papers_sorted:
         paper_list.sort(key=lambda paper_list: paper_list["year"])
 
-    theory_paper_list = []
-    for paper_name in theory_papers:
-        paper_dict = read_data_yaml(paper_name, theory=True)
-        theory_paper_list.append(paper_dict)
+    if include_theory:
+        theory_paper_list = []
+        for paper_name in theory_papers:
+            paper_dict = read_data_yaml(paper_name, theory=True)
+            theory_paper_list.append(paper_dict)
 
     if redshift_range is not None:
         norm = colors.Normalize(vmin=redshift_range[0], vmax=redshift_range[1])
@@ -245,7 +246,10 @@ def make_plot(
         norm = colors.Normalize(vmin=redshift_list[0], vmax=redshift_list[-1])
     scalar_map = cmx.ScalarMappable(norm=norm, cmap=colormap)
 
-    fig_height = 20
+    if include_theory:
+        fig_height = 20
+    else:
+        fig_height = 10
     fig_width = 20
     fig = plt.figure(figsize=(fig_width, fig_height))
     legend_names = []
@@ -427,6 +431,7 @@ def make_plot(
                     lines.append(line)
         legend_names.append(label)
 
+    theory_line_inds = []
     if include_theory:
         # we want to supress legend labels for theories with linewidth=0
         # which are only used for shading
@@ -435,7 +440,6 @@ def make_plot(
         ordering = np.flip(np.argsort(linewidths))
         theory_paper_list = [theory_paper_list[p] for p in ordering]
 
-        theory_line_inds = []
         for paper in theory_paper_list:
             label_start = " $\\bf{Theory:} \\rm{ "
             label_end = "}$"
@@ -558,11 +562,9 @@ if __name__ == "__main__":
         "in the data directory.",
     )
     parser.add_argument(
-        "--include_theory",
+        "--no_theory",
         action="store_true",
-        default=True,
-        help="Flag to plot theory lines as well as limits. If True, default range is "
-        "modified.",
+        help="Flag to not plot theory lines. If True, default range is modified.",
     )
     parser.add_argument(
         "--theories",
@@ -645,7 +647,7 @@ if __name__ == "__main__":
 
     make_plot(
         papers=args.papers,
-        include_theory=args.include_theory,
+        include_theory=not args.no_theory,
         theories=args.theories,
         plot_as_points=args.aspoints,
         delta_squared_range=args.range,
