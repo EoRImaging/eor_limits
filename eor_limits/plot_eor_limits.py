@@ -6,6 +6,7 @@
 
 import glob
 import os
+import copy
 
 import yaml
 import numpy as np
@@ -14,6 +15,21 @@ import matplotlib.cm as cmx
 import matplotlib.colors as colors
 
 from eor_limits.data import DATA_PATH
+
+default_theory_params = {
+    "mesinger_2016_faint_nf0.9": {
+        "paper": "mesinger_2016",
+        "model": "faint",
+        "nf": 0.9,
+    },
+    "mesinger_2016_bright_nf0.9": {
+        "paper": "mesinger_2016",
+        "model": "bright",
+        "nf": 0.9,
+    },
+    "pagano_beta1_z8.5": {"paper": "pagano_liu_2020", "beta": 1, "redshift": 8.5},
+    "pagano_beta-1_z8.5": {"paper": "pagano_liu_2020", "beta": -1, "redshift": 8.5},
+}
 
 
 def read_data_yaml(paper_name, theory=False):
@@ -78,7 +94,7 @@ def read_data_yaml(paper_name, theory=False):
 def make_plot(
     papers=None,
     include_theory=True,
-    theories=None,
+    theory_params=default_theory_params,
     plot_as_points=["patil_2017", "mertens_2020"],
     plot_filename="eor_limits.pdf",
     delta_squared_range=None,
@@ -101,11 +117,12 @@ def make_plot(
         Defaults to `None` meaning include all papers in the data folder.
     include_theory : bool
         Flag to include theory lines on plots.
-    theories : list of str
-        List of theory models to include on the plot (specified by file name of model
-        excluding the .yaml extension), must be present in the data folder.
-        Defaults to `None` meaning include all theories. Only used if
-        `include_theory` is True.
+    theory_params : dict
+        Dictionary specifying theory lines to include on the plot. Dictionary
+        parameters depend on the theory paper. E.g. for lines from Mesinger et al. 2016,
+        the options are 'model' which can be 'bright' or 'faint', 'nf' which specifies
+        a neutral fraction and 'redshift'. See the paper specific modules for more
+        examples. Only used if `include_theory` is True.
     plot_as_points : list of str
         List of papers that have a line type data model to be plotted as points rather
         that a line.
@@ -147,16 +164,6 @@ def make_plot(
         # if a list is passed in by hand, don't reorder it
         papers_sorted = True
 
-    if include_theory:
-        if theories is None:
-            # use all the theories. This gives weird ordering which we will fix later
-            theory_papers = [
-                os.path.splitext(os.path.basename(p))[0]
-                for p in glob.glob(os.path.join(DATA_PATH, "theory", "*.yaml"))
-            ]
-        else:
-            theory_papers = theories
-
     if delta_squared_range is None:
         if include_theory:
             delta_squared_range = [1e0, 1e6]
@@ -194,8 +201,32 @@ def make_plot(
 
     if include_theory:
         theory_paper_list = []
-        for paper_name in theory_papers:
-            paper_dict = read_data_yaml(paper_name, theory=True)
+        for name, theory in theory_params.items():
+            theory_paper_yamls = [
+                os.path.splitext(os.path.basename(p))[0]
+                for p in glob.glob(os.path.join(DATA_PATH, "theory", "*.yaml"))
+            ]
+            if theory["paper"] in theory_paper_yamls:
+                paper_dict = read_data_yaml(theory["paper"], theory=True)
+            elif theory["paper"] == "mesinger_2016":
+                from eor_limits.process_mesinger_2016 import get_mesinger_2016_line
+
+                dict_use = copy.deepcopy(theory)
+                dict_use.pop("paper")
+                paper_dict = get_mesinger_2016_line(**dict_use)
+            elif theory["paper"] == "pagano_liu_2020":
+                from eor_limits.process_pagano_2020 import get_pagano_2020_line
+
+                dict_use = copy.deepcopy(theory)
+                dict_use.pop("paper")
+                paper_dict = get_pagano_2020_line(**dict_use)
+            else:
+                raise ValueError(
+                    "Theory paper " + theory["paper"] + " is not a yaml in the "
+                    "data/theory folder and is not a paper with a known processing "
+                    "module."
+                )
+
             theory_paper_list.append(paper_dict)
 
     if redshift_range is not None:
@@ -436,8 +467,8 @@ def make_plot(
         # we want to supress legend labels for theories with linewidth=0
         # which are only used for shading
         # fix ordering to put them at the end
-        linewidths = [paper["linewidth"] for paper in theory_paper_list]
-        ordering = np.flip(np.argsort(linewidths))
+        linewidths = np.asarray([paper["linewidth"] for paper in theory_paper_list])
+        ordering = np.argsort(linewidths == 0)
         theory_paper_list = [theory_paper_list[p] for p in ordering]
 
         for paper in theory_paper_list:
@@ -447,7 +478,7 @@ def make_plot(
                 label_start
                 + r"\ ".join(paper["model"].split(" "))
                 + r"\ ("
-                + paper["author"]
+                + r"\ ".join(paper["author"].split(" "))
                 + r",\ "
                 + str(paper["year"])
                 + ")"
@@ -459,7 +490,7 @@ def make_plot(
             (line,) = plt.plot(
                 k_vals,
                 delta_squared,
-                c="black",
+                c="orange",
                 linewidth=paper["linewidth"],
                 linestyle=paper["linestyle"],
                 zorder=2,
@@ -470,7 +501,7 @@ def make_plot(
                     zorder = 0
                     alpha = 1
                 else:
-                    color_use = "orange"
+                    color_use = "darkorange"
                     zorder = 0
                     alpha = 1.0 / len(theory_paper_list)
                 plt.fill_between(
@@ -518,7 +549,7 @@ def make_plot(
     else:
         leg_columns = 3
 
-    leg_rows = int(np.ceil(len(paper_list) / leg_columns))
+    leg_rows = int(np.ceil(len(legend_names) / leg_columns))
 
     legend_height = (2 * leg_rows) * font_inch
 
@@ -571,10 +602,37 @@ if __name__ == "__main__":
         type=str,
         nargs="+",
         default=None,
-        help="Theory models to include on the plot (specified by file name of model"
-        "excluding the .yaml extension), must be present in the data folder."
-        "Defaults to `None` meaning include all theories. Only used if"
-        "`include_theory` is True.",
+        help="Theories to plot. Theory-specific options can be set to control which "
+        "lines are drawn.",
+    )
+    parser.add_argument(
+        "--theory_model",
+        nargs="+",
+        type=str,
+        default=None,
+        help="Model type to select from theories (e.g. 'bright' or 'faint' for "
+        "Mesinger et al. 2016).",
+    )
+    parser.add_argument(
+        "--theory_nf",
+        nargs="+",
+        type=str,
+        default=None,
+        help="Neutral fractions to select from theories.",
+    )
+    parser.add_argument(
+        "--theory_redshift",
+        nargs="+",
+        type=str,
+        default=None,
+        help="Redshifts to select from theories.",
+    )
+    parser.add_argument(
+        "--theory_linewidth",
+        nargs="+",
+        type=float,
+        default=None,
+        help="Linewidths for theory lines.",
     )
     parser.add_argument(
         "--file",
@@ -645,10 +703,87 @@ if __name__ == "__main__":
     if args.shade_theory == "False":
         args.shade_theory = False
 
+    if args.theories is not None:
+        if args.theory_nf is None:
+            args.theory_nf = [None]
+        else:
+            args.theory_nf = [
+                float(val) if val != "None" else None for val in args.theory_nf
+            ]
+        if args.theory_redshift is None:
+            args.theory_redshift = [None]
+        if args.theory_model is None:
+            args.theory_model = [None]
+
+        theory_params = {}
+        num_theories = len(args.theories)
+        num_models = len(args.theory_model)
+        num_nf = len(args.theory_nf)
+        num_redshift = len(args.theory_redshift)
+        num_theory_lines = max([num_theories, num_models, num_nf, num_redshift])
+        if num_theory_lines > 1:
+            if num_theories == 1:
+                args.theories = args.theories * num_theory_lines
+            elif num_theories != num_theory_lines:
+                raise ValueError(
+                    "Number of theories must be one or match the max length of "
+                    "theory_model, theory_nf or theory_redshift."
+                )
+            if num_models == 1:
+                args.theory_model = args.theory_model * num_theory_lines
+            elif num_models != num_theory_lines:
+                raise ValueError(
+                    "Number of theory_models must be one or match the max length of "
+                    "theories, theory_nf or theory_redshift."
+                )
+            if num_nf == 1:
+                args.theory_nf = args.theory_nf * num_theory_lines
+            elif num_nf != num_theory_lines:
+                raise ValueError(
+                    "Number of theory_nfs must be one or match the max length of "
+                    "theories, theory_model or theory_redshift."
+                )
+            if num_redshift == 1:
+                args.theory_redshift = args.theory_redshift * num_theory_lines
+            elif num_redshift != num_theory_lines:
+                raise ValueError(
+                    "Number of theory_redshifts must be one or match the max length of "
+                    "theories, theory_model or theory_nf."
+                )
+
+            if args.theory_linewidth is not None:
+                if len(args.theory_linewidth) == 1:
+                    args.theory_linewidth = args.theory_linewidth * num_theory_lines
+                elif len(args.theory_linewidth) != num_theory_lines:
+                    raise ValueError(
+                        "Number of theory lines must be one or match the max length of "
+                        "theories, theory_model, theory_nf or theory_redshift."
+                    )
+        for index, theory in enumerate(args.theories):
+            name = (
+                theory
+                + "_"
+                + str(args.theory_model[index])
+                + "_nf_"
+                + str(args.theory_nf[index])
+                + "_z_"
+                + str(args.theory_redshift[index])
+            )
+            theory_params[name] = {
+                "paper": theory,
+                "model": args.theory_model[index],
+                "nf": args.theory_nf[index],
+                "redshift": args.theory_redshift[index],
+            }
+            if args.theory_linewidth is not None:
+                theory_params[name]["linewidth"] = args.theory_linewidth[index]
+    else:
+        theory_params = default_theory_params
+
     make_plot(
         papers=args.papers,
         include_theory=not args.no_theory,
-        theories=args.theories,
+        theory_params=theory_params,
         plot_as_points=args.aspoints,
         delta_squared_range=args.range,
         redshift_range=args.redshift,
