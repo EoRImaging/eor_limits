@@ -490,18 +490,18 @@ def make_plot(
             (line,) = plt.plot(
                 k_vals,
                 delta_squared,
-                c="orange",
+                c="lightsteelblue",
                 linewidth=paper["linewidth"],
                 linestyle=paper["linestyle"],
                 zorder=2,
             )
             if shade_theory is not False:
                 if shade_theory == "flat":
-                    color_use = "moccasin"
+                    color_use = "aliceblue"
                     zorder = 0
                     alpha = 1
                 else:
-                    color_use = "darkorange"
+                    color_use = "lightsteelblue"
                     zorder = 0
                     alpha = 1.0 / len(theory_paper_list)
                 plt.fill_between(
