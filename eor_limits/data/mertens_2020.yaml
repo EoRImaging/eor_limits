@@ -2,9 +2,13 @@ telescope: LOFAR
 author: Mertens
 year: 2020
 doi: 10.1093/mnras/staa327
-type: point
+type: line
 delta_squared: [72.86**2., 106.65**2., 153.00**2., 246.92**2., 370.18**2.,
                 520.33**2., 683.2**2.]
 k: [.075, .100, .133, .179, .238, .319, .432]
+# These k bounds are taken by assuming log binning. Not authoritative
+k_lower: [0.065, 0.087, 0.115, 0.154, 0.206, 0.276, 0.371]
+k_upper: [0.087, 0.115, 0.154, 0.206, 0.276, 0.371, 0.503]
 redshift: [9.1]
 marker: H # hexagon2
+linewidth: 1

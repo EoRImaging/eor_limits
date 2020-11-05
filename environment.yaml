@@ -1,0 +1,12 @@
+name: eor_limits
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - numpy>=1.18
+  - matplotlib
+  - pyyaml
+  - coverage
+  - pre-commit
+  - pytest
+  - pytest-cov

@@ -5,5 +5,8 @@ doi: 10.1093/mnras/stt753
 type: point
 delta_squared: [6.15e4]
 k: [.5]
+# These k bounds are taken by eye from the plots in the paper. Not authoritative.
+k_lower: [0.495]
+k_upper: [0.505]
 redshift: [8.6]
 marker: D #diamond
