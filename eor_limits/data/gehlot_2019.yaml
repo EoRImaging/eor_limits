@@ -1,0 +1,11 @@
+telescope: LOFAR-LBA
+author: Gehlot
+year: 2019
+doi: 10.1093/mnras/stz1937
+type: point
+delta_squared: [14561**2, 14886**2]
+k: [0.038, 0.038]
+k_lower: [0.026, 0.026] # assuming log bins in Figure 15
+k_upper: [0.048, 0.048] # assuming log bins in Figure 15
+redshift: [22.5, 22.5]  # middle of the band
+marker: o # dot
