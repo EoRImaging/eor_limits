@@ -317,6 +317,8 @@ def make_plot(
         if paper["type"] == "point":
             if len(paper["redshift"]) == 1 and len(paper["delta_squared"]) > 1:
                 paper["redshift"] = paper["redshift"] * len(paper["delta_squared"])
+            elif len(paper["redshift"]) != len(paper["delta_squared"]):
+                raise ValueError(f"{label} has the wrong number of redshift values.")
             delta_squared = np.asarray(paper["delta_squared"])
             if redshift_range is not None:
                 redshift_array = np.asarray(paper["redshift"])
