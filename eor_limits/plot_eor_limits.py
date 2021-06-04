@@ -285,7 +285,14 @@ def make_plot(
                             redshift_list.append(elem)
 
         redshift_list = sorted(set(redshift_list))
-        norm = colors.Normalize(vmin=redshift_list[0], vmax=redshift_list[-1])
+        if np.min(redshift_list) < np.max(redshift_list):
+            redshift_range_use = [redshift_list[0], redshift_list[-1]]
+        else:
+            # if only 1 redshift and no range specified, use a range of 2 centered on
+            # redshift of data.
+            redshift_range_use = [redshift_list[0] - 1, redshift_list[0] + 1]
+
+        norm = colors.Normalize(vmin=redshift_range_use[0], vmax=redshift_range_use[1])
     scalar_map = cmx.ScalarMappable(norm=norm, cmap=colormap)
 
     if include_theory:
