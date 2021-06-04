@@ -230,6 +230,17 @@ def make_plot(
             theory_paper_list.append(paper_dict)
 
     if redshift_range is not None:
+        if len(redshift_range) != 2:
+            raise ValueError(
+                "redshift range must have 2 elements with the second element greater "
+                "than the first element."
+            )
+        if redshift_range[0] >= redshift_range[1]:
+            raise ValueError(
+                "redshift range must have 2 elements with the second element greater "
+                "than the first element."
+            )
+
         norm = colors.Normalize(vmin=redshift_range[0], vmax=redshift_range[1])
     else:
         redshift_list = []
@@ -462,6 +473,9 @@ def make_plot(
                     lines.append(line)
         legend_names.append(label)
 
+    if len(skipped_papers) == len(paper_list):
+        raise ValueError("No papers in specified redshift and/or delta squared range.")
+
     theory_line_inds = []
     if include_theory:
         # we want to supress legend labels for theories with linewidth=0
@@ -538,7 +552,7 @@ def make_plot(
     plt.xlim(*k_range)
 
     plt.tick_params(labelsize=fontsize)
-    cb = plt.colorbar(fraction=0.1, pad=0.08, label="Redshift")
+    cb = plt.colorbar(scalar_map, fraction=0.1, pad=0.08, label="Redshift")
     cb.ax.yaxis.set_label_position("left")
     cb.ax.yaxis.set_ticks_position("left")
     cb.set_label(label="Redshift", fontsize=fontsize)
