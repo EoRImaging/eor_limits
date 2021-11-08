@@ -17,15 +17,29 @@ import matplotlib.colors as colors
 from eor_limits.data import DATA_PATH
 
 default_theory_params = {
-    "mesinger_2016_faint_nf0.9": {
+    "mesinger_2016_faint_nf0.8": {
         "paper": "mesinger_2016",
         "model": "faint",
-        "nf": 0.9,
+        "nf": 0.8,
+        "linewidth": 2,
     },
-    "mesinger_2016_bright_nf0.9": {
+    "mesinger_2016_bright_nf0.8": {
         "paper": "mesinger_2016",
         "model": "bright",
-        "nf": 0.9,
+        "nf": 0.8,
+        "linewidth": 2,
+    },
+    "mesinger_2016_faint_nf0.5": {
+        "paper": "mesinger_2016",
+        "model": "faint",
+        "nf": 0.5,
+        "linewidth": 3,
+    },
+    "mesinger_2016_bright_nf0.5": {
+        "paper": "mesinger_2016",
+        "model": "bright",
+        "nf": 0.5,
+        "linewidth": 3,
     },
     "pagano_beta1_z8.5": {"paper": "pagano_liu_2020", "beta": 1, "redshift": 8.5},
     "pagano_beta-1_z8.5": {"paper": "pagano_liu_2020", "beta": -1, "redshift": 8.5},
@@ -94,6 +108,7 @@ def read_data_yaml(paper_name, theory=False):
 def make_plot(
     papers=None,
     include_theory=True,
+    theory_legend=True,
     theory_params=default_theory_params,
     plot_as_points=["patil_2017", "mertens_2020"],
     plot_filename="eor_limits.pdf",
@@ -123,6 +138,9 @@ def make_plot(
         the options are 'model' which can be 'bright' or 'faint', 'nf' which specifies
         a neutral fraction and 'redshift'. See the paper specific modules for more
         examples. Only used if `include_theory` is True.
+    theory_legend : bool
+        Option to exclude theory lines from the legend. Used by some users who prefer
+        to add the annotations on the lines by hand to improve readability.
     plot_as_points : list of str
         List of papers that have a line type data model to be plotted as points rather
         that a line.
@@ -537,7 +555,7 @@ def make_plot(
                 )
             theory_line_inds.append(len(lines))
             lines.append(line)
-            if paper["linewidth"] > 0:
+            if paper["linewidth"] > 0 and theory_legend:
                 legend_names.append(label)
 
     point_size = 1 / 72.0  # typography standard (points/inch)
