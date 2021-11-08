@@ -17,15 +17,29 @@ import matplotlib.colors as colors
 from eor_limits.data import DATA_PATH
 
 default_theory_params = {
-    "mesinger_2016_faint_nf0.9": {
+    "mesinger_2016_faint_nf0.8": {
         "paper": "mesinger_2016",
         "model": "faint",
-        "nf": 0.9,
+        "nf": 0.8,
+        "linewidth": 2,
     },
-    "mesinger_2016_bright_nf0.9": {
+    "mesinger_2016_bright_nf0.8": {
         "paper": "mesinger_2016",
         "model": "bright",
-        "nf": 0.9,
+        "nf": 0.8,
+        "linewidth": 2,
+    },
+    "mesinger_2016_faint_nf0.5": {
+        "paper": "mesinger_2016",
+        "model": "faint",
+        "nf": 0.5,
+        "linewidth": 3,
+    },
+    "mesinger_2016_bright_nf0.5": {
+        "paper": "mesinger_2016",
+        "model": "bright",
+        "nf": 0.5,
+        "linewidth": 3,
     },
     "pagano_beta1_z8.5": {"paper": "pagano_liu_2020", "beta": 1, "redshift": 8.5},
     "pagano_beta-1_z8.5": {"paper": "pagano_liu_2020", "beta": -1, "redshift": 8.5},
