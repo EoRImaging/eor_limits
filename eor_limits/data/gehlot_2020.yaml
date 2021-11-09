@@ -3,7 +3,7 @@ author: Gehlot
 year: 2020
 doi: 10.1093/mnras/staa3093
 type: point
-delta_squared: [7390**2]
+delta_squared: [7390.**2]
 k: [0.144]
 k_lower: [0.14] # eyeballing fig 10
 k_upper: [0.19] # eyeballing fig 10
