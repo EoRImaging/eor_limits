@@ -3,9 +3,9 @@ author: Eastwood
 year: 2019
 doi: 10.3847/1538-3881/ab2629
 type: point
-delta_squared: [10.**8]
+delta_squared: [1e8]
 k: [0.1]
 k_lower: [0.095] # eyeballing Figure 10
 k_upper: [1.05] # eyeballing Figure 10
 redshift: [18.4]  # middle of the band
-marker: x # dot
+marker: < # dot
