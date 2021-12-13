@@ -17,6 +17,12 @@ import matplotlib.colors as colors
 from eor_limits.data import DATA_PATH
 
 default_theory_params = {
+    "munoz_2021_AllGalaxies_z8.5": {
+        "paper": "munoz_2021",
+        "model": "EOS",
+        "redshift": 8.5,
+        "linewidth": 3,
+    },
     "mesinger_2016_faint_nf0.8": {
         "paper": "mesinger_2016",
         "model": "faint",
@@ -39,7 +45,7 @@ default_theory_params = {
         "paper": "mesinger_2016",
         "model": "bright",
         "nf": 0.5,
-        "linewidth": 3,
+        "linewidth": 2,
     },
     "pagano_beta1_z8.5": {"paper": "pagano_liu_2020", "beta": 1, "redshift": 8.5},
     "pagano_beta-1_z8.5": {"paper": "pagano_liu_2020", "beta": -1, "redshift": 8.5},
@@ -238,6 +244,12 @@ def make_plot(
                 dict_use = copy.deepcopy(theory)
                 dict_use.pop("paper")
                 paper_dict = get_pagano_2020_line(**dict_use)
+            elif theory["paper"] == "munoz_2021":
+                from eor_limits.process_munoz_2021 import get_munoz_2021_line
+
+                dict_use = copy.deepcopy(theory)
+                dict_use.pop("paper")
+                paper_dict = get_munoz_2021_line(**dict_use)
             else:
                 raise ValueError(
                     "Theory paper " + theory["paper"] + " is not a yaml in the "
