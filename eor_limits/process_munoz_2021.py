@@ -12,7 +12,6 @@ import numpy as np
 from eor_limits.data import DATA_PATH
 
 
-
 def get_munoz_2021_line(model="EOS", redshift=None, linewidth=1.0):
     """
     Get the AllGalaxies model
@@ -40,31 +39,41 @@ def get_munoz_2021_line(model="EOS", redshift=None, linewidth=1.0):
     }
 
     if model == "EOS":
-        munoz_file_k = os.path.join(DATA_PATH, "theory", "munoz_2021_allgalaxies/1pt5Gpc_EOS_coeval_pow_kbins.bin")
-        munoz_file_z = os.path.join(DATA_PATH, "theory", "munoz_2021_allgalaxies/1pt5Gpc_EOS_coeval_pow_zlist.bin")
-        munoz_file_P21 = os.path.join(DATA_PATH, "theory", "munoz_2021_allgalaxies/1pt5Gpc_EOS_coeval_pow_P21.bin")
-        #munoz_file_errP21 = os.path.join(DATA_PATH, "theory", "munoz_2021_allgalaxies/1pt5Gpc_EOS_coeval_pow_errP21.bin")
+        munoz_file_k = os.path.join(
+            DATA_PATH,
+            "theory",
+            "munoz_2021_allgalaxies/1pt5Gpc_EOS_coeval_pow_kbins.bin",
+        )
+        munoz_file_z = os.path.join(
+            DATA_PATH,
+            "theory",
+            "munoz_2021_allgalaxies/1pt5Gpc_EOS_coeval_pow_zlist.bin",
+        )
+        munoz_file_P21 = os.path.join(
+            DATA_PATH, "theory", "munoz_2021_allgalaxies/1pt5Gpc_EOS_coeval_pow_P21.bin"
+        )
+        # munoz_file_errP21 = os.path.join(DATA_PATH, "theory", "munoz_2021_allgalaxies/1pt5Gpc_EOS_coeval_pow_errP21.bin")
         paper_dict["linestyle"] = "solid"
         paper_dict["model"] = "AllGalaxies"
-    else: ## model == "OPT"
-        munoz_file_k = os.path.join(DATA_PATH, "theory", "munoz_2021_optimistic/600Mpc_pt0_coeval_pow_kbins.bin")
-        munoz_file_z = os.path.join(DATA_PATH, "theory", "munoz_2021_optimistic/600Mpc_pt0_coeval_pow_zlist.bin")
-        munoz_file_P21 = os.path.join(DATA_PATH, "theory", "munoz_2021_optimistic/600Mpc_pt0_coeval_pow_P21.bin")
-        #munoz_file_errP21 = os.path.join(DATA_PATH, "theory", "munoz_2021_allgalaxies/600Mpc_pt0_coeval_pow_errP21.bin")
+    else:  ## model == "OPT"
+        munoz_file_k = os.path.join(
+            DATA_PATH, "theory", "munoz_2021_optimistic/600Mpc_pt0_coeval_pow_kbins.bin"
+        )
+        munoz_file_z = os.path.join(
+            DATA_PATH, "theory", "munoz_2021_optimistic/600Mpc_pt0_coeval_pow_zlist.bin"
+        )
+        munoz_file_P21 = os.path.join(
+            DATA_PATH, "theory", "munoz_2021_optimistic/600Mpc_pt0_coeval_pow_P21.bin"
+        )
+        # munoz_file_errP21 = os.path.join(DATA_PATH, "theory", "munoz_2021_allgalaxies/600Mpc_pt0_coeval_pow_errP21.bin")
         paper_dict["linestyle"] = "dashdotted"
         paper_dict["model"] = "AllGalaxies (OPT)"
 
-
-
-
-
-
-
     redshifts = np.fromfile(munoz_file_z)
     k_arr = np.fromfile(munoz_file_k)
-    delta_squared_arr = np.fromfile(munoz_file_P21).reshape((redshifts.size, k_arr.size))
-
-
+    delta_squared_arr = np.fromfile(munoz_file_P21).reshape(
+        (redshifts.size, k_arr.size)
+    )
 
     # Sort in order of ascending redshift
     order = np.argsort(redshifts)
