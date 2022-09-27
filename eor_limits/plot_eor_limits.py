@@ -152,7 +152,9 @@ def make_plot(
     paper_redshifts : dict
         Dict specifying which redshifts to plot per paper. This can help simplify the
         plot so that it's not so busy. Default of 'None' means all redshifts are plotted
-        for all papers.
+        for all papers. The keys should be paper names (specified as 'author_year'),
+        values should be lists of redshifts to include in the plot, e.g.
+        paper_redshifts = {"trott_2020": [6.5, 7.8], "li_2019": [6.5]}.
     plot_as_points : list of str
         List of papers that have a line type data model to be plotted as points rather
         that a line. This can help simplify the plot so that it's not so busy.
