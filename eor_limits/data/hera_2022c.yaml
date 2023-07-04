@@ -1,7 +1,7 @@
 telescope: HERA
 author: HERA
-year: 2022
-doi: 10.48550/arXiv.2210.04912
+year: 2023
+doi: 10.3847/1538-4357/acaf50
 type: line
 # Since power spectra were reported for two bands and five fields, we report here:
 #   - Band 1, Field A
