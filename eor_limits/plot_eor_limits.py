@@ -83,7 +83,7 @@ def read_data_yaml(paper_name, theory=False):
             paper_dict["delta_squared"] = [
                 float(val) for val in paper_dict["delta_squared"]
             ]
-        except (ValueError):
+        except ValueError:
             val_list = []
             for val in paper_dict["delta_squared"]:
                 if "**" in val:
@@ -98,7 +98,7 @@ def read_data_yaml(paper_name, theory=False):
         for ind, elem in enumerate(paper_dict["delta_squared"]):
             try:
                 paper_dict["delta_squared"][ind] = [float(val) for val in elem]
-            except (ValueError):
+            except ValueError:
                 val_list = []
                 for val in paper_dict["delta_squared"][ind]:
                     if "**" in val:
