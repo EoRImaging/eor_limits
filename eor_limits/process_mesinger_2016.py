@@ -58,7 +58,7 @@ def get_mesinger_2016_line(model="faint", nf=None, redshift=None, linewidth=1.0)
         paper_dict["linewidth"] = 0
         model_name = model + "_galaxies_max"
         for ind, this_file in enumerate(model_files):
-            data_array = np.loadtxt(this_file, dtype=np.float)
+            data_array = np.loadtxt(this_file, dtype=float)
             if ind == 0:
                 # first column is k
                 k_vals = data_array[:, 0]
@@ -100,7 +100,7 @@ def get_mesinger_2016_line(model="faint", nf=None, redshift=None, linewidth=1.0)
             redshift_diffs = np.abs(np.asarray(redshifts) - redshift)
             closest_ind = np.atleast_1d(np.argmin(redshift_diffs))
 
-        data_array = np.loadtxt(np.asarray(model_files)[closest_ind][0], dtype=np.float)
+        data_array = np.loadtxt(np.asarray(model_files)[closest_ind][0], dtype=float)
         # first column is k
         paper_dict["k"] = data_array[:, 0].tolist()
         # second is power
