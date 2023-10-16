@@ -399,8 +399,9 @@ def make_plot(
                 redshift_array = np.asarray(paper["redshift"])
                 if len(redshift_array) != len(delta_squared):
                     raise ValueError(
-                        f"Paper {paper['author']} ({paper['year']}) has {len(redshift_array)} "
-                        f"redshifts, but {len(delta_squared)} power spectrum values!"
+                        f"Paper {paper['author']} ({paper['year']}) has "
+                        f"{len(redshift_array)} redshifts, but {len(delta_squared)} "
+                        "power spectrum values!"
                     )
 
                 points_use = np.where(
@@ -426,15 +427,15 @@ def make_plot(
             if points_use.size == 0:
                 skipped_papers.append(paper)
                 print(
-                    f";  skipped since its outside redshift/delta^2 range [{redshift_range[0]} < "
-                    f"z < {redshift_range[1]}] & [{delta_squared_range[0]:1.0e} < Δ² < "
+                    ";  skipped since its outside redshift/delta^2 range "
+                    f"[{redshift_range[0]} < z < {redshift_range[1]}] & "
+                    f"[{delta_squared_range[0]:1.0e} < Δ² < "
                     f"{delta_squared_range[1]:1.0e}]"
                 )
                 continue
             else:
-                print(
-                    f";  using {len(points_use)} point{'s' if len(points_use) > 1 else ''}."
-                )
+                plural = len(points_use) > 1
+                print(f";  using {len(points_use)} point{'s' if plural > 1 else ''}.")
                 paper_ks.extend(list(np.asarray(paper["k"])[points_use]))
                 delta_squared = np.asarray(paper["delta_squared"])[points_use]
                 line = plt.scatter(
@@ -506,7 +507,8 @@ def make_plot(
                     print(
                         f";  skipped since its outside redshift/delta^2 range ["
                         f"{redshift_range[0]} < z < {redshift_range[1]}] & ["
-                        f"{delta_squared_range[0]:1.0e} < Δ² < {delta_squared_range[1]:1.0e}]"
+                        f"{delta_squared_range[0]:1.0e} < Δ² < "
+                        f"{delta_squared_range[1]:1.0e}]"
                     )
                     continue
             else:
@@ -879,14 +881,20 @@ if __name__ == "__main__":
         type=str,
         nargs="+",
         default=None,
-        help="List of names:::files for which to include sensitivies. Files must be 21cmSense outputs.",
+        help=(
+            "List of names:::files for which to include sensitivies. "
+            "Files must be 21cmSense outputs."
+        ),
     )
     parser.add_argument(
         "--sensitivity-style",
         type=str,
         nargs="+",
         default=None,
-        help="style parameters for plotting sensitivities. Format should be name:::{key:val} or just {key:val}.",
+        help=(
+            "style parameters for plotting sensitivities. "
+            "Format should be name:::{key:val} or just {key:val}."
+        ),
     )
     parser.add_argument("--fontsize", type=int, help="Font size to use.", default=15)
     parser.add_argument(
