@@ -132,10 +132,11 @@ def make_plot(
     plot_filename="eor_limits.pdf",
     markersize=150,
     fig_ratio=None,
-    sensitivities: Optional[dict]=None,
+    sensitivities: Optional[dict] = None,
     sensitivity_style: Optional[dict] = None,
-    fig: Optional[plt.Figure]=None,
-    ax: Optional[plt.Axes]=None,
+    fig: Optional[plt.Figure] = None,
+    ax: Optional[plt.Axes] = None,
+    plot_filename="eor_limits.pdf",
 ) -> Tuple[plt.Figure, plt.Axes]:
     """
     Plot the current EoR Limits as a function of k and redshift.
@@ -372,7 +373,7 @@ def make_plot(
     paper_ks = []
     skipped_papers = []
     for paper_i, paper in enumerate(paper_list):
-        print("Processing", paper['author'], paper['year'], end='')
+        print("Processing", paper["author"], paper["year"], end="")
         if paper["bold"]:
             label_start = " $\\bf{"
         else:
@@ -399,7 +400,8 @@ def make_plot(
                 if len(redshift_array) != len(delta_squared):
                     raise ValueError(
                         f"Paper {paper['author']} ({paper['year']}) has {len(redshift_array)} "
-                        f"redshifts, but {len(delta_squared)} power spectrum values!")
+                        f"redshifts, but {len(delta_squared)} power spectrum values!"
+                    )
 
                 points_use = np.where(
                     (redshift_array >= redshift_range[0])
@@ -426,10 +428,13 @@ def make_plot(
                 print(
                     f";  skipped since its outside redshift/delta^2 range [{redshift_range[0]} < "
                     f"z < {redshift_range[1]}] & [{delta_squared_range[0]:1.0e} < Δ² < "
-                    f"{delta_squared_range[1]:1.0e}]")
+                    f"{delta_squared_range[1]:1.0e}]"
+                )
                 continue
             else:
-                print(f";  using {len(points_use)} point{'s' if len(points_use) > 1 else ''}.")
+                print(
+                    f";  using {len(points_use)} point{'s' if len(points_use) > 1 else ''}."
+                )
                 paper_ks.extend(list(np.asarray(paper["k"])[points_use]))
                 delta_squared = np.asarray(paper["delta_squared"])[points_use]
                 line = plt.scatter(
@@ -501,7 +506,8 @@ def make_plot(
                     print(
                         f";  skipped since its outside redshift/delta^2 range ["
                         f"{redshift_range[0]} < z < {redshift_range[1]}] & ["
-                        f"{delta_squared_range[0]:1.0e} < Δ² < {delta_squared_range[1]:1.0e}]")
+                        f"{delta_squared_range[0]:1.0e} < Δ² < {delta_squared_range[1]:1.0e}]"
+                    )
                     continue
             else:
                 lines_use = np.arange(len(redshifts))
@@ -518,8 +524,11 @@ def make_plot(
                         new_lines_use.append(line)
                 lines_use = np.array(new_lines_use, dtype=int)
 
-            for ind in lines_use:
-                redshift = np.asarray(redshifts)[ind]
+            print(
+                f";  using {len(lines_use)} point{'s' if len(lines_use) > 1 else ''}."
+            )
+
+            for ind, redshift in enumerate(np.asarray(redshifts)[lines_use]):
                 paper_ks.extend(k_vals[ind])
 
                 # Some lines have overlapping edges (since window functions can overlap)
@@ -527,10 +536,11 @@ def make_plot(
                 max_right_edges = np.concatenate((k_vals[ind][1:], [np.inf]))
                 min_left_edges = np.concatenate(([0], max_right_edges[:-1]))
 
-
                 k_edges = np.stack(
-                    (np.maximum(np.asarray(k_lower[ind]), min_left_edges),
-                     np.minimum(np.asarray(k_upper[ind]), max_right_edges))
+                    (
+                        np.maximum(np.asarray(k_lower[ind]), min_left_edges),
+                        np.minimum(np.asarray(k_upper[ind]), max_right_edges),
+                    )
                 ).T.flatten()
                 delta_edges = np.stack(
                     (np.asarray(delta_squared[ind]), np.asarray(delta_squared[ind]))
@@ -665,19 +675,27 @@ def make_plot(
 
         # These must be outputs from 21cmSense
         data = np.load(fname)
-        ks = data['ks']
-        sense = data[style.get('sensitivity_kind', 'sample+thermal')]
+        ks = data["ks"]
+        sense = data[style.get("sensitivity_kind", "sample+thermal")]
 
         ks = ks[~np.isinf(sense)]
         sense = sense[~np.isinf(sense)]
 
-        plt.plot(ks, sense, color=style.get('color', 'k'), ls=style.get('ls', ['--', ':', '-.'][indx%3]), lw=style.get('lw', [3, 2, 4][indx//3]))
+        plt.plot(
+            ks,
+            sense,
+            color=style.get("color", "k"),
+            ls=style.get("ls", ["--", ":", "-."][indx % 3]),
+            lw=style.get("lw", [3, 2, 4][indx // 3]),
+        )
 
         # Put the instrument name right on the plot.
         # We know the sensitivity will go up to the right, so we put it at about 2/3
         # of the way, and align it to top.
-        k_ind = int(len(ks)*(0.8 - 0.1*indx))
-        plt.text(ks[k_ind], sense[k_ind], name, fontsize=fontsize, verticalalignment='top')
+        k_ind = int(len(ks) * (0.8 - 0.1 * indx))
+        plt.text(
+            ks[k_ind], sense[k_ind], name, fontsize=fontsize, verticalalignment="top"
+        )
 
     plt.rcParams.update({"font.size": fontsize})
     plt.xlabel("k ($h Mpc^{-1}$)", fontsize=fontsize)
@@ -752,8 +770,8 @@ if __name__ == "__main__":
         nargs="+",
         default=None,
         help="Papers to include on plot "
-             "(must be in data directory). Defaults to all papers "
-             "in the data directory.",
+        "(must be in data directory). Defaults to all papers "
+        "in the data directory.",
     )
     parser.add_argument(
         "--no_theory",
@@ -766,7 +784,7 @@ if __name__ == "__main__":
         nargs="+",
         default=None,
         help="Theories to plot. Theory-specific options can be set to control which "
-             "lines are drawn.",
+        "lines are drawn.",
     )
     parser.add_argument(
         "--theory_model",
@@ -774,7 +792,7 @@ if __name__ == "__main__":
         type=str,
         default=None,
         help="Model type to select from theories (e.g. 'bright' or 'faint' for "
-             "Mesinger et al. 2016).",
+        "Mesinger et al. 2016).",
     )
     parser.add_argument(
         "--theory_nf",
@@ -814,7 +832,7 @@ if __name__ == "__main__":
         "--range",
         type=float,
         help="Range of Delta Squared to include on plot (yaxis range). "
-             "Defaults to [1e3, 1e6] if include_theory is false and [1e0, 1e6] otherwise",
+        "Defaults to [1e3, 1e6] if include_theory is false and [1e0, 1e6] otherwise",
         default=None,
         nargs="+",
     )
@@ -837,14 +855,14 @@ if __name__ == "__main__":
         type=str,
         default="generational",
         help="Type of shading above limits to apply, one of: 'generational', 'alpha' "
-             "or False.",
+        "or False.",
     )
     parser.add_argument(
         "--shade_theory",
         type=str,
         default="flat",
         help="Type of shading below theories to apply, one of: 'flat', 'alpha' "
-             "or False.",
+        "or False.",
     )
     parser.add_argument(
         "--colormap", type=str, help="Matplotlib colormap to use.", default="Spectral_r"
@@ -857,22 +875,30 @@ if __name__ == "__main__":
         default=None,
     )
     parser.add_argument(
-        '--sensitivities',
+        "--sensitivities",
         type=str,
-        nargs='+',
+        nargs="+",
         default=None,
-        help='List of names:::files for which to include sensitivies. Files must be 21cmSense outputs.'
+        help="List of names:::files for which to include sensitivies. Files must be 21cmSense outputs.",
     )
     parser.add_argument(
-        '--sensitivity-style',
+        "--sensitivity-style",
         type=str,
-        nargs='+',
+        nargs="+",
         default=None,
-        help='style parameters for plotting sensitivities. Format should be name:::{key:val} or just {key:val}.'
+        help="style parameters for plotting sensitivities. Format should be name:::{key:val} or just {key:val}.",
     )
     parser.add_argument("--fontsize", type=int, help="Font size to use.", default=15)
-    parser.add_argument('--height-ratio', type=float, help='defines the height of the figure', default=None)
-    parser.add_argument('--markersize', type=int, default=150, help='size of the markers')    parser.add_argument(
+    parser.add_argument(
+        "--height-ratio",
+        type=float,
+        help="defines the height of the figure",
+        default=None,
+    )
+    parser.add_argument(
+        "--markersize", type=int, default=150, help="size of the markers"
+    )
+    parser.add_argument(
         "--file",
         type=str,
         dest="filename",
@@ -946,7 +972,9 @@ if __name__ == "__main__":
                         "Number of theory lines must be one or match the max length of "
                         "theories, theory_model, theory_nf or theory_redshift."
                     )
-        for index, (theory, model, nf, redshift) in enumerate(zip(args.theories, args.theory_model, args.theory_nf, args.theory_redshift)):
+        for index, (theory, model, nf, redshift) in enumerate(
+            zip(args.theories, args.theory_model, args.theory_nf, args.theory_redshift)
+        ):
             name = f"{theory}_{model}_nf_{nf}_z_{redshift}"
             theory_params[name] = {
                 "paper": theory,
@@ -958,21 +986,25 @@ if __name__ == "__main__":
                 theory_params[name]["linewidth"] = args.theory_linewidth[index]
     else:
         if args.theory_nf or args.theory_redshift or args.theory_model:
-            raise ValueError("You passed a theory nf/redshift/model but no theory itself!")
+            raise ValueError(
+                "You passed a theory nf/redshift/model but no theory itself!"
+            )
 
         theory_params = default_theory_params
 
     # Process sensitivity arguments.
     if args.sensitivities:
-        sensitivities = dict(param.split(':::') for param in args.sensitivities)
+        sensitivities = dict(param.split(":::") for param in args.sensitivities)
     else:
         sensitivities = None
 
     if args.sensitivity_style:
-        if args.sensitivity_style.strip().startswith('{'):
+        if args.sensitivity_style.strip().startswith("{"):
             sensitivity_style = json.loads(args.sensitivity_style)
         else:
-            sensitivity_style = dict(param.split(":::") for param in args.sensitivity_style)
+            sensitivity_style = dict(
+                param.split(":::") for param in args.sensitivity_style
+            )
             sensitivity_style = {k: json.loads(v) for k, v in sensitivity_style.items()}
     else:
         sensitivity_style = None
@@ -994,7 +1026,7 @@ if __name__ == "__main__":
         sensitivities=sensitivities,
         sensitivity_style=sensitivity_style,
         markersize=args.markersize,
-        fig_ratio=args.height_ratio
+        fig_ratio=args.height_ratio,
     )
 
     fig.savefig(args.filename)
