@@ -426,12 +426,19 @@ def make_plot(
 
             if points_use.size == 0:
                 skipped_papers.append(paper)
-                print(
-                    ";  skipped since its outside redshift/delta^2 range "
-                    f"[{redshift_range[0]} < z < {redshift_range[1]}] & "
-                    f"[{delta_squared_range[0]:1.0e} < Δ² < "
-                    f"{delta_squared_range[1]:1.0e}]"
-                )
+                if redshift_range is None:
+                    print(
+                        ";  skipped since its outside delta^2 range "
+                        f"[{delta_squared_range[0]:1.0e} < Δ² < "
+                        f"{delta_squared_range[1]:1.0e}]"
+                    )
+                else:
+                    print(
+                        ";  skipped since its outside redshift/delta^2 range "
+                        f"[{redshift_range[0]} < z < {redshift_range[1]}] & "
+                        f"[{delta_squared_range[0]:1.0e} < Δ² < "
+                        f"{delta_squared_range[1]:1.0e}]"
+                    )
                 continue
             else:
                 plural = len(points_use) > 1

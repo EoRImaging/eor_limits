@@ -1,0 +1,11 @@
+telescope: NenuFAR
+author: Munshi
+year: 2023
+doi: https://arxiv.org/pdf/2311.05364.pdf
+type: point
+delta_squared: [24000000]
+k: [0.041]
+k_lower: [0.06] # eyeballing fig 16
+k_upper: [0.03] # eyeballing fig 16
+redshift: [20.3]  # middle of the band
+marker: ^ # triangle

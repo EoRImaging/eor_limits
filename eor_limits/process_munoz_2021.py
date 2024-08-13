@@ -12,7 +12,7 @@ import numpy as np
 from eor_limits.data import DATA_PATH
 
 
-def get_munoz_2021_line(model="EOS", redshift=None, linewidth=1.0):
+def get_munoz_2021_line(model="EOS", redshift=None, linewidth=1.0, nf=None):
     """
     Get the AllGalaxies model.
 
@@ -68,7 +68,7 @@ def get_munoz_2021_line(model="EOS", redshift=None, linewidth=1.0):
         )
         # munoz_file_errP21 = os.path.join(DATA_PATH, "theory",
         # "munoz_2021_allgalaxies/600Mpc_pt0_coeval_pow_errP21.bin")
-        paper_dict["linestyle"] = "dashdotted"
+        paper_dict["linestyle"] = "dashdot"
         paper_dict["model"] = "AllGalaxies (OPT)"
 
     redshifts = np.fromfile(munoz_file_z)
