@@ -634,7 +634,9 @@ def make_plot(
     plt.xlim(*k_range)
 
     plt.tick_params(labelsize=fontsize)
-    cb = plt.colorbar(scalar_map, ax=plt.gca(), fraction=0.1, pad=0.08, label="Redshift")
+    cb = plt.colorbar(
+        scalar_map, ax=plt.gca(), fraction=0.1, pad=0.08, label="Redshift"
+    )
     cb.ax.yaxis.set_label_position("left")
     cb.ax.yaxis.set_ticks_position("left")
     cb.set_label(label="Redshift", fontsize=fontsize)
