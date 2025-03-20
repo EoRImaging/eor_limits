@@ -634,7 +634,7 @@ def make_plot(
     plt.xlim(*k_range)
 
     plt.tick_params(labelsize=fontsize)
-    cb = plt.colorbar(scalar_map, fraction=0.1, pad=0.08, label="Redshift")
+    cb = plt.colorbar(scalar_map, ax=plt.gca(), fraction=0.1, pad=0.08, label="Redshift")
     cb.ax.yaxis.set_label_position("left")
     cb.ax.yaxis.set_ticks_position("left")
     cb.set_label(label="Redshift", fontsize=fontsize)
@@ -665,9 +665,9 @@ def make_plot(
         frameon=False,
     )
 
-    for ind in range(len(leg.legendHandles)):
+    for ind in range(len(leg.legend_handles)):
         if ind not in theory_line_inds:
-            leg.legendHandles[ind].set_color("gray")
+            leg.legend_handles[ind].set_color("gray")
     plt.subplots_adjust(bottom=plot_bottom)
     fig.tight_layout()
     plt.savefig(plot_filename)
