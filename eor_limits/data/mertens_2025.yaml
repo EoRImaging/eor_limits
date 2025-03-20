@@ -1,0 +1,15 @@
+telescope: LOFAR
+author: Mertens
+year: 2025
+doi: 10.48550/arXiv.2503.05576
+type: line
+# arxiv submission before publication
+delta_squared: [54.3**2., 74.5**2., 110.6**2., 167.2**2., 238.6**2.,
+                305.4**2., 341.0**2.] 
+k: [.076, .101, .133, .181, .240, .319, .432]
+# These k bounds are taken by assuming log binning. Not authoritative
+k_lower: [0.065, 0.087, 0.115, 0.154, 0.206, 0.276, 0.371]
+k_upper: [0.087, 0.115, 0.154, 0.206, 0.276, 0.371, 0.503]
+redshift: [9.1]
+marker: x 
+linewidth: 4
