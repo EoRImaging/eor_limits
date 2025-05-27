@@ -24,7 +24,7 @@ setup_args = {
     "scripts": ["eor_limits/plot_eor_limits.py"],
     "version": version,
     "include_package_data": True,
-    "install_requires": ["numpy", "matplotlib", "pyyaml"],
+    "install_requires": ["numpy", "matplotlib", "pyyaml", "h5py"],
     "extras_require": {"dev": ["pytest", "pytest-cov", "coverage", "pre-commit"]},
     "classifiers": [
         "Development Status :: 5 - Production/Stable",
