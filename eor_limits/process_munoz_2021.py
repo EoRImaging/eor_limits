@@ -12,7 +12,7 @@ import numpy as np
 from eor_limits.data import DATA_PATH
 
 
-def get_munoz_2021_line(model="EOS", redshift=None, linewidth=1.0, nf=None):
+def get_munoz_2021_line(model="EOS", redshift=None, linewidth=1.0):
     """
     Get the AllGalaxies model.
 
