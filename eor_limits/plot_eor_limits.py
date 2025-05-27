@@ -15,6 +15,7 @@ import numpy as np
 import yaml
 from typing import Tuple, Optional
 import json
+import h5py
 
 from eor_limits.data import DATA_PATH
 
@@ -208,7 +209,7 @@ def make_plot(
         included, and 1 if theory is included.
     sensitivities : dict
         Dictionary of sensitivities to plot on the figure. The keys are labels for each
-        sensitivity estimate, and the values are the file names of the 
+        sensitivity estimate, and the values are the file names of the
         sensitivities to plot, which must be outputs from 21cmSense v2+.
     sensitivity_style : dict
         Dictionary of style parameters for plotting sensitivities. The keys are
@@ -703,18 +704,18 @@ def make_plot(
                 f"Invalid sensitivity kind '{sense_kind}' for {name}. "
                 "Must be one of 'sample+thermal', 'sample', or 'thermal'."
             )
-            
+
         # These must be outputs from 21cmSense v2+
         with h5py.File(fname, "r") as fl:
             if "k" not in fl.keys():
-                raise ValueError(f"{fname} is not a valid 21cmSense output: no key 'k' found")
-            if sense_kind not in fl.keys():
-                raise IOError(
-                    f"{fname} has no key {sense_kind} for sensitivity data. "
+                raise ValueError(
+                    f"{fname} is not a valid 21cmSense output: no key 'k' found"
                 )
+            if sense_kind not in fl.keys():
+                raise IOError(f"{fname} has no key {sense_kind} for sensitivity data. ")
             ks = fl["k"][:]
             sense = fl[sense_kind][:]
-              
+
         ks = ks[~np.isinf(sense)]
         sense = sense[~np.isinf(sense)]
 
@@ -735,8 +736,8 @@ def make_plot(
         )
 
     plt.rcParams.update({"font.size": fontsize})
-    plt.xlabel("k ($h Mpc^{-1}$)", fontsize=fontsize)
-    plt.ylabel("$\Delta^2$ ($mK^2$)", fontsize=fontsize)  # noqa
+    plt.xlabel(r"k ($h Mpc^{-1}$)", fontsize=fontsize)
+    plt.ylabel(r"$\Delta^2$ ($mK^2$)", fontsize=fontsize)  # noqa
     plt.yscale("log")
     plt.xscale("log")
     plt.ylim(*delta_squared_range)
@@ -919,7 +920,7 @@ if __name__ == "__main__":
         help=(
             "List of names:::files for which to include sensitivities. "
             "Files must be 21cmSense v2+ outputs, which can be generated with "
-            "``sense calc-sense --fname out.h5`` (see 21cmSense docs for more info). "
+            "``sense calc-sense --fname out.h5`` (see 21cmSense docs for more info)."
         ),
     )
     parser.add_argument(
@@ -930,7 +931,7 @@ if __name__ == "__main__":
         help=(
             "style parameters for plotting sensitivities. "
             "Format should be name:::{key:val} or just {key:val}. "
-            "Each 'name' (if given) should correspond to a label in the --sensitivities "
+            "Each 'name' (if given) should correspond to a label in the sensitivities "
             "argument, and the values should be a JSON string with style parameters "
             "for plotting, e.g. {'color': 'k', 'ls': '--', 'lw': 3}. "
             "An additional key 'sensitivity_kind' can be used to specify which kind of "
