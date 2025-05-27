@@ -201,7 +201,21 @@ def make_plot(
         Font size to use on plot.
     plot_filename : str
         File name to save plot to.
-
+    markersize : int
+        Size of the markers to use for point plots.
+    fig_ratio : float
+        Ratio of figure height to width. If None, defaults to 0.5 if theory is not
+        included, and 1 if theory is included.
+    sensitivities : dict
+        Dictionary of sensitivities to plot on the figure. The keys are labels for each
+        sensitivity estimate, and the values are the file names of the 
+        sensitivities to plot, which must be outputs from 21cmSense v2+.
+    sensitivity_style : dict
+        Dictionary of style parameters for plotting sensitivities. The keys are
+        labels for each sensitivity estimate, and the values are dictionaries with
+        style parameters for plotting, e.g. {'color': 'k', 'ls': '--', 'lw': 3}.
+        An additional key 'sensitivity_kind' can be used to specify which kind of
+        sensitivity to plot, e.g. 'sample+thermal', 'sample' or 'thermal'.
     """
     if papers is None:
         # use all the papers. This gives weird ordering which we will fix later
@@ -680,11 +694,25 @@ def make_plot(
         else:
             style = sensitivity_style
 
-        # These must be outputs from 21cmSense
-        data = np.load(fname)
-        ks = data["ks"]
-        sense = data[style.get("sensitivity_kind", "sample+thermal")]
+        sense_kind = style.get("sensitivity_kind", "sample+thermal")
 
+        if sense_kind not in ["sample+thermal", "sample", "thermal"]:
+            raise ValueError(
+                f"Invalid sensitivity kind '{sense_kind}' for {name}. "
+                "Must be one of 'sample+thermal', 'sample', or 'thermal'."
+            )
+            
+        # These must be outputs from 21cmSense v2+
+        with h5py.File(fname, "r") as fl:
+            if "k" not in fl.keys():
+                raise ValueError(f"{fname} is not a valid 21cmSense output: no key 'k' found")
+            if sense_kind not in fl.keys():
+                raise IOError(
+                    f"{fname} has no key {sense_kind} for sensitivity data. "
+                )
+            ks = fl["k"][:]
+            sense = fl[sense_kind][:]
+              
         ks = ks[~np.isinf(sense)]
         sense = sense[~np.isinf(sense)]
 
@@ -887,8 +915,9 @@ if __name__ == "__main__":
         nargs="+",
         default=None,
         help=(
-            "List of names:::files for which to include sensitivies. "
-            "Files must be 21cmSense outputs."
+            "List of names:::files for which to include sensitivities. "
+            "Files must be 21cmSense v2+ outputs, which can be generated with "
+            "``sense calc-sense --fname out.h5`` (see 21cmSense docs for more info). "
         ),
     )
     parser.add_argument(
@@ -898,7 +927,14 @@ if __name__ == "__main__":
         default=None,
         help=(
             "style parameters for plotting sensitivities. "
-            "Format should be name:::{key:val} or just {key:val}."
+            "Format should be name:::{key:val} or just {key:val}. "
+            "Each 'name' (if given) should correspond to a label in the --sensitivities "
+            "argument, and the values should be a JSON string with style parameters "
+            "for plotting, e.g. {'color': 'k', 'ls': '--', 'lw': 3}. "
+            "An additional key 'sensitivity_kind' can be used to specify which kind of "
+            "sensitivity to plot, e.g. 'sample+thermal', 'sample' or 'thermal'. "
+            "If no name is given, the style will be applied to all sensitivities. "
+            "If no style is given, the default style will be used.",
         ),
     )
     parser.add_argument("--fontsize", type=int, help="Font size to use.", default=15)
