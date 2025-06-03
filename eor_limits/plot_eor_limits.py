@@ -372,7 +372,7 @@ def make_plot(
         norm = colors.Normalize(vmin=redshift_range_use[0], vmax=redshift_range_use[1])
     scalar_map = cmx.ScalarMappable(norm=norm, cmap=colormap)
 
-    fig_width=25 if theory_legend else 20
+    fig_width = 25 if theory_legend else 20
     if include_theory:
         fig_height = fig_width * (fig_ratio or 1)
     else:
@@ -536,7 +536,9 @@ def make_plot(
             else:
                 lines_use = np.arange(len(redshifts))
 
-            print(f";  using {len(lines_use)} point{'s' if len(lines_use) > 1 else ''}.")
+            print(
+                f";  using {len(lines_use)} point{'s' if len(lines_use) > 1 else ''}."
+            )
 
             if len(paper_redshifts) > 0 and paper["name"] in paper_redshifts:
                 new_lines_use = []
