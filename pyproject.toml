@@ -1,0 +1,110 @@
+[project]
+name = "eor-limits"
+description = "A data format and plotting utility for 21cm power spectrum upper limits."
+readme = "README.md"
+authors = [
+    { name = "Nichole Barry", email = "nichole.barry@unsw.edu.au"},
+    { name = "Bryna Hazelton", email = "brynah@phys.washington.edu"},
+    { name = "Steven Murray", email = "murray.steveng@gmail.com" },
+]
+requires-python = ">=3.12"
+dependencies = [
+    "cyclopts>=4.5.1",
+    "matplotlib>=3.10.8",
+    "numpy>=2.4.1",
+    "pyyaml>=6.0.3",
+]
+urls = { Repository = "https://github.com/EoRImaging/eor_limits"}
+license = { file = "LICENSE" }
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: BSD License",
+    "Programming Language :: Python :: 3.6",
+    "Topic :: Scientific/Engineering :: Astronomy",
+]
+keywords = ["cosmology"]
+dynamic = ["version"]
+
+[project.scripts]
+eor-limits = "eor_limits.cli:app"
+
+[build-system]
+requires = ["hatchling", "uv-dynamic-versioning"]
+build-backend = "hatchling.build"
+
+[tool.hatch.version]
+source = "uv-dynamic-versioning"
+
+[dependency-groups]
+dev = [
+    "coverage>=7.13.2",
+    "pre-commit>=4.5.1",
+    "pytest>=9.0.2",
+    "pytest-cov>=7.0.0",
+    "ruff>=0.14.14",
+]
+
+
+[tool.ruff]
+preview = true
+line-length=88
+target-version="py313"
+
+[tool.ruff.lint]
+extend-select = [
+  "UP",   # pyupgrade
+  "E",    # pycodestyle
+  "W",    # pycodestyle warning
+  "F",    # pyflakes
+  "C90",  # mccabe complexity
+  "I",    # isort
+  "N",    # pep8-naming
+  "D",    # docstyle
+  # "ANN"   # type annotations
+  "B",    # bugbear
+  "A",    # builtins
+  "C4",   # comprehensions
+  "DTZ",  # datetime
+  "FA",   # future annotations
+  "PIE",  # flake8-pie
+  "T",    # print statements
+  "PT",   # pytest-style
+  "Q",    # quotes
+  "SIM",  # simplify
+  "PTH",  # use Pathlib
+  "ERA",  # kill commented code
+  "NPY",  # numpy-specific rules
+  "PERF", # performance
+  # "FURB", # refurb
+  "RUF",  # ruff-specific rules
+  "RET",  # return statements
+  "RSE",  # exception raises
+  "TRY201", # verbose raise
+]
+ignore = [
+    "B008",     # do not performa function call in argument defaults
+    "RUF009",   # don't perform function call in dataclass defaults
+    "RUF013",   # allow use of implicit optionals (i.e. param: int = None)
+    "RUF067",   # __init__ can define new variables
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*.py" = [
+    "T",     # print statements
+]
+"docs/conf.py" = [
+    "A",  # conf.py can shadow builtins
+    "ERA",
+    "DTZ",
+]
+"**/*.ipynb" = [
+    "T201", "DTZ", "D", "PTH119", "ERA"
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = 'numpy'
+property-decorators = ["pytest.fixture"]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 21

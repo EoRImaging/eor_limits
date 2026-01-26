@@ -1,16 +1,13 @@
 #! /usr/bin/env python
-# -*- mode: python; coding: utf-8 -*
 # Copyright (c) 2019 Nichole Barry, Bryna Hazelton
 # Licensed under the 2-clause BSD License
 """Process Pagano and Liu 2020 spectra for plotting."""
 
-import os
-
 import numpy as np
 
-from eor_limits.data import DATA_PATH
+from eor_limits.data import THEORY_PATH
 
-pagano_file = os.path.join(DATA_PATH, "theory", "pagano_liu_2020.npz")
+pagano_file = THEORY_PATH / "pagano_liu_2020.npz"
 
 
 def get_pagano_2020_line(beta=1, redshift=8, linewidth=1.0):

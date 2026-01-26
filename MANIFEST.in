@@ -1,3 +1,0 @@
-include *.md
-include LICENSE
-recursive-include eor_limits/data *
