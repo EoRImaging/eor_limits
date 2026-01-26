@@ -1,18 +1,14 @@
 #! /usr/bin/env python
-# -*- mode: python; coding: utf-8 -*
 # Copyright (c) 2019 Nichole Barry, Bryna Hazelton
 # Licensed under the 2-clause BSD License
 """Process Mesinger et al. 2016 EOS spectra for plotting."""
 
-import glob
-import os
-
 import numpy as np
 
-from eor_limits.data import DATA_PATH
+from eor_limits.data import THEORY_PATH
 
-faint_path = os.path.join(DATA_PATH, "theory", "mesinger_2016_faint_galaxies_all")
-bright_path = os.path.join(DATA_PATH, "theory", "mesinger_2016_bright_galaxies_all")
+faint_path = THEORY_PATH / "mesinger_2016_faint_galaxies_all"
+bright_path = THEORY_PATH / "mesinger_2016_bright_galaxies_all"
 
 
 def get_mesinger_2016_line(model="faint", nf=None, redshift=None, linewidth=1.0):
@@ -48,10 +44,10 @@ def get_mesinger_2016_line(model="faint", nf=None, redshift=None, linewidth=1.0)
         "linewidth": linewidth,
     }
     if model == "faint":
-        model_files = glob.glob(os.path.join(faint_path, "*"))
+        model_files = list(faint_path.glob("*"))
         paper_dict["linestyle"] = "--"
     else:
-        model_files = glob.glob(os.path.join(bright_path, "*"))
+        model_files = list(bright_path.glob("*"))
         paper_dict["linestyle"] = ":"
 
     if nf is None and redshift is None:
@@ -74,7 +70,7 @@ def get_mesinger_2016_line(model="faint", nf=None, redshift=None, linewidth=1.0)
         paper_dict["redshift"] = None
 
     else:
-        filenames = [os.path.splitext(os.path.basename(f))[0] for f in model_files]
+        filenames = [f.stem for f in model_files]
         nf_vals = [float(f.partition("nf")[2].partition("_")[0]) for f in filenames]
         redshifts = [float(f.partition("z")[2].partition("_")[0]) for f in filenames]
 
