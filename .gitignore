@@ -106,3 +106,4 @@ venv.bak/
 # ignore standard plot location
 eor_limits.pdf
 .vscode/
+_autosummary/
