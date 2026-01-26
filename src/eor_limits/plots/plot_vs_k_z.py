@@ -464,18 +464,14 @@ def plot_limit_paper_lines(
             max_right_edges = np.concatenate((k_vals[ind][1:], [np.inf]))
             min_left_edges = np.concatenate(([0], max_right_edges[:-1]))
 
-            k_edges = np.stack(
-                (
-                    np.maximum(np.asarray(k_lower[ind]), min_left_edges),
-                    np.minimum(np.asarray(k_upper[ind]), max_right_edges),
-                )
-            ).T.flatten()
-            delta_edges = np.stack(
-                (
-                    np.asarray(delta_squared[ind]),
-                    np.asarray(delta_squared[ind]),
-                )
-            ).T.flatten()
+            k_edges = np.stack((
+                np.maximum(np.asarray(k_lower[ind]), min_left_edges),
+                np.minimum(np.asarray(k_upper[ind]), max_right_edges),
+            )).T.flatten()
+            delta_edges = np.stack((
+                np.asarray(delta_squared[ind]),
+                np.asarray(delta_squared[ind]),
+            )).T.flatten()
             if paper["plot_as_point"]:
                 this_line = plt.scatter(
                     k_vals[ind],

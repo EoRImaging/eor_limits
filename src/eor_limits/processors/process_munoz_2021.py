@@ -54,12 +54,10 @@ def get_munoz_2021_line(model="EOS", redshift=None, linewidth=1.0):
 
     redshifts = np.fromfile(munoz_file_z)
     k_arr = np.fromfile(munoz_file_k)
-    delta_squared_arr = np.fromfile(munoz_file_p21).reshape(
-        (
-            redshifts.size,
-            k_arr.size,
-        )
-    )
+    delta_squared_arr = np.fromfile(munoz_file_p21).reshape((
+        redshifts.size,
+        k_arr.size,
+    ))
 
     # Sort in order of ascending redshift
     order = np.argsort(redshifts)
