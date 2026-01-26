@@ -1,0 +1,41 @@
+name: Check Distribution Build
+
+on: push
+
+jobs:
+  check-build:
+    name: Check Build
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@master
+        with:
+          fetch-depth: 0
+
+      - name: "Set up Python"
+        uses: actions/setup-python@v6
+        with:
+          python-version-file: "pyproject.toml"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          version: "0.9.26"
+          enable-cache: true
+
+      - name: Build
+        run: uv build
+
+      # Check that basic features work and we didn't miss to include crucial files
+      - name: Smoke test (wheel)
+        run: uv run --isolated --no-project --with dist/*.whl python -c "import eor_limits"
+      - name: Smoke test (source distribution)
+        run: uv run --isolated --no-project --with dist/*.tar.gz python -c "import eor_limits"
+
+      - name: Deploy to PyPI
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') && success()
+        run: uv publish
