@@ -1,0 +1,16 @@
+telescope: NenuFAR
+author: Munshi
+year: 2025
+doi: 10.1093/mnras/staf1386
+
+data:
+    delta_squared: [[4.6e5, 1.8e6, 5.6e6, 1.5e7, 3.7e7, 4.9e7],
+                    [5.0e6, 2.3e7, 5.8e7, 1.4e8, 2.1e8, 2.5e8]]
+    k: [[0.038, 0.066, 0.107, 0.166, 0.267, 0.408],
+        [0.038, 0.066, 0.107, 0.166, 0.267, 0.408]]
+    k_lower:
+    k_upper:
+    z: [17.0, 20.3]
+    z_lower:
+    z_upper:
+    z_tags:

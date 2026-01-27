@@ -1,0 +1,14 @@
+telescope: GMRT
+author: Paciga
+year: 2013
+doi: 10.1093/mnras/stt753
+
+data:
+    delta_squared: [[6.15e4]]
+    k: [[0.5]]
+    k_lower:
+    k_upper:
+    z: [8.6]
+    z_lower:
+    z_upper:
+    z_tags:

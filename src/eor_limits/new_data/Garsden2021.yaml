@@ -1,0 +1,14 @@
+telescope: OVRO-LWA
+author: Garsden
+year: 2021
+doi: 10.1093/mnras/stab1671
+
+data:
+    delta_squared: [[2e12]]
+    k: [[0.445]]
+    k_lower:
+    k_upper:
+    z: [28]
+    z_lower: [25]
+    z_upper: [31]
+    z_tags:

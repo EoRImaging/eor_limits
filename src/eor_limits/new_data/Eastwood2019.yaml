@@ -1,0 +1,14 @@
+telescope: OVRO-LWA
+author: Eastwood
+year: 2019
+doi: 10.3847/1538-3881/ab2629
+
+data:
+    delta_squared: [[1e8]]
+    k: [[0.148]]
+    k_lower:
+    k_upper:
+    z: [18.4]
+    z_lower:
+    z_upper:
+    z_tags:
