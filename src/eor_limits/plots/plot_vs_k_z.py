@@ -1,69 +1,53 @@
 """Module defining a plotting function for EoR limits vs k and redshift."""
 
-import copy
-from typing import Any
+import logging
+from functools import reduce
+from typing import Any, Literal
 
 import matplotlib.cm as cmx
 import matplotlib.colors as colors
 import matplotlib.pyplot as plt
 import numpy as np
 
-from eor_limits.data import KNOWN_PAPERS, KNOWN_THEORIES
+from eor_limits.data import KNOWN_PAPERS, get_theory_data
 
-from ..datatypes import read_data_yaml
+from ..datatypes import DataSet
 
-default_theory_params = {
-    "munoz_2021_AllGalaxies_z8.5": {
-        "paper": "munoz_2021",
-        "model": "EOS",
-        "redshift": 8.5,
-        "linewidth": 3,
-    },
-    "mesinger_2016_faint_nf0.8": {
-        "paper": "mesinger_2016",
-        "model": "faint",
-        "nf": 0.8,
-        "linewidth": 2,
-    },
-    "mesinger_2016_bright_nf0.8": {
-        "paper": "mesinger_2016",
-        "model": "bright",
-        "nf": 0.8,
-        "linewidth": 2,
-    },
-    "mesinger_2016_faint_nf0.5": {
-        "paper": "mesinger_2016",
-        "model": "faint",
-        "nf": 0.5,
-        "linewidth": 3,
-    },
-    "mesinger_2016_bright_nf0.5": {
-        "paper": "mesinger_2016",
-        "model": "bright",
-        "nf": 0.5,
-        "linewidth": 2,
-    },
-    "pagano_beta1_z8.5": {"paper": "pagano_liu_2020", "beta": 1, "redshift": 8.5},
-    "pagano_beta-1_z8.5": {"paper": "pagano_liu_2020", "beta": -1, "redshift": 8.5},
+DEFAULT_TELESCOPE_MARKERS = {
+    "PAPER": "o",
+    "MWA": "s",
+    "LOFAR": "D",
+    "HERA": "H",
+    "GMRT": "v",
 }
+
+logger = logging.getLogger(__name__)
 
 
 def make_plot(
     papers: list[str] | None = None,
-    include_theory: bool = True,
+    theories: list[str] | None = None,
+    theory_redshifts: list[float] | None = None,
     theory_legend: bool = True,
-    theory_params: dict[str, dict[str, Any]] = default_theory_params,
-    paper_redshifts: dict | None = None,
-    plot_as_points: list[str] | None = None,
     delta_squared_range: tuple[float, float] | None = None,
     redshift_range: tuple[float, float] | None = None,
     k_range: tuple[float, float] | None = None,
     shade_limits: str = "generational",
-    shade_theory: str = "flat",
+    shade_theory_alpha: float | None = None,
     colormap: str = "Spectral_r",
+    base_limit_style: dict[str, Any] | None = None,
+    limit_styles: dict[str, dict[str, Any]] | None = None,
     linewidths: dict | None = None,
     bold_papers: list[str] | None = None,
     fontsize: int = 15,
+    fig_ratio: float | None = None,
+    sensitivities: dict | None = None,
+    sensitivity_style: dict | None = None,
+    aspoints: list[str] | None = None,
+    aslines: list[str] | None = None,
+    nk_for_lines: int = 10,
+    fig: plt.Figure | None = None,
+    ax: plt.Axes | None = None,
 ) -> plt.Figure:
     """
     Plot the current EoR Limits as a function of k and redshift.
@@ -85,12 +69,10 @@ def make_plot(
     theory_legend : bool
         Option to exclude theory lines from the legend. Used by some users who prefer
         to add the annotations on the lines by hand to improve readability.
-    paper_redshifts : dict
-        Dict specifying which redshifts to plot per paper. This can help simplify the
-        plot so that it's not so busy. Default of 'None' means all redshifts are plotted
-        for all papers. The keys should be paper names (specified as 'author_year'),
-        values should be lists of redshifts to include in the plot, e.g.
-        paper_redshifts = {"trott_2020": [6.5, 7.8], "li_2019": [6.5]}.
+    theory_redshifts : list of float
+        List specifying which redshifts to plot for theory lines. The default is to use
+        the closest redshift to the centre of the prescribed redshift range. Multiple
+        redshifts can be used.
     plot_as_points : list of str
         List of papers that have a line type data model to be plotted as points rather
         that a line. This can help simplify the plot so that it's not so busy.
@@ -127,8 +109,10 @@ def make_plot(
         File name to save plot to.
 
     """
-    if plot_as_points is None:
-        plot_as_points = ["patil_2017", "mertens_2020"]
+    if aspoints is None:
+        aspoints = []
+    if aslines is None:
+        aslines = []
 
     if papers is None:
         # use all the papers. This gives weird ordering which we will fix later
@@ -139,7 +123,7 @@ def make_plot(
         papers_sorted = True
 
     if delta_squared_range is None:
-        if include_theory:
+        if theories is not None:
             delta_squared_range = (1e0, 1e6)
         else:
             delta_squared_range = (1e3, 1e6)
@@ -148,38 +132,33 @@ def make_plot(
         bold_papers = []
     if linewidths is None:
         linewidths = {}
-    if paper_redshifts is None:
-        paper_redshifts = {}
-    generation1 = [
-        "paciga_2013",
-        "dillon_2014",
-        "dillon_2015",
-        "beardsley_2016",
-        "patil_2017",
-        "kolopanis_2019",
-    ]
-    paper_list = build_paper_info(
-        papers, plot_as_points, linewidths, bold_papers, generation1
-    )
+
+    limits = [DataSet.load(p).drop_nan() for p in papers]
+
     if not papers_sorted:
-        paper_list.sort(key=lambda paper_list: paper_list["year"])
+        limits.sort(key=lambda limit: limit.year)
 
-    if include_theory:
-        theory_paper_list = load_theory_data(theory_params)
+    limits = select_k_and_z_ranges(limits, redshift_range, k_range, delta_squared_range)
+    actual_redshift_range = get_total_redshift_range(limits, redshift_range)
 
-    if redshift_range is not None:
-        if len(redshift_range) != 2:
-            raise ValueError(
-                "redshift range must have 2 elements with the second element greater "
-                "than the first element."
-            )
-        if redshift_range[0] >= redshift_range[1]:
-            raise ValueError(
-                "redshift range must have 2 elements with the second element greater "
-                "than the first element."
-            )
+    if not limits:
+        raise ValueError(
+            "No limits in specified redshift, k and/or delta squared range."
+        )
 
-        norm = colors.Normalize(vmin=redshift_range[0], vmax=redshift_range[1])
+    # Build styles for each paper, which we will use for plotting and the legend.
+    # This also applies any overrides specified by the user.
+    points_or_lines = get_points_or_lines(limits, nk_for_lines, aspoints, aslines)
+    limit_styles = build_limit_styles(
+        limits, points_or_lines, base_limit_style, limit_styles
+    )
+
+    norm = set_cmap_norm_via_zrange(actual_redshift_range)
+    scalar_map = cmx.ScalarMappable(norm=norm, cmap=colormap)
+
+    fig_width = 25 if theory_legend else 20
+    if theories is not None:
+        fig_height = fig_width * (fig_ratio or 1)
     else:
         redshift_list = determine_redshifts(delta_squared_range, k_range, paper_list)
 
@@ -197,31 +176,45 @@ def make_plot(
     fig_width = 25 if theory_legend else 20
 
     fig = plt.figure(figsize=(fig_width, fig_height))
-    legend_names, lines, paper_ks, skipped_papers = plot_limit_papers(
-        paper_redshifts,
-        delta_squared_range,
-        redshift_range,
+    legend_names, lines, paper_ks = plot_limit_papers(
+        limits,
+        limit_styles,
+        bold_papers,
         shade_limits,
         colormap,
-        paper_list,
         norm,
         scalar_map,
+        points_or_lines,
+        delta_squared_range,
     )
 
-    if len(skipped_papers) == len(paper_list):
-        raise ValueError("No papers in specified redshift and/or delta squared range.")
+    if theories is not None:
+        theory_data = [get_theory_data(theory) for theory in theories]
 
-    if include_theory:
-        theory_line_inds = plot_theory_lines(
+        # Each theory has _all_ redshifts in it. We need to downselect
+        # to those specified by the user, or the closest redshift to the centre of the
+        # redshift range if no redshifts are specified.
+        if theory_redshifts is not None:
+            theory_data = [
+                data.select_closest_z(z)
+                for data in theory_data
+                for z in theory_redshifts
+            ]
+        else:
+            z_centre = 0.5 * (actual_redshift_range[0] + actual_redshift_range[1])
+            theory_data = [data.select_closest_z(z_centre) for data in theory_data]
+
+        theory_styles = build_theory_styles(theory_data, linewidths)
+
+        theory_lines, theory_labels = plot_theory_lines(
             theory_legend,
             delta_squared_range,
-            shade_theory,
-            theory_paper_list,
-            legend_names,
-            lines,
+            shade_theory_alpha,
+            theory_data,
+            theory_styles,
         )
     else:
-        theory_line_inds = []
+        theory_lines, theory_labels = [], []
 
     point_size = 1 / 72.0  # typography standard (points/inch)
     font_inch = fontsize * point_size
@@ -263,9 +256,9 @@ def make_plot(
     axis_height_norm = axis_height / fig_height
     plot_bottom = legend_height_norm + axis_height_norm
 
-    leg = plt.legend(
-        lines,
-        legend_names,
+    plt.legend(
+        lines + theory_lines,
+        legend_names + theory_labels,
         bbox_to_anchor=(0.48, legend_height_norm / 2.0),
         loc="center",
         bbox_transform=fig.transFigure,
@@ -273,462 +266,451 @@ def make_plot(
         frameon=False,
     )
 
-    for ind in range(len(leg.legend_handles)):
-        if ind not in theory_line_inds:
-            leg.legend_handles[ind].set_color("gray")
     plt.subplots_adjust(bottom=plot_bottom)
     fig.tight_layout()
     return fig
 
 
+def select_k_and_z_ranges(
+    limits: list[DataSet],
+    redshift_range: tuple[float, float] | None,
+    k_range: tuple[float, float] | None,
+    dsq_range: tuple[float, float] | None,
+) -> list[DataSet]:
+    """Select the specified k and redshift ranges from the limits."""
+    new_limits = []
+    for limit in limits:
+        if redshift_range is not None:
+            try:
+                limit = limit.select_z(*redshift_range)
+            except ValueError:
+                logger.info(
+                    f"{limit.key} skipped since its outside redshift range "
+                    f"[{redshift_range[0]} < z < {redshift_range[1]}]"
+                )
+                continue
+
+        if k_range is not None:
+            try:
+                limit = limit.select_k(*k_range)
+            except ValueError:
+                logger.info(
+                    f"{limit.key} skipped since its outside k range "
+                    f"[{k_range[0]} < k < {k_range[1]}]"
+                )
+                continue
+
+        if dsq_range is not None:
+            try:
+                limit = limit.select_delta_sq(*dsq_range)
+            except ValueError:
+                logger.info(
+                    f"{limit.key} skipped since its outside delta squared range "
+                    f"[{dsq_range[0]} < delta^2 < {dsq_range[1]}]"
+                )
+                continue
+
+        new_limits.append(limit)
+    return new_limits
+
+
+def set_cmap_norm_via_zrange(redshift_range):
+    """Set the colormap normalization based on redshift range."""
+    if len(redshift_range) != 2:
+        raise ValueError(
+            "redshift range must have 2 elements with the second element greater "
+            "than the first element."
+        )
+    if redshift_range[0] > redshift_range[1]:
+        raise ValueError(
+            "redshift range must have 2 elements with the second element greater "
+            "than the first element."
+        )
+
+    if redshift_range[0] == redshift_range[1]:
+        redshift_range_use = [redshift_range[0] - 1, redshift_range[0] + 1]
+    else:
+        redshift_range_use = redshift_range
+
+    return colors.Normalize(vmin=redshift_range_use[0], vmax=redshift_range_use[1])
+
+
+def plot_sensitivities(fontsize, sensitivities, sensitivity_style):
+    """Plot the sensitivity curves."""
+    sensitivity_style = sensitivity_style or {}
+    sensitivities = sensitivities or {}
+    for indx, (name, fname) in enumerate(sensitivities.items()):
+        # Set the style.
+        if name in sensitivity_style:
+            style = sensitivity_style[name]
+        else:
+            style = sensitivity_style
+
+        sense_kind = style.get("sensitivity_kind", "sample+thermal")
+
+        if sense_kind not in ["sample+thermal", "sample", "thermal"]:
+            raise ValueError(
+                f"Invalid sensitivity kind '{sense_kind}' for {name}. "
+                "Must be one of 'sample+thermal', 'sample', or 'thermal'."
+            )
+
+        # These must be outputs from 21cmSense v2+
+        with h5py.File(fname, "r") as fl:
+            if "k" not in fl:
+                raise ValueError(
+                    f"{fname} is not a valid 21cmSense output: no key 'k' found"
+                )
+            if sense_kind not in fl:
+                raise OSError(f"{fname} has no key {sense_kind} for sensitivity data. ")
+            ks = fl["k"][:]
+            sense = fl[sense_kind][:]
+
+        ks = ks[~np.isinf(sense)]
+        sense = sense[~np.isinf(sense)]
+
+        plt.plot(
+            ks,
+            sense,
+            color=style.get("color", "k"),
+            ls=style.get("ls", ["--", ":", "-."][indx % 3]),
+            lw=style.get("lw", [3, 2, 4][indx // 3]),
+        )
+
+        # Put the instrument name right on the plot.
+        # We know the sensitivity will go up to the right, so we put it at about 2/3
+        # of the way, and align it to top.
+        k_ind = int(len(ks) * (0.8 - 0.1 * indx))
+        plt.text(
+            ks[k_ind], sense[k_ind], name, fontsize=fontsize, verticalalignment="top"
+        )
+
+
 def plot_theory_lines(
-    theory_legend,
-    delta_squared_range,
-    shade_theory,
-    theory_paper_list,
-    legend_names,
-    lines,
+    theory_legend: bool,
+    delta_squared_range: tuple[float, float],
+    shade_theory_alpha: float,
+    theory_paper_list: list[DataSet],
+    theory_styles: dict[str, dict[str, Any]],
 ):
     """Plot theory lines on the current plot."""
-    theory_line_inds = []
-
-    # we want to supress legend labels for theories with linewidth=0
-    # which are only used for shading
-    # fix ordering to put them at the end
-    linewidths = np.asarray([paper["linewidth"] for paper in theory_paper_list])
-    ordering = np.argsort(linewidths == 0)
-    theory_paper_list = [theory_paper_list[p] for p in ordering]
-
+    labels = []
+    lines = []
+    if shade_theory_alpha is None:
+        shade_theory_alpha = 1.0 / len(theory_paper_list)
     for paper in theory_paper_list:
-        label_start = " $\\bf{Theory:} \\rm{ "
-        label_end = "}$"
-        label = (
-            label_start
-            + r"\ ".join(paper["model"].split(" "))
-            + r"\ ("
-            + r"\ ".join(paper["author"].split(" "))
-            + r",\ "
-            + str(paper["year"])
-            + ")"
-            + label_end
-        )
-        k_vals = paper["k"]
-        delta_squared = paper["delta_squared"]
+        label = get_latex_theory_label(paper)
 
         (line,) = plt.plot(
-            k_vals,
-            delta_squared,
-            c="lightsteelblue",
-            linewidth=paper["linewidth"],
-            linestyle=paper["linestyle"],
+            paper.data.k[0],
+            paper.data.delta_squared[0],
             zorder=2,
+            **theory_styles.get(paper.key, {}),
         )
-        if shade_theory is not False:
-            if shade_theory == "flat":
-                color_use = "aliceblue"
-                zorder = 0
-                alpha = 1
-            else:
-                color_use = "lightsteelblue"
-                zorder = 0
-                alpha = 1.0 / len(theory_paper_list)
+
+        if shade_theory_alpha:
+            color_use = theory_styles.get(paper.key, {})["c"]
+            zorder = 0
+            alpha = shade_theory_alpha
             plt.fill_between(
-                k_vals,
-                delta_squared,
+                paper.data.k[0],
+                paper.data.delta_squared[0],
                 delta_squared_range[0],
                 color=color_use,
                 alpha=alpha,
                 zorder=zorder,
             )
-        theory_line_inds.append(len(lines))
+
         lines.append(line)
-        if paper["linewidth"] > 0 and theory_legend:
-            legend_names.append(label)
-    return theory_line_inds
+        if theory_styles.get(paper.key, {}).get("linewidth", 0) > 0 and theory_legend:
+            labels.append(label)
+        else:
+            labels.append(None)
+
+    return lines, labels
+
+
+def build_limit_styles(
+    limits: list[DataSet],
+    lines_or_points: dict[str, Literal["points", "lines"]],
+    base_override: dict[str, Any] | None = None,
+    overrides: dict[str, dict[str, Any]] | None = None,
+) -> dict[str, dict[str, Any]]:
+    """Build a dictionary of styles to use for each limit paper."""
+    styles = {}
+    for limit in limits:
+        if lines_or_points[limit.key] == "points":
+            style = {"s": 150}
+            style |= base_override if base_override else {}
+
+            style["marker"] = DEFAULT_TELESCOPE_MARKERS.get(limit.telescope, "o")
+
+            style |= overrides.get(f"{limit.key}", {}) if overrides else {}
+
+        else:
+            style = {
+                "linewidth": 2,
+                "linestyle": "-",
+            }
+            style |= base_override if base_override else {}
+            style |= overrides.get(f"{limit.key}", {}) if overrides else {}
+
+        styles[f"{limit.key}"] = style
+    return styles
+
+
+def build_theory_styles(
+    theory_papers: list[DataSet],
+    linewidths: dict | None = None,
+) -> dict[str, dict[str, Any]]:
+    """Build a dictionary of styles to use for each theory paper."""
+    styles = {}
+    for paper in theory_papers:
+        style = {
+            "linewidth": 2,
+            "linestyle": "--",
+            "c": "lightsteelblue",
+        }
+        if linewidths and paper.key in linewidths:
+            style["linewidth"] = linewidths[paper.key]
+        styles[paper.key] = style
+    return styles
+
+
+def get_latex_paper_label(paper: DataSet, bold: bool = False) -> str:
+    """Get a LaTeX label for a paper."""
+    label_start = " $\\bf{" if bold else " $\\rm{"
+    label_end = "}$"
+    return (
+        label_start
+        + r"\ ".join(paper.telescope.split(" "))
+        + r"\ ("
+        + paper.author
+        + r",\ "
+        + str(paper.year)
+        + ")"
+        + label_end
+    )
+
+
+def get_latex_theory_label(paper: DataSet) -> str:
+    """Get a LaTeX label for a theory paper."""
+    return (
+        " $\\bf{Theory:} \\rm{ "
+        + r"\ ".join(paper.telescope.split(" "))
+        + r"\ ("
+        + r"\ ".join(paper.author.split(" "))
+        + r",\ "
+        + str(paper.year)
+        + ")}$"
+    )
+
+
+def get_points_or_lines(
+    limits,
+    nk_for_lines: int,
+    aspoints: list[str] | None,
+    aslines: list[str] | None,
+) -> dict[str, Literal["points", "lines"]]:
+    """Determine whether to plot each limit paper as points or lines."""
+    out = {}
+    for limit in limits:
+        if limit.key in aspoints:
+            out[limit.key] = "points"
+        elif limit.key in aslines:
+            out[limit.key] = "lines"
+        else:
+            maxlen = max(len(k) for k in limit.data.k)
+            if maxlen <= nk_for_lines:
+                out[limit.key] = "points"
+            else:
+                out[limit.key] = "lines"
+
+    return out
 
 
 def plot_limit_papers(
-    paper_redshifts,
-    delta_squared_range,
-    redshift_range,
+    limits: list[DataSet],
+    limit_styles: dict[str, dict[str, Any]],
+    bold_papers: list[str],
     shade_limits,
     colormap,
-    paper_list,
     norm,
     scalar_map,
+    points_or_lines: dict[str, Literal["points", "lines"]],
+    delta_squared_range,
 ):
     """Plot limit papers on the current plot."""
     legend_names = []
     lines = []
     paper_ks = []
-    skipped_papers = []
-    for paper in paper_list:
-        label_start = " $\\bf{" if paper["bold"] else " $\\rm{"
-        label_end = "}$"
-        label = (
-            label_start
-            + r"\ ".join(paper["telescope"].split(" "))
-            + r"\ ("
-            + paper["author"]
-            + r",\ "
-            + str(paper["year"])
-            + ")"
-            + label_end
-        )
-
-        if paper["type"] == "point":
-            skip_this_paper, these_ks, line = plot_limit_paper_as_points(
-                paper_redshifts,
-                delta_squared_range,
-                redshift_range,
+    for paper in limits:
+        logger.info(f"Plotting {paper.author} {paper.year}")
+        label = get_latex_paper_label(paper, bold=paper.key in bold_papers)
+        if points_or_lines[paper.key] == "points":
+            these_ks, line = plot_limit_paper_as_points(
                 shade_limits,
                 colormap,
                 norm,
                 paper,
                 label,
+                limit_style=limit_styles.get(paper.key, {}),
+                delta_squared_range=delta_squared_range,
             )
         else:
-            skip_this_paper, these_ks, line = plot_limit_paper_lines(
-                paper_redshifts,
-                delta_squared_range,
-                redshift_range,
-                shade_limits,
-                colormap,
-                norm,
-                scalar_map,
+            these_ks, line = plot_limit_paper_lines(
                 paper,
-                label,
+                shade_limits=shade_limits,
+                scalar_map=scalar_map,
+                label=label,
+                style=limit_styles[paper.key],
+                delta_squared_range=delta_squared_range,
             )
 
-        if skip_this_paper:
-            skipped_papers.append(paper)
-        else:
-            paper_ks.extend(these_ks)
-            lines.append(line)
-            legend_names.append(label)
+        paper_ks.extend(these_ks)
+        lines.append(line)
+        legend_names.append(label)
 
-    return legend_names, lines, paper_ks, skipped_papers
+    return legend_names, lines, paper_ks
 
 
 def plot_limit_paper_lines(
-    paper_redshifts,
-    delta_squared_range,
-    redshift_range,
-    shade_limits,
-    colormap,
-    norm,
+    limit: DataSet,
+    shade_limits: float,
     scalar_map,
-    paper,
-    label,
+    label: str,
+    style: dict[str, Any],
+    delta_squared_range: tuple[float, float],
 ):
     """Plot a limit paper with line data on the current plot."""
-    skip_this_paper = False
-    if not isinstance(paper["k"][0], list):
-        redshifts = [paper["redshift"][0]]
-        k_vals = [paper["k"]]
-        k_lower = [paper["k_lower"]]
-        k_upper = [paper["k_upper"]]
-        delta_squared = [paper["delta_squared"]]
-    else:
-        redshifts = list(np.squeeze(paper["redshift"]))
-        k_vals = paper["k"]
-        k_lower = paper["k_lower"]
-        k_upper = paper["k_upper"]
-        delta_squared = paper["delta_squared"]
+    for ind, redshift in enumerate(limit.data.z):
+        k_vals = limit.data.k[ind]
+        delta_squared = limit.data.delta_squared[ind]
+        k_lower = (
+            limit.data.k_lower[ind]
+            if limit.data.k_lower is not None
+            else [0] * len(k_vals)
+        )
+        k_upper = (
+            limit.data.k_upper[ind]
+            if limit.data.k_upper is not None
+            else [np.inf] * len(k_vals)
+        )
 
-    if redshift_range is not None:
-        redshift_array = np.asarray(redshifts)
-        lines_use = np.where(
-            (redshift_array >= redshift_range[0])
-            & (redshift_array <= redshift_range[1])
-        )[0]
-    else:
-        lines_use = np.arange(len(redshifts))
+        # Some lines have overlapping edges (since window functions can overlap)
+        # That looks ugly, so we make sure we meet towards the right.
+        max_right_edges = np.concatenate((k_vals[1:], [np.inf]))
+        min_left_edges = np.concatenate(([0], max_right_edges[:-1]))
 
-    if lines_use.size > 0:
-        if len(paper_redshifts) > 0 and paper["name"] in paper_redshifts:
-            redshift_array = np.asarray(redshifts)
-            new_lines_use = [
-                line
-                for line in lines_use
-                if redshift_array[line] in paper_redshifts[paper["name"]]
-            ]
-            lines_use = np.array(new_lines_use, dtype=int)
+        k_edges = np.stack((
+            np.maximum(np.asarray(k_lower), min_left_edges),
+            np.minimum(np.asarray(k_upper), max_right_edges),
+        )).T.flatten()
+        delta_edges = np.stack((
+            np.asarray(delta_squared),
+            np.asarray(delta_squared),
+        )).T.flatten()
 
-        for ind in lines_use:
-            redshift = np.asarray(redshifts)[ind]
-            these_ks = k_vals[ind]
+        color_val = scalar_map.to_rgba(redshift)
+        # make black outline by plotting thicker black line first
+        plt.plot(
+            k_edges,
+            delta_edges,
+            c="black",
+            linewidth=style["linewidth"] + 2,
+            zorder=2,
+        )
 
-            # Some lines have overlapping edges (since window functions can overlap)
-            # That looks ugly, so we make sure we meet towards the right.
-            max_right_edges = np.concatenate((k_vals[ind][1:], [np.inf]))
-            min_left_edges = np.concatenate(([0], max_right_edges[:-1]))
+        (this_line,) = plt.plot(
+            k_edges,
+            delta_edges,
+            c=color_val,
+            linewidth=style["linewidth"],
+            label=label,
+            zorder=2,
+        )
+        if shade_limits:
+            color_use = "grey"
+            zorder = 0
+            alpha = shade_limits
+            plt.fill_between(
+                k_edges,
+                delta_edges,
+                delta_squared_range[1],
+                color=color_use,
+                alpha=alpha,
+                zorder=zorder,
+            )
 
-            k_edges = np.stack((
-                np.maximum(np.asarray(k_lower[ind]), min_left_edges),
-                np.minimum(np.asarray(k_upper[ind]), max_right_edges),
-            )).T.flatten()
-            delta_edges = np.stack((
-                np.asarray(delta_squared[ind]),
-                np.asarray(delta_squared[ind]),
-            )).T.flatten()
-            if paper["plot_as_point"]:
-                this_line = plt.scatter(
-                    k_vals[ind],
-                    delta_squared[ind],
-                    marker=paper["marker"],
-                    c=np.zeros(len(k_vals[ind])) + redshift,
-                    cmap=colormap,
-                    norm=norm,
-                    edgecolors="black",
-                    label=label,
-                    s=150,
-                    zorder=10,
-                )
-            else:
-                color_val = scalar_map.to_rgba(redshift)
-                # make black outline by plotting thicker black line first
-                plt.plot(
-                    k_edges,
-                    delta_edges,
-                    c="black",
-                    linewidth=paper["linewidth"] + 2,
-                    zorder=2,
-                )
+        if ind == 0:
+            line = this_line
+            out_ks = k_vals
 
-                (this_line,) = plt.plot(
-                    k_edges,
-                    delta_edges,
-                    c=color_val,
-                    linewidth=paper["linewidth"],
-                    label=label,
-                    zorder=2,
-                )
-            if shade_limits is not False:
-                if shade_limits == "generational":
-                    if paper["generation1"]:
-                        color_use = "grey"
-                        zorder = 1
-                        alpha = 1
-                    else:
-                        color_use = "lightgrey"
-                        zorder = 0
-                        alpha = 1
-                else:
-                    color_use = "grey"
-                    zorder = 0
-                    alpha = 0.5
-                plt.fill_between(
-                    k_edges,
-                    delta_edges,
-                    delta_squared_range[1],
-                    color=color_use,
-                    alpha=alpha,
-                    zorder=zorder,
-                )
-
-            if ind == min(lines_use):
-                line = this_line
-                out_ks = these_ks
-
-    else:
-        skip_this_paper = True
-        line = None
-        out_ks = []
-
-    return skip_this_paper, out_ks, line
+    return out_ks, line
 
 
 def plot_limit_paper_as_points(
-    paper_redshifts,
-    delta_squared_range,
-    redshift_range,
-    shade_limits,
-    colormap,
+    shade_limits: bool,
+    colormap: str,
     norm,
-    paper,
-    label,
+    paper: DataSet,
+    label: str,
+    limit_style: dict[str, Any],
+    delta_squared_range: tuple[float, float],
 ):
     """Plot a limit paper with point data on the current plot."""
-    skip_this_paper = False
-    if len(paper["redshift"]) == 1 and len(paper["delta_squared"]) > 1:
-        paper["redshift"] = paper["redshift"] * len(paper["delta_squared"])
-    elif len(paper["redshift"]) != len(paper["delta_squared"]):
-        raise ValueError(f"{label} has the wrong number of redshift values.")
-    delta_squared = np.asarray(paper["delta_squared"])
-    if redshift_range is not None:
-        redshift_array = np.asarray(paper["redshift"])
-        points_use = np.where(
-            (redshift_array >= redshift_range[0])
-            & (redshift_array <= redshift_range[1])
-            & (delta_squared >= delta_squared_range[0])
-            & (delta_squared <= delta_squared_range[1])
-        )[0]
-    else:
-        points_use = np.where(
-            (delta_squared >= delta_squared_range[0])
-            & (delta_squared <= delta_squared_range[1])
-        )[0]
+    # flatten all the data (remember that at each z, the size of k might be different)
+    k = np.concatenate(paper.data.k)
+    dsq = np.concatenate(paper.data.delta_squared)
+    z = reduce(
+        sum,
+        ([z] * len(kk) for z, kk in zip(paper.data.z, paper.data.k, strict=True)),
+        [],
+    )
 
-    if len(paper_redshifts) > 0 and paper["name"] in paper_redshifts:
-        redshift_array = np.asarray(paper["redshift"])
-        new_points_use = [
-            point
-            for point in points_use
-            if redshift_array[point] in paper_redshifts[paper["name"]]
-        ]
-        points_use = np.array(new_points_use, dtype=int)
+    line = plt.scatter(
+        k,
+        dsq,
+        c=z,
+        cmap=colormap,
+        norm=norm,
+        label=label,
+        zorder=10,
+        **limit_style,
+    )
 
-    if points_use.size > 0:
-        these_ks = list(np.asarray(paper["k"])[points_use])
+    if (
+        shade_limits
+        and paper.data.k_lower is not None
+        and paper.data.k_upper is not None
+    ):
+        color_use = "grey"
+        zorder = 0
+        alpha = 0.5
 
-        delta_squared = np.asarray(paper["delta_squared"])[points_use]
-        line = plt.scatter(
-            np.asarray(paper["k"])[points_use],
-            delta_squared,
-            marker=paper["marker"],
-            c=np.asarray(paper["redshift"])[points_use].tolist(),
-            cmap=colormap,
-            norm=norm,
-            edgecolors="black",
-            label=label,
-            s=150,
-            zorder=10,
-        )
-        if shade_limits:
-            if shade_limits == "generational":
-                if paper["generation1"]:
-                    color_use = "grey"
-                    zorder = 1
-                    alpha = 1
-                else:
-                    color_use = "lightgrey"
-                    zorder = 0
-                    alpha = 1
-            else:
-                color_use = "grey"
-                zorder = 0
-                alpha = 0.5
-            for index in points_use:
-                k_edges = [paper["k_lower"][index], paper["k_upper"][index]]
-                delta_edges = [
-                    paper["delta_squared"][index],
-                    paper["delta_squared"][index],
-                ]
-                plt.fill_between(
-                    k_edges,
-                    delta_edges,
-                    delta_squared_range[1],
-                    color=color_use,
-                    alpha=alpha,
-                    zorder=zorder,
-                )
-    else:
-        skip_this_paper = True
-        these_ks = []
-        line = None
-
-    return skip_this_paper, these_ks, line
-
-
-def determine_redshifts(delta_squared_range, k_range, paper_list):
-    """Determine the redshifts from all limits."""
-    redshift_list = []
-    for paper in paper_list:
-        if paper["type"] == "point":
-            delta_array = np.array(paper["delta_squared"])
-            redshift_array = np.array(paper["redshift"])
-            if redshift_array.size == 1 and delta_array.size > 1:
-                redshift_array = np.repeat(redshift_array[0], delta_array.size)
-            if k_range is not None:
-                k_vals = np.asarray(paper["k"])
-                inds_use = np.nonzero(
-                    (delta_array <= delta_squared_range[1])
-                    & (k_vals <= k_range[1])
-                    & (k_vals >= k_range[0])
-                )[0]
-            else:
-                inds_use = np.nonzero(delta_array <= delta_squared_range[1])[0]
-            if len(paper["redshift"]) == 1 and inds_use.size > 0:
-                inds_use = np.asarray([0])
-            redshift_list += list(redshift_array[inds_use])
-        else:
-            if not isinstance(paper["k"][0], list):
-                redshifts = [paper["redshift"][0]]
-                k_vals = [paper["k"]]
-                delta_squared = [paper["delta_squared"]]
-            else:
-                redshifts = list(np.squeeze(paper["redshift"]))
-                k_vals = paper["k"]
-                delta_squared = paper["delta_squared"]
-            for ind, elem in enumerate(redshifts):
-                delta_array = np.asarray(delta_squared[ind])
-                if k_range is not None:
-                    k_array = np.asarray(k_vals[ind])
-                    if np.nanmin(delta_array) <= delta_squared_range[1] or (
-                        np.min(k_array) <= k_range[1] and np.max(k_array) >= k_range[0]
-                    ):
-                        redshift_list.append(elem)
-                else:
-                    if np.nanmin(delta_array) <= delta_squared_range[1]:
-                        redshift_list.append(elem)
-    return sorted(set(redshift_list))
-
-
-def load_theory_data(theory_params):
-    """Load the theory data."""
-    theory_paper_list = []
-    for theory in theory_params.values():
-        if theory["paper"] in KNOWN_THEORIES:
-            paper_dict = read_data_yaml(theory["paper"], theory=True)
-        elif theory["paper"] == "mesinger_2016":
-            from ..processors.process_mesinger_2016 import get_mesinger_2016_line
-
-            dict_use = copy.deepcopy(theory)
-            dict_use.pop("paper")
-            paper_dict = get_mesinger_2016_line(**dict_use)
-        elif theory["paper"] == "pagano_liu_2020":
-            from ..processors.process_pagano_2020 import get_pagano_2020_line
-
-            dict_use = copy.deepcopy(theory)
-            dict_use.pop("paper")
-            paper_dict = get_pagano_2020_line(**dict_use)
-        elif theory["paper"] == "munoz_2021":
-            from ..processors.process_munoz_2021 import get_munoz_2021_line
-
-            dict_use = copy.deepcopy(theory)
-            dict_use.pop("paper")
-            paper_dict = get_munoz_2021_line(**dict_use)
-        else:
-            raise ValueError(
-                "Theory paper " + theory["paper"] + " is not a yaml in the "
-                "data/theory folder and is not a paper with a known processing "
-                "module."
+        for klow, khi, dsq in zip(
+            paper.data.k_lower,
+            paper.data.k_upper,
+            paper.data.delta_squared,
+            strict=True,
+        ):
+            k_edges = np.concatenate((klow, [khi[-1]]))
+            delta_edges = np.concatenate((dsq, dsq[-1:]))
+            plt.fill_between(
+                k_edges,
+                delta_edges,
+                delta_squared_range[1],
+                color=color_use,
+                alpha=alpha,
+                zorder=zorder,
             )
 
-        theory_paper_list.append(paper_dict)
-    return theory_paper_list
+    return k, line
 
 
-def build_paper_info(papers, plot_as_points, linewidths, bold_papers, generation1):
-    """Generate a dictionary of paper info for all papers to be plotted."""
-    paper_list = []
-    for paper_name in papers:
-        paper_dict = read_data_yaml(paper_name)
-        paper_dict["name"] = paper_name
-        if paper_name in bold_papers:
-            paper_dict["bold"] = True
-        else:
-            paper_dict["bold"] = False
-        if paper_name in plot_as_points:
-            paper_dict["plot_as_point"] = True
-        else:
-            paper_dict["plot_as_point"] = False
-        if paper_name in generation1:
-            paper_dict["generation1"] = True
-        else:
-            paper_dict["generation1"] = False
-        if paper_name in linewidths:
-            paper_dict["linewidth"] = linewidths[paper_name]
-        paper_list.append(paper_dict)
-    return paper_list
+def get_total_redshift_range(paper_list, redshift_range):
+    """Get the total redshift range across all papers."""
+    if redshift_range is not None:
+        return redshift_range
+    minz = min(min(paper.data.z) for paper in paper_list)
+    maxz = max(max(paper.data.z) for paper in paper_list)
+    return (minz, maxz)

@@ -1,0 +1,14 @@
+telescope: LOFAR
+author: Gehlot
+year: 2019
+doi: 10.1093/mnras/stz1937
+
+data:
+    delta: [[14561]]
+    k: [[0.038]]
+    k_lower:
+    k_upper:
+    z: [22.5]
+    z_lower: [19.8]
+    z_upper: [25.2]
+    z_tags:
