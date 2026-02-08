@@ -6,13 +6,13 @@ Licensed under the 2-clause BSD License
 """
 
 from . import plots
-from .data import DATA_PATH, KNOWN_PAPERS, KNOWN_THEORIES
-from .datatypes import read_data_yaml
+from .data import DATA_PATH, KNOWN_PAPERS, THEORY_PATH
+from .datatypes import DataSet
 
 __all__ = [
     "DATA_PATH",
     "KNOWN_PAPERS",
-    "KNOWN_THEORIES",
+    "THEORY_PATH",
+    "DataSet",
     "plots",
-    "read_data_yaml",
 ]
