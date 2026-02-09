@@ -71,6 +71,7 @@ class Data:
     _delta_squared: tuple[np.ndarray, ...] | None = attrs.field(default=None)
 
     def __repr__(self) -> str:
+        """Return a string representation of Data, as a pandas DataFrame."""
         return self.as_pandas_df().__repr__()
 
     @z.validator
@@ -315,8 +316,6 @@ class DataSet:
         new_k_lower: list[np.ndarray] | None,
         new_k_upper: list[np.ndarray] | None,
         new_dsq: list[np.ndarray],
-        delta_sq_min: float,
-        delta_sq_max: float,
     ) -> Self:
 
         new_k = [kk for kk, zm in zip(new_k, zmask, strict=True) if zm]
@@ -383,7 +382,7 @@ class DataSet:
             raise ValueError("No data points found with this mask")
 
         return self._flush_empty_redshifts(
-            zmask, new_k, new_k_lower, new_k_upper, new_dsq, None, None
+            zmask, new_k, new_k_lower, new_k_upper, new_dsq
         )
 
     def select_k_range(self, k_min: float, k_max: float) -> Self:
@@ -399,18 +398,20 @@ class DataSet:
                 f"No data points found in the k range {k_min} to {k_max}."
             ) from err
 
-    def select_delta_sq_range(self, delta_sq_min: float, delta_sq_max: float) -> Self:
+    def select_delta_squared_range(
+        self, delta_squared_min: float, delta_squared_max: float
+    ) -> Self:
         """Return a new DataSet with only data in the specified delta_squared range."""
 
         def mask(dsq):
-            return (dsq >= delta_sq_min) & (dsq <= delta_sq_max)
+            return (dsq >= delta_squared_min) & (dsq <= delta_squared_max)
 
         try:
             return self._select_with_k_based_mask(mask, "delta_squared")
         except ValueError as err:
             raise ValueError(
                 "No data points found in the delta_squared range "
-                f"{delta_sq_min} to {delta_sq_max}."
+                f"{delta_squared_min} to {delta_squared_max}."
             ) from err
 
     def select_closest_z(self, z_target: float) -> Self:
@@ -466,8 +467,8 @@ class DataSet:
         )
         return attrs.evolve(self, data=new_data)
 
-    def select_lowest_delta_sq(self) -> Self:
-        """Return a new DataSet with only the data point with the lowest delta_squared."""
+    def select_lowest_delta_squared(self) -> Self:
+        """Return a new DataSet with only the lowest delta_squared data points."""
         min_ids = np.array([np.nanargmin(dsq) for dsq in self.data.delta_squared])
         new_data = Data(
             z=self.data.z,
