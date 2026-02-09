@@ -50,7 +50,7 @@ def test_select_delta_squared_range():
     ds_val = dataset.data.delta_squared[0][5]
     dsmin = ds_val / 10
     dsmax = ds_val * 10
-    selected = dataset.select_delta_sq_range(dsmin, dsmax)
+    selected = dataset.select_delta_squared_range(dsmin, dsmax)
     assert isinstance(selected, DataSet)
 
     for ds_arr in selected.data.delta_squared:
@@ -81,7 +81,7 @@ def test_select_closest_k():
 def test_select_lowest_delta_squared():
     """Test selecting the lowest delta_squared value from a dataset."""
     dataset = DataSet.load("HERA2025")
-    selected = dataset.select_lowest_delta_sq()
+    selected = dataset.select_lowest_delta_squared()
     assert isinstance(selected, DataSet)
     for ds_arr in selected.data.delta_squared:
         assert len(ds_arr) == 1

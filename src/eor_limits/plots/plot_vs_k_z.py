@@ -302,7 +302,7 @@ def select_k_and_z_ranges(
 
         if dsq_range is not None:
             try:
-                limit = limit.select_delta_sq_range(*dsq_range)
+                limit = limit.select_delta_squared_range(*dsq_range)
             except ValueError:
                 logger.info(
                     f"{limit.key} skipped since its outside delta squared range "
