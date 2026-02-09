@@ -6,7 +6,7 @@
 
 import numpy as np
 
-from eor_limits.data import THEORY_PATH
+from eor_limits._paths import THEORY_PATH
 from eor_limits.datatypes import Data
 
 from ._base import BaseTheoryProcessor
@@ -15,6 +15,7 @@ from ._base import BaseTheoryProcessor
 class Munoz2022AllGalaxies(BaseTheoryProcessor):
     """The AllGalaxies model from Munoz et al. 2022."""
 
+    simulator: str = "21cmFASTv3 (EOS2022, all galaxies)"
     author: str = "Muñoz"
     year: int = 2022
     doi: str = "10.1093/mnras/stac185"

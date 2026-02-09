@@ -7,9 +7,9 @@ from pathlib import Path
 
 import numpy as np
 
+from eor_limits._paths import THEORY_PATH
 from eor_limits.datatypes import Data
 
-from ...const import THEORY_PATH
 from ._base import BaseTheoryProcessor
 
 faint_path = THEORY_PATH / "mesinger_2016_faint_galaxies"

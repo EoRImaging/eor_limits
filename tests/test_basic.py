@@ -1,6 +1,6 @@
 """Really basic tests."""
 
-from eor_limits.plots import make_plot
+from eor_limits import make_plot
 
 
 def test_make_plot_basic():

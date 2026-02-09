@@ -3,13 +3,19 @@
 # Licensed under the 2-clause BSD License
 """Code for plotting EoR Limits."""
 
+import json
+import logging
 from pathlib import Path
+from typing import Literal
 
 from cyclopts import App
+from rich.logging import RichHandler
 
-from .plots.plot_vs_k_z import make_plot
+from . import make_plot
 
 app = App()
+
+logger = logging.getLogger("eor_limits")
 
 
 @app.command
@@ -36,6 +42,7 @@ def plot(
     aspoints: list[str] = None,
     aslines: list[str] = None,
     out: Path = Path("eor_limits.pdf"),
+    log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = "INFO",
 ):
     """
     Plot the current EoR Limits as a function of k or redshift.
@@ -107,6 +114,13 @@ def plot(
         points.
 
     """
+    logging.basicConfig(
+        level=log_level,
+        format="%(message)s",
+        datefmt="[%X]",
+        handlers=[RichHandler(rich_tracebacks=True)],
+    )
+
     if theories is not None:
         theories, theory_model, theory_nf, theory_redshift = parse_theories(
             theories, theory_model, theory_nf, theory_redshift, theory_linewidth

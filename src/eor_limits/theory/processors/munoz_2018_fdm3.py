@@ -3,7 +3,7 @@
 import numpy as np
 import yaml
 
-from eor_limits.data import THEORY_PATH
+from eor_limits._paths import THEORY_PATH
 from eor_limits.datatypes import Data
 
 from ._base import BaseTheoryProcessor

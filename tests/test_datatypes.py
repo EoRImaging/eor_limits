@@ -3,8 +3,7 @@
 import numpy as np
 import pytest
 
-from eor_limits.data import KNOWN_PAPERS
-from eor_limits.datatypes import DataSet
+from eor_limits import KNOWN_PAPERS, DataSet
 
 
 @pytest.mark.parametrize("paper_name", list(KNOWN_PAPERS.keys()))

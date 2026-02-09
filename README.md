@@ -84,7 +84,7 @@ Alternatively, to make the plot within an interactive environment like a
 Jupyter notebook, run:
 
 ```
-from eor_limits import plots
-plots.make_plot()
+from eor_limits import make_plot
+make_plot()
 ```
 and the plot should appear inline.

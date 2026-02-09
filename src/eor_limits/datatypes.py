@@ -18,26 +18,6 @@ def _make_array(x: Any, _) -> np.ndarray:
     return np.asarray(x, dtype=float)
 
 
-def _normalize_dataset_name(path: str | Path) -> Path:
-    from . import DATA_PATH, KNOWN_PAPERS
-
-    if isinstance(path, str) and not path.endswith(".yaml"):
-        path = DATA_PATH / (path + ".yaml")
-    elif isinstance(path, str):
-        path = Path(path)
-
-    if not path.exists():
-        path = DATA_PATH / path
-
-    if not path.exists():
-        raise ValueError(
-            f"Dataset file '{path.name}' not found. "
-            f"Available datasets: {KNOWN_PAPERS.keys()}"
-        )
-
-    return path
-
-
 def _floatarray(x):
     return np.array(x, dtype=float)
 
@@ -268,6 +248,8 @@ class DataSet:
     @classmethod
     def load(cls, path: str | Path, /) -> Self:
         """Load a DataSet from a YAML file or a known dataset name."""
+        from .data_loading import _normalize_dataset_name
+
         path = _normalize_dataset_name(path)
 
         with path.open("r") as fl:

@@ -1,7 +1,7 @@
 """Module defining a plotting function for EoR limits vs k and redshift."""
 
 import logging
-from functools import reduce
+from itertools import chain
 from typing import Any, Literal
 
 import matplotlib.cm as cmx
@@ -9,9 +9,9 @@ import matplotlib.colors as colors
 import matplotlib.pyplot as plt
 import numpy as np
 
-from eor_limits.data import KNOWN_PAPERS, get_theory_data
+from eor_limits import KNOWN_PAPERS, load_theory_model
 
-from ..datatypes import DataSet
+from .datatypes import DataSet
 
 DEFAULT_TELESCOPE_MARKERS = {
     "PAPER": "o",
@@ -189,7 +189,7 @@ def make_plot(
     )
 
     if theories is not None:
-        theory_data = [get_theory_data(theory) for theory in theories]
+        theory_data = [load_theory_model(theory) for theory in theories]
 
         # Each theory has _all_ redshifts in it. We need to downselect
         # to those specified by the user, or the closest redshift to the centre of the
@@ -661,10 +661,10 @@ def plot_limit_paper_as_points(
     # flatten all the data (remember that at each z, the size of k might be different)
     k = np.concatenate(paper.data.k)
     dsq = np.concatenate(paper.data.delta_squared)
-    z = reduce(
-        sum,
-        ([z] * len(kk) for z, kk in zip(paper.data.z, paper.data.k, strict=True)),
-        [],
+    z = list(
+        chain.from_iterable(
+            ([z] * len(kk) for z, kk in zip(paper.data.z, paper.data.k, strict=True)),
+        )
     )
 
     line = plt.scatter(
