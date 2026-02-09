@@ -70,6 +70,9 @@ class Data:
     _delta: tuple[np.ndarray, ...] | None = attrs.field(default=None)
     _delta_squared: tuple[np.ndarray, ...] | None = attrs.field(default=None)
 
+    def __repr__(self) -> str:
+        return self.as_pandas_df().__repr__()
+
     @z.validator
     def _check_z(self, attribute, value):
         if len(value) == 0:
@@ -175,16 +178,16 @@ class Data:
         for i in range(len(self.z)):
             row = {
                 "z": self.z[i],
-                "z_lower": self.z_lower[i] if self.z_lower is not None else np.nan,
-                "z_upper": self.z_upper[i] if self.z_upper is not None else np.nan,
+                "z_lower": self.z_lower[i] if self.z_lower is not None else None,
+                "z_upper": self.z_upper[i] if self.z_upper is not None else None,
                 "z_tags": self.z_tags[i] if self.z_tags is not None else "",
                 "k": np.array(self.k[i]),
                 "k_lower": np.array(self.k_lower[i])
                 if self.k_lower is not None
-                else np.nan,
+                else None,
                 "k_upper": np.array(self.k_upper[i])
                 if self.k_upper is not None
-                else np.nan,
+                else None,
                 "delta_squared": np.array(self.delta_squared[i]),
             }
             rows.append(row)
@@ -246,18 +249,20 @@ class DataSet:
         default=(), validator=attrs.validators.instance_of(tuple)
     )
 
-    def __str__(self) -> str:
+    def __repr__(self) -> str:
         """Return a string representation of the DataSet, including metadata."""
-        text = f"DataSet: telescope={self.telescope}, author={self.author}, "
-        text += f"year={self.year}, doi={self.doi}"
+        string = "DataSet(\n"
+        string += f"\t telescope='{self.telescope}',\n"
+        string += f"\t author='{self.author}',\n"
+        string += f"\t year={self.year},\n"
+        string += f"\t doi='{self.doi}',\n"
         if self.notes:
-            text += ",\nnotes=["
-            text += ",\n       ".join(self.notes)
-            text += "]"
-        text += ",\ndata=\n"
-        text += str(self.data)
-        text += "\n"
-        return text
+            string += f"\t notes={self.notes},\n"
+        string += "\t data=\n\t\t"
+        string_data = self.data.__repr__().replace("\n", "\n\t\t")
+        string += string_data
+        string += "\n)"
+        return string
 
     @classmethod
     def load(cls, path: str | Path, /) -> Self:
@@ -269,7 +274,7 @@ class DataSet:
 
         return converter.structure(yaml_data, cls)
 
-    def select_z(self, z_min: float, z_max: float) -> Self:
+    def select_z_range(self, z_min: float, z_max: float) -> Self:
         """Return a new DataSet with only data in the specified redshift range."""
         mask = (self.data.z >= z_min) & (self.data.z <= z_max)
         if not mask.any():
@@ -381,7 +386,7 @@ class DataSet:
             zmask, new_k, new_k_lower, new_k_upper, new_dsq, None, None
         )
 
-    def select_k(self, k_min: float, k_max: float) -> Self:
+    def select_k_range(self, k_min: float, k_max: float) -> Self:
         """Return a new DataSet with only data in the specified k range."""
 
         def mask(kk):
@@ -394,7 +399,7 @@ class DataSet:
                 f"No data points found in the k range {k_min} to {k_max}."
             ) from err
 
-    def select_delta_sq(self, delta_sq_min: float, delta_sq_max: float) -> Self:
+    def select_delta_sq_range(self, delta_sq_min: float, delta_sq_max: float) -> Self:
         """Return a new DataSet with only data in the specified delta_squared range."""
 
         def mask(dsq):
@@ -428,6 +433,67 @@ class DataSet:
             if self.data.k_upper is not None
             else None,
             delta_squared=(self.data.delta_squared[idx],),
+        )
+        return attrs.evolve(self, data=new_data)
+
+    def select_closest_k(self, k_target: float) -> Self:
+        """Return a new DataSet with only the data point closest to the target k."""
+        ids = [np.argmin(np.abs(kk - k_target)) for kk in self.data.k]
+        new_data = Data(
+            z=self.data.z,
+            z_lower=self.data.z_lower,
+            z_upper=self.data.z_upper,
+            z_tags=self.data.z_tags,
+            k=tuple(
+                np.array([kk[idx]]) for idx, kk in zip(ids, self.data.k, strict=True)
+            ),
+            k_lower=tuple(
+                np.array([kl[idx]])
+                for idx, kl in zip(ids, self.data.k_lower, strict=True)
+            )
+            if self.data.k_lower is not None
+            else None,
+            k_upper=tuple(
+                np.array([ku[idx]])
+                for idx, ku in zip(ids, self.data.k_upper, strict=True)
+            )
+            if self.data.k_upper is not None
+            else None,
+            delta_squared=tuple(
+                np.array([dsq[idx]])
+                for idx, dsq in zip(ids, self.data.delta_squared, strict=True)
+            ),
+        )
+        return attrs.evolve(self, data=new_data)
+
+    def select_lowest_delta_sq(self) -> Self:
+        """Return a new DataSet with only the data point with the lowest delta_squared."""
+        min_ids = np.array([np.nanargmin(dsq) for dsq in self.data.delta_squared])
+        new_data = Data(
+            z=self.data.z,
+            z_lower=self.data.z_lower,
+            z_upper=self.data.z_upper,
+            z_tags=self.data.z_tags,
+            k=tuple(
+                np.array([kk[idx]])
+                for idx, kk in zip(min_ids, self.data.k, strict=True)
+            ),
+            k_lower=tuple(
+                np.array([kl[idx]])
+                for idx, kl in zip(min_ids, self.data.k_lower, strict=True)
+            )
+            if self.data.k_lower is not None
+            else None,
+            k_upper=tuple(
+                np.array([ku[idx]])
+                for idx, ku in zip(min_ids, self.data.k_upper, strict=True)
+            )
+            if self.data.k_upper is not None
+            else None,
+            delta_squared=tuple(
+                np.array([dsq[idx]])
+                for idx, dsq in zip(min_ids, self.data.delta_squared, strict=True)
+            ),
         )
         return attrs.evolve(self, data=new_data)
 

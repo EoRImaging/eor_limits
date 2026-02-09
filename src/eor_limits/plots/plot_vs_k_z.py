@@ -282,7 +282,7 @@ def select_k_and_z_ranges(
     for limit in limits:
         if redshift_range is not None:
             try:
-                limit = limit.select_z(*redshift_range)
+                limit = limit.select_z_range(*redshift_range)
             except ValueError:
                 logger.info(
                     f"{limit.key} skipped since its outside redshift range "
@@ -292,7 +292,7 @@ def select_k_and_z_ranges(
 
         if k_range is not None:
             try:
-                limit = limit.select_k(*k_range)
+                limit = limit.select_k_range(*k_range)
             except ValueError:
                 logger.info(
                     f"{limit.key} skipped since its outside k range "
@@ -302,7 +302,7 @@ def select_k_and_z_ranges(
 
         if dsq_range is not None:
             try:
-                limit = limit.select_delta_sq(*dsq_range)
+                limit = limit.select_delta_sq_range(*dsq_range)
             except ValueError:
                 logger.info(
                     f"{limit.key} skipped since its outside delta squared range "
