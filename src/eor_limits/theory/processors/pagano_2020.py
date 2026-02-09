@@ -5,7 +5,7 @@
 
 import numpy as np
 
-from eor_limits.data import THEORY_PATH
+from eor_limits._paths import THEORY_PATH
 from eor_limits.datatypes import Data
 
 from ._base import BaseTheoryProcessor
@@ -42,7 +42,7 @@ def _pagano_factory(betaidx: float):
             "author": "Pagano and Liu",
             "year": 2020,
             "doi": "10.1093/mnras/staa2118",
-            "load_data": classmethod(load_data),
+            "_load_data": classmethod(load_data),
         },
     )
 
