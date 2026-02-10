@@ -20,7 +20,7 @@ class Munoz2022AllGalaxies(BaseTheoryProcessor):
     year: int = 2022
     doi: str = "10.1093/mnras/stac185"
 
-    _datapath = THEORY_PATH / "munoz_2021_allgalaxies"
+    _datapath = THEORY_PATH / "munoz_2022_allgalaxies"
 
     @classmethod
     def _get_paths(cls):
@@ -68,7 +68,7 @@ class Munoz2022Optimistic(Munoz2022AllGalaxies):
     """The Optimistic model from Munoz et al. 2022, which has more PopIII stars."""
 
     simulator: str = "21cmFASTv3 (EOS2022, optimistic)"
-    _datapath = THEORY_PATH / "munoz_2021_optimistic"
+    _datapath = THEORY_PATH / "munoz_2022_optimistic"
 
     @classmethod
     def _get_paths(cls):
