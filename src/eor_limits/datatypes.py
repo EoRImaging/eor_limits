@@ -257,14 +257,11 @@ class DataSet:
 
         return converter.structure(yaml_data, cls)
 
-    def select_z_range(self, z_min: float, z_max: float) -> Self:
-        """Return a new DataSet with only data in the specified redshift range."""
-        mask = (self.data.z >= z_min) & (self.data.z <= z_max)
+    def _select_with_z_based_mask(self, mask: np.ndarray) -> Self:
         if not mask.any():
-            raise ValueError(
-                f"No data points found in the redshift range {z_min} to {z_max}."
-            )
-
+            raise ValueError("No data points found with this mask")
+        if mask.shape != self.data.z.shape:
+            raise ValueError("Mask must have the same shape as z.")
         new_data = Data(
             z=self.data.z[mask],
             z_lower=self.data.z_lower[mask] if self.data.z_lower is not None else None,
@@ -291,83 +288,67 @@ class DataSet:
         )
         return attrs.evolve(self, data=new_data)
 
-    def _flush_empty_redshifts(
-        self,
-        zmask: np.ndarray,
-        new_k: list[np.ndarray],
-        new_k_lower: list[np.ndarray] | None,
-        new_k_upper: list[np.ndarray] | None,
-        new_delta_squared: list[np.ndarray],
-    ) -> Self:
-
-        new_k = [kk for kk, zm in zip(new_k, zmask, strict=True) if zm]
-        new_k_lower = (
-            [kl for kl, zm in zip(new_k_lower, zmask, strict=True) if zm]
-            if new_k_lower is not None
-            else None
-        )
-        new_k_upper = (
-            [ku for ku, zm in zip(new_k_upper, zmask, strict=True) if zm]
-            if new_k_upper is not None
-            else None
-        )
-        new_delta_squared = [
-            dsq for dsq, zm in zip(new_delta_squared, zmask, strict=True) if zm
-        ]
-        new_z = self.data.z[zmask]
-        new_z_lower = (
-            self.data.z_lower[zmask] if self.data.z_lower is not None else None
-        )
-        new_z_upper = (
-            self.data.z_upper[zmask] if self.data.z_upper is not None else None
-        )
-        new_z_tags = (
-            tuple(ztag for ztag, zm in zip(self.data.z_tags, zmask, strict=True) if zm)
-            if self.data.z_tags is not None
-            else None
-        )
-
-        new_data = attrs.evolve(
-            self.data,
-            k=tuple(new_k),
-            k_lower=tuple(new_k_lower) if new_k_lower is not None else None,
-            k_upper=tuple(new_k_upper) if new_k_upper is not None else None,
-            delta_squared=tuple(new_delta_squared),
-            z=new_z,
-            z_lower=new_z_lower,
-            z_upper=new_z_upper,
-            z_tags=new_z_tags,
-        )
-
-        return attrs.evolve(self, data=new_data)
-
     def _select_with_k_based_mask(self, mask: callable, field: str = "k") -> Self:
         fld = getattr(self.data, field)
-        new_k = [kk[mask(q)] for kk, q in zip(self.data.k, fld, strict=True)]
-
-        new_dsq = [
-            dsq[mask(q)] for dsq, q in zip(self.data.delta_squared, fld, strict=True)
-        ]
-        if self.data.k_lower is not None:
-            new_k_lower = [
-                kl[mask(q)] for kl, q in zip(self.data.k_lower, fld, strict=True)
-            ]
-        else:
-            new_k_lower = None
-        if self.data.k_upper is not None:
-            new_k_upper = [
-                ku[mask(q)] for ku, q in zip(self.data.k_upper, fld, strict=True)
-            ]
-        else:
-            new_k_upper = None
-
-        zmask = np.array([len(kk) > 0 for kk in new_k])
-        if not any(zmask):
-            raise ValueError("No data points found with this mask")
-
-        return self._flush_empty_redshifts(
-            zmask, new_k, new_k_lower, new_k_upper, new_dsq
+        fld_mask = [mask(q) for q in fld]
+        new_data = Data(
+            z=np.array([
+                self.data.z[i] for i in range(len(self.data.z)) if any(fld_mask[i])
+            ]),
+            z_lower=np.array([
+                self.data.z_lower[i]
+                for i in range(len(self.data.z))
+                if any(fld_mask[i])
+            ])
+            if self.data.z_lower is not None
+            else None,
+            z_upper=np.array([
+                self.data.z_upper[i]
+                for i in range(len(self.data.z))
+                if any(fld_mask[i])
+            ])
+            if self.data.z_upper is not None
+            else None,
+            z_tags=tuple(
+                self.data.z_tags[i] for i in range(len(self.data.z)) if any(fld_mask[i])
+            )
+            if self.data.z_tags is not None
+            else None,
+            k=tuple(
+                kk[mask]
+                for kk, mask in zip(self.data.k, fld_mask, strict=True)
+                if any(mask)
+            ),
+            k_lower=tuple(
+                kl[mask]
+                for kl, mask in zip(self.data.k_lower, fld_mask, strict=True)
+                if any(mask)
+            )
+            if self.data.k_lower is not None
+            else None,
+            k_upper=tuple(
+                ku[mask]
+                for ku, mask in zip(self.data.k_upper, fld_mask, strict=True)
+                if any(mask)
+            )
+            if self.data.k_upper is not None
+            else None,
+            delta_squared=tuple(
+                dsq[mask]
+                for dsq, mask in zip(self.data.delta_squared, fld_mask, strict=True)
+                if any(mask)
+            ),
         )
+        return attrs.evolve(self, data=new_data)
+
+    def select_z_range(self, z_min: float, z_max: float) -> Self:
+        """Return a new DataSet with only data in the specified redshift range."""
+        mask = (self.data.z >= z_min) & (self.data.z <= z_max)
+        if not mask.any():
+            raise ValueError(
+                f"No data points found in the redshift range {z_min} to {z_max}."
+            )
+        return self._select_with_z_based_mask(mask)
 
     def select_k_range(self, k_min: float, k_max: float) -> Self:
         """Return a new DataSet with only data in the specified k range."""
@@ -400,87 +381,32 @@ class DataSet:
 
     def select_closest_z(self, z_target: float) -> Self:
         """Return a new DataSet with only the data point closest to the target z."""
-        idx = np.argmin(np.abs(self.data.z - z_target))
-        new_data = Data(
-            z=np.array([self.data.z[idx]]),
-            z_lower=np.array([self.data.z_lower[idx]])
-            if self.data.z_lower is not None
-            else None,
-            z_upper=np.array([self.data.z_upper[idx]])
-            if self.data.z_upper is not None
-            else None,
-            z_tags=(self.data.z_tags[idx],) if self.data.z_tags is not None else None,
-            k=(self.data.k[idx],),
-            k_lower=(self.data.k_lower[idx],)
-            if self.data.k_lower is not None
-            else None,
-            k_upper=(self.data.k_upper[idx],)
-            if self.data.k_upper is not None
-            else None,
-            delta_squared=(self.data.delta_squared[idx],),
-        )
-        return attrs.evolve(self, data=new_data)
+        idx = np.abs(self.data.z - z_target).argmin()
+        mask = np.zeros_like(self.data.z, dtype=bool)
+        mask[idx] = True
+        return self._select_with_z_based_mask(mask)
 
     def select_closest_k(self, k_target: float) -> Self:
         """Return a new DataSet with only the data point closest to the target k."""
-        ids = [np.argmin(np.abs(kk - k_target)) for kk in self.data.k]
-        new_data = Data(
-            z=self.data.z,
-            z_lower=self.data.z_lower,
-            z_upper=self.data.z_upper,
-            z_tags=self.data.z_tags,
-            k=tuple(
-                np.array([kk[idx]]) for idx, kk in zip(ids, self.data.k, strict=True)
-            ),
-            k_lower=tuple(
-                np.array([kl[idx]])
-                for idx, kl in zip(ids, self.data.k_lower, strict=True)
-            )
-            if self.data.k_lower is not None
-            else None,
-            k_upper=tuple(
-                np.array([ku[idx]])
-                for idx, ku in zip(ids, self.data.k_upper, strict=True)
-            )
-            if self.data.k_upper is not None
-            else None,
-            delta_squared=tuple(
-                np.array([dsq[idx]])
-                for idx, dsq in zip(ids, self.data.delta_squared, strict=True)
-            ),
-        )
-        return attrs.evolve(self, data=new_data)
+
+        def mask(kk):
+            idx = np.abs(kk - k_target).argmin()
+            mask = np.zeros_like(kk, dtype=bool)
+            mask[idx] = True
+            return mask
+
+        return self._select_with_k_based_mask(mask, "k")
 
     def select_lowest_delta_squared(self) -> Self:
         """Return a new DataSet with only the lowest delta_squared data points."""
-        min_ids = np.array([np.nanargmin(dsq) for dsq in self.data.delta_squared])
-        new_data = Data(
-            z=self.data.z,
-            z_lower=self.data.z_lower,
-            z_upper=self.data.z_upper,
-            z_tags=self.data.z_tags,
-            k=tuple(
-                np.array([kk[idx]])
-                for idx, kk in zip(min_ids, self.data.k, strict=True)
-            ),
-            k_lower=tuple(
-                np.array([kl[idx]])
-                for idx, kl in zip(min_ids, self.data.k_lower, strict=True)
-            )
-            if self.data.k_lower is not None
-            else None,
-            k_upper=tuple(
-                np.array([ku[idx]])
-                for idx, ku in zip(min_ids, self.data.k_upper, strict=True)
-            )
-            if self.data.k_upper is not None
-            else None,
-            delta_squared=tuple(
-                np.array([dsq[idx]])
-                for idx, dsq in zip(min_ids, self.data.delta_squared, strict=True)
-            ),
-        )
-        return attrs.evolve(self, data=new_data)
+
+        def mask(dsq):
+            idx = np.nanargmin(dsq)
+            mask = np.zeros_like(dsq, dtype=bool)
+            mask[idx] = True
+            return mask
+
+        return self._select_with_k_based_mask(mask, "delta_squared")
 
     @property
     def key(self) -> str:

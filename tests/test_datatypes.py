@@ -34,8 +34,8 @@ def test_select_k():
     """Test selecting a range of k values from a dataset."""
     dataset = DataSet.load("HERA2025")
     k_val = dataset.data.k[0][5]
-    kmin = k_val - 0.1
-    kmax = k_val + 0.1
+    kmin = k_val - 0.25
+    kmax = k_val + 0.25
     selected = dataset.select_k_range(kmin, kmax)
     assert isinstance(selected, DataSet)
     for k_arr in selected.data.k:
