@@ -312,9 +312,7 @@ class DataSet:
             else None
         )
         new_delta_squared = [
-            new_delta_squared
-            for dsq, zm in zip(new_delta_squared, zmask, strict=True)
-            if zm
+            dsq for dsq, zm in zip(new_delta_squared, zmask, strict=True) if zm
         ]
         new_z = self.data.z[zmask]
         new_z_lower = (
