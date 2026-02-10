@@ -275,7 +275,7 @@ def select_k_and_z_ranges(
     limits: list[DataSet],
     redshift_range: tuple[float, float] | None,
     k_range: tuple[float, float] | None,
-    dsq_range: tuple[float, float] | None,
+    delta_squared_range: tuple[float, float] | None,
 ) -> list[DataSet]:
     """Select the specified k and redshift ranges from the limits."""
     new_limits = []
@@ -300,13 +300,13 @@ def select_k_and_z_ranges(
                 )
                 continue
 
-        if dsq_range is not None:
+        if delta_squared_range is not None:
             try:
-                limit = limit.select_delta_squared_range(*dsq_range)
+                limit = limit.select_delta_squared_range(*delta_squared_range)
             except ValueError:
                 logger.info(
                     f"{limit.key} skipped since its outside delta squared range "
-                    f"[{dsq_range[0]} < delta^2 < {dsq_range[1]}]"
+                    f"[{delta_squared_range[0]} < delta^2 < {delta_squared_range[1]}]"
                 )
                 continue
 

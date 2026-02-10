@@ -27,7 +27,7 @@ def plot(
     theory_nf: list[float] = None,
     theory_redshift: list[float] = None,
     theory_linewidth: list[float] = None,
-    dsq_range: tuple[float, float] = None,
+    delta_squared_range: tuple[float, float] = None,
     z_range: tuple[float, float] = None,
     k_range: tuple[float, float] = None,
     shade_limits: float = 0.5,
@@ -67,7 +67,7 @@ def plot(
         Redshifts to select from theories.
     theory_linewidth
         Linewidths for theory lines.
-    dsq_range
+    delta_squared_range
         Range of Delta Squared to include on plot (yaxis range).
     z_range
         Range of redshifts to include on plot.
@@ -137,7 +137,7 @@ def plot(
         papers=papers,
         theories=theories,
         theory_legend=theory_legend,
-        delta_squared_range=dsq_range,
+        delta_squared_range=delta_squared_range,
         redshift_range=z_range,
         k_range=k_range,
         shade_limits=shade_limits,

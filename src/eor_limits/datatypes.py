@@ -297,7 +297,7 @@ class DataSet:
         new_k: list[np.ndarray],
         new_k_lower: list[np.ndarray] | None,
         new_k_upper: list[np.ndarray] | None,
-        new_dsq: list[np.ndarray],
+        new_delta_squared: list[np.ndarray],
     ) -> Self:
 
         new_k = [kk for kk, zm in zip(new_k, zmask, strict=True) if zm]
@@ -311,7 +311,11 @@ class DataSet:
             if new_k_upper is not None
             else None
         )
-        new_dsq = [dsq for dsq, zm in zip(new_dsq, zmask, strict=True) if zm]
+        new_delta_squared = [
+            new_delta_squared
+            for dsq, zm in zip(new_delta_squared, zmask, strict=True)
+            if zm
+        ]
         new_z = self.data.z[zmask]
         new_z_lower = (
             self.data.z_lower[zmask] if self.data.z_lower is not None else None
@@ -330,7 +334,7 @@ class DataSet:
             k=tuple(new_k),
             k_lower=tuple(new_k_lower) if new_k_lower is not None else None,
             k_upper=tuple(new_k_upper) if new_k_upper is not None else None,
-            delta_squared=tuple(new_dsq),
+            delta_squared=tuple(new_delta_squared),
             z=new_z,
             z_lower=new_z_lower,
             z_upper=new_z_upper,
