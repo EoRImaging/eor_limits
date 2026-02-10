@@ -30,7 +30,7 @@ def make_plot(
     theory_redshifts: list[float] | None = None,
     theory_legend: bool = True,
     delta_squared_range: tuple[float, float] | None = None,
-    redshift_range: tuple[float, float] | None = None,
+    z_range: tuple[float, float] | None = None,
     k_range: tuple[float, float] | None = None,
     shade_limits: str = "generational",
     shade_theory_alpha: float | None = None,
@@ -80,7 +80,7 @@ def make_plot(
         Range of delta squared values to include in plot (yaxis range). Must be
         length 2 with second element greater than first element. Defaults to [1e3, 1e6]
         if include_theory is False and [1e0, 1e6] otherwise.
-    redshift_range : list of float
+    z_range : list of float
         Range of redshifts to include in the plot. Must be length 2 with the second
         element greater than the first element.
     k_range : list of float
@@ -138,8 +138,8 @@ def make_plot(
     if not papers_sorted:
         limits.sort(key=lambda limit: limit.year)
 
-    limits = select_k_and_z_ranges(limits, redshift_range, k_range, delta_squared_range)
-    actual_redshift_range = get_total_redshift_range(limits, redshift_range)
+    limits = select_k_and_z_ranges(limits, z_range, k_range, delta_squared_range)
+    actual_z_range = get_total_z_range(limits, z_range)
 
     if not limits:
         raise ValueError(
@@ -153,7 +153,7 @@ def make_plot(
         limits, points_or_lines, base_limit_style, limit_styles
     )
 
-    norm = set_cmap_norm_via_zrange(actual_redshift_range)
+    norm = set_cmap_norm_via_zrange(actual_z_range)
     scalar_map = cmx.ScalarMappable(norm=norm, cmap=colormap)
 
     fig_width = 25 if theory_legend else 20
@@ -201,7 +201,7 @@ def make_plot(
                 for z in theory_redshifts
             ]
         else:
-            z_centre = 0.5 * (actual_redshift_range[0] + actual_redshift_range[1])
+            z_centre = 0.5 * (actual_z_range[0] + actual_z_range[1])
             theory_data = [data.select_closest_z(z_centre) for data in theory_data]
 
         theory_styles = build_theory_styles(theory_data, linewidths)
@@ -273,20 +273,20 @@ def make_plot(
 
 def select_k_and_z_ranges(
     limits: list[DataSet],
-    redshift_range: tuple[float, float] | None,
+    z_range: tuple[float, float] | None,
     k_range: tuple[float, float] | None,
     delta_squared_range: tuple[float, float] | None,
 ) -> list[DataSet]:
     """Select the specified k and redshift ranges from the limits."""
     new_limits = []
     for limit in limits:
-        if redshift_range is not None:
+        if z_range is not None:
             try:
-                limit = limit.select_z_range(*redshift_range)
+                limit = limit.select_z_range(*z_range)
             except ValueError:
                 logger.info(
                     f"{limit.key} skipped since its outside redshift range "
-                    f"[{redshift_range[0]} < z < {redshift_range[1]}]"
+                    f"[{z_range[0]} < z < {z_range[1]}]"
                 )
                 continue
 
@@ -314,25 +314,25 @@ def select_k_and_z_ranges(
     return new_limits
 
 
-def set_cmap_norm_via_zrange(redshift_range):
+def set_cmap_norm_via_zrange(z_range):
     """Set the colormap normalization based on redshift range."""
-    if len(redshift_range) != 2:
+    if len(z_range) != 2:
         raise ValueError(
             "redshift range must have 2 elements with the second element greater "
             "than the first element."
         )
-    if redshift_range[0] > redshift_range[1]:
+    if z_range[0] > z_range[1]:
         raise ValueError(
             "redshift range must have 2 elements with the second element greater "
             "than the first element."
         )
 
-    if redshift_range[0] == redshift_range[1]:
-        redshift_range_use = [redshift_range[0] - 1, redshift_range[0] + 1]
+    if z_range[0] == z_range[1]:
+        z_range_use = [z_range[0] - 1, z_range[0] + 1]
     else:
-        redshift_range_use = redshift_range
+        z_range_use = z_range
 
-    return colors.Normalize(vmin=redshift_range_use[0], vmax=redshift_range_use[1])
+    return colors.Normalize(vmin=z_range_use[0], vmax=z_range_use[1])
 
 
 def plot_sensitivities(fontsize, sensitivities, sensitivity_style):
@@ -707,10 +707,10 @@ def plot_limit_paper_as_points(
     return k, line
 
 
-def get_total_redshift_range(paper_list, redshift_range):
+def get_total_z_range(paper_list, z_range):
     """Get the total redshift range across all papers."""
-    if redshift_range is not None:
-        return redshift_range
+    if z_range is not None:
+        return z_range
     minz = min(min(paper.data.z) for paper in paper_list)
     maxz = max(max(paper.data.z) for paper in paper_list)
     return (minz, maxz)

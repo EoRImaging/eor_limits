@@ -138,7 +138,7 @@ def plot(
         theories=theories,
         theory_legend=theory_legend,
         delta_squared_range=delta_squared_range,
-        redshift_range=z_range,
+        z_range=z_range,
         k_range=k_range,
         shade_limits=shade_limits,
         shade_theory_alpha=shade_theory,
