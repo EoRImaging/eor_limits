@@ -180,31 +180,25 @@ class Data:
         def mask(dsq):
             return np.isfinite(dsq)
 
-        new_k = [
-            kk[mask(dsq)] for kk, dsq in zip(self.k, self.delta_squared, strict=True)
-        ]
-        new_delta_squared = [dsq[mask(dsq)] for dsq in self.delta_squared]
-        if self.k_lower is not None:
-            new_k_lower = [
-                kl[mask(dsq)]
-                for kl, dsq in zip(self.k_lower, self.delta_squared, strict=True)
-            ]
-        else:
-            new_k_lower = None
-        if self.k_upper is not None:
-            new_k_upper = [
-                ku[mask(dsq)]
-                for ku, dsq in zip(self.k_upper, self.delta_squared, strict=True)
-            ]
-        else:
-            new_k_upper = None
-
         return attrs.evolve(
             self,
-            k=tuple(new_k),
-            k_lower=tuple(new_k_lower) if new_k_lower is not None else None,
-            k_upper=tuple(new_k_upper) if new_k_upper is not None else None,
-            delta_squared=tuple(new_delta_squared),
+            k=tuple(
+                kk[mask(dsq)]
+                for kk, dsq in zip(self.k, self.delta_squared, strict=True)
+            ),
+            k_lower=tuple(
+                kl[mask(dsq)]
+                for kl, dsq in zip(self.k_lower, self.delta_squared, strict=True)
+            )
+            if self.k_lower is not None
+            else None,
+            k_upper=tuple(
+                ku[mask(dsq)]
+                for ku, dsq in zip(self.k_upper, self.delta_squared, strict=True)
+            )
+            if self.k_upper is not None
+            else None,
+            delta_squared=tuple(dsq[mask(dsq)] for dsq in self.delta_squared),
             delta=None,
         )
 
