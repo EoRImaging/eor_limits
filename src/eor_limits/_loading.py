@@ -2,22 +2,16 @@
 
 from pathlib import Path
 
-# Define paths to data and theory directories
 from eor_limits._datatypes import DataSet
-from eor_limits.theory import THEORY_PATH, KNOWN_THEORIES, __all_theories__
 from eor_limits.data import DATA_PATH, KNOWN_LIMITS
-
-# Import the individual theory processors to populate the __all_theories__ dictionary
-from .theory import mesinger_2016 as mesinger_2016
-from .theory import munoz_2018_fdm3 as munoz_2018_fdm3
-from .theory import munoz_2022 as munoz_2022
-from .theory import pagano_2020 as pagano_2020
+from eor_limits.theory import KNOWN_THEORIES, __all_theories__
 
 __all___ = [
     "load_theory_model",
     "load_limit_data",
     "_normalize_dataset_name",
 ]
+
 
 def load_theory_model(name: str) -> DataSet:
     """Get the theory data processor for a given theory name."""

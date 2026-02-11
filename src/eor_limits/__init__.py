@@ -5,14 +5,14 @@ Copyright (c) 2019 Nichole Barry, Bryna Hazelton
 Licensed under the 2-clause BSD License
 """
 
-from .data import KNOWN_LIMITS
-from .theory import KNOWN_THEORIES
 from ._datatypes import DataSet
 from ._loading import (
     load_limit_data,
     load_theory_model,
 )
 from ._plot import make_plot
+from .data import KNOWN_LIMITS
+from .theory import KNOWN_THEORIES
 
 __all__ = [
     "KNOWN_LIMITS",

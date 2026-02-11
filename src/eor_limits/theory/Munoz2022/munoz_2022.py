@@ -7,12 +7,11 @@
 import numpy as np
 
 from eor_limits._datatypes import Data
+from eor_limits.theory._base import THEORY_PATH, BaseTheoryProcessor
 
-from . import KNOWN_THEORIES
-from ._base import BaseTheoryProcessor
+all_galaxies_path = THEORY_PATH / "Munoz2022" / "allgalaxies/"
+optimistic_path = THEORY_PATH / "Munoz2022" / "optimistic/"
 
-all_galaxies_path = KNOWN_THEORIES["Munoz2022AllGalaxies"]
-optimistic_path = KNOWN_THEORIES["Munoz2022Optimistic"]
 
 class Munoz2022AllGalaxies(BaseTheoryProcessor):
     """The AllGalaxies model from Munoz et al. 2022."""
@@ -21,7 +20,6 @@ class Munoz2022AllGalaxies(BaseTheoryProcessor):
     author: str = "Muñoz"
     year: int = 2022
     doi: str = "10.1093/mnras/stac185"
-
     _datapath = all_galaxies_path
 
     @classmethod
