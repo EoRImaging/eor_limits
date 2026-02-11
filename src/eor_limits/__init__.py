@@ -5,17 +5,17 @@ Copyright (c) 2019 Nichole Barry, Bryna Hazelton
 Licensed under the 2-clause BSD License
 """
 
-from .data_loading import (
-    KNOWN_PAPERS,
-    KNOWN_THEORIES,
+from .data import KNOWN_LIMITS
+from .theory import KNOWN_THEORIES
+from ._datatypes import DataSet
+from ._loading import (
     load_limit_data,
     load_theory_model,
 )
-from .datatypes import DataSet
-from .plot_vs_k_z import make_plot
+from ._plot import make_plot
 
 __all__ = [
-    "KNOWN_PAPERS",
+    "KNOWN_LIMITS",
     "KNOWN_THEORIES",
     "DataSet",
     "load_limit_data",

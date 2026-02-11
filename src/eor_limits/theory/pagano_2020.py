@@ -5,12 +5,13 @@
 
 import numpy as np
 
-from eor_limits._paths import THEORY_PATH
-from eor_limits.datatypes import Data
+from eor_limits._datatypes import Data
 
+from . import KNOWN_THEORIES
 from ._base import BaseTheoryProcessor
 
-pagano_file = THEORY_PATH / "pagano_liu_2020.npz"
+# all betas are in the same file, so just load one of them to get the path
+pagano_file = KNOWN_THEORIES["PaganoLiu2020Beta1.00"] 
 
 # load all possible betas
 with np.load(pagano_file) as data:
@@ -49,4 +50,4 @@ def _pagano_factory(betaidx: float):
 
 for betidx in range(len(_betas)):
     cls = _pagano_factory(betidx)
-    globals()[cls.__name__] = cls
+    #__all_theories__[cls.__name__] = cls

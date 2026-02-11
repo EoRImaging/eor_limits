@@ -3,10 +3,12 @@
 import numpy as np
 import yaml
 
-from eor_limits._paths import THEORY_PATH
-from eor_limits.datatypes import Data
+from eor_limits._datatypes import Data
 
+from . import KNOWN_THEORIES
 from ._base import BaseTheoryProcessor
+
+munoz_fdm3_path = KNOWN_THEORIES["Munoz2018FDM3"]
 
 
 class Munoz2018FDM3(BaseTheoryProcessor):
@@ -19,7 +21,7 @@ class Munoz2018FDM3(BaseTheoryProcessor):
 
     @classmethod
     def _load_data(cls) -> Data:
-        with (THEORY_PATH / "munoz_2018_fdm3.yaml").open("r") as f:
+        with (munoz_fdm3_path).open("r") as f:
             yaml_data = yaml.safe_load(f)
 
         k = yaml_data["k"]

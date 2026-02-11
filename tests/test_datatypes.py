@@ -3,10 +3,10 @@
 import numpy as np
 import pytest
 
-from eor_limits import KNOWN_PAPERS, DataSet
+from eor_limits import KNOWN_LIMITS, DataSet
 
 
-@pytest.mark.parametrize("paper_name", list(KNOWN_PAPERS.keys()))
+@pytest.mark.parametrize("paper_name", list(KNOWN_LIMITS.keys()))
 def test_load_all_datasets(paper_name):
     """Test loading all datasets."""
     dataset = DataSet.load(paper_name)

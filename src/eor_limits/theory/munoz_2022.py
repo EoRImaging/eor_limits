@@ -6,11 +6,13 @@
 
 import numpy as np
 
-from eor_limits._paths import THEORY_PATH
-from eor_limits.datatypes import Data
+from eor_limits._datatypes import Data
 
+from . import KNOWN_THEORIES
 from ._base import BaseTheoryProcessor
 
+all_galaxies_path = KNOWN_THEORIES["Munoz2022AllGalaxies"]
+optimistic_path = KNOWN_THEORIES["Munoz2022Optimistic"]
 
 class Munoz2022AllGalaxies(BaseTheoryProcessor):
     """The AllGalaxies model from Munoz et al. 2022."""
@@ -20,7 +22,7 @@ class Munoz2022AllGalaxies(BaseTheoryProcessor):
     year: int = 2022
     doi: str = "10.1093/mnras/stac185"
 
-    _datapath = THEORY_PATH / "munoz_2022_allgalaxies"
+    _datapath = all_galaxies_path
 
     @classmethod
     def _get_paths(cls):
@@ -68,7 +70,7 @@ class Munoz2022Optimistic(Munoz2022AllGalaxies):
     """The Optimistic model from Munoz et al. 2022, which has more PopIII stars."""
 
     simulator: str = "21cmFASTv3 (EOS2022, optimistic)"
-    _datapath = THEORY_PATH / "munoz_2022_optimistic"
+    _datapath = optimistic_path
 
     @classmethod
     def _get_paths(cls):

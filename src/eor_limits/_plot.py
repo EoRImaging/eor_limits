@@ -9,9 +9,9 @@ import matplotlib.colors as colors
 import matplotlib.pyplot as plt
 import numpy as np
 
-from eor_limits import KNOWN_PAPERS, load_theory_model
+from eor_limits import KNOWN_LIMITS, load_theory_model
 
-from .datatypes import DataSet
+from ._datatypes import DataSet
 
 DEFAULT_TELESCOPE_MARKERS = {
     "PAPER": "o",
@@ -117,7 +117,7 @@ def make_plot(
     if papers is None:
         # use all the papers. This gives weird ordering which we will fix later
         papers_sorted = False
-        papers = list(KNOWN_PAPERS.keys())
+        papers = list(KNOWN_LIMITS.keys())
     else:
         # if a list is passed in by hand, don't reorder it
         papers_sorted = True

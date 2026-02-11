@@ -2,10 +2,9 @@
 
 from abc import ABC, abstractmethod
 
-from eor_limits.datatypes import Data, DataSet
+from eor_limits._datatypes import Data, DataSet
 
-__all_theories__ = {}
-
+from . import __all_theories__
 
 class BaseTheoryProcessor(ABC):
     """Abstract base class for theory processors."""
