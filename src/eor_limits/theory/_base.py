@@ -1,10 +1,15 @@
 """Abstract base class for theory processors."""
 
 from abc import ABC, abstractmethod
+from pathlib import Path
 
 from eor_limits._datatypes import Data, DataSet
 
-from . import __all_theories__
+# Import paths and theory registry
+THEORY_PATH = Path(__file__).parent.resolve()
+KNOWN_THEORIES = {}  # populated in __init__.py
+__all_theories__ = {}  # populated in __init__.py
+
 
 class BaseTheoryProcessor(ABC):
     """Abstract base class for theory processors."""
@@ -13,10 +18,12 @@ class BaseTheoryProcessor(ABC):
     author: str
     year: int
     doi: str
+    _datapath: Path
 
     def __init_subclass__(cls) -> None:
         """Register subclasses in the __all_theories__ dictionary."""
         __all_theories__[cls.__name__] = cls
+        KNOWN_THEORIES[cls.__name__] = cls._datapath
         return super().__init_subclass__()
 
     @classmethod
