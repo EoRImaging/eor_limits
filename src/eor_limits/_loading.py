@@ -2,29 +2,28 @@
 
 from pathlib import Path
 
-from eor_limits.datatypes import DataSet
+# Define paths to data and theory directories
+from eor_limits._datatypes import DataSet
+from eor_limits.theory import THEORY_PATH, KNOWN_THEORIES, __all_theories__
+from eor_limits.data import DATA_PATH, KNOWN_LIMITS
 
-from ._paths import DATA_PATH
-from .theory import __all_theories__
+# Import the individual theory processors to populate the __all_theories__ dictionary
+from .theory import mesinger_2016 as mesinger_2016
+from .theory import munoz_2018_fdm3 as munoz_2018_fdm3
+from .theory import munoz_2022 as munoz_2022
+from .theory import pagano_2020 as pagano_2020
 
 __all___ = [
-    "KNOWN_PAPERS",
-    "KNOWN_THEORIES",
     "load_theory_model",
     "load_limit_data",
     "_normalize_dataset_name",
 ]
 
-
-KNOWN_PAPERS = {p.stem: p for p in DATA_PATH.glob("*.yaml") if p.is_file()}
-KNOWN_THEORIES = tuple(__all_theories__.keys())
-
-
 def load_theory_model(name: str) -> DataSet:
     """Get the theory data processor for a given theory name."""
-    if name not in __all_theories__:
+    if name not in KNOWN_THEORIES.keys() or name not in __all_theories__.keys():
         raise ValueError(
-            f"Theory '{name}' not found. Available theories: {KNOWN_THEORIES}"
+            f"Theory '{name}' not found. Available theories: {KNOWN_THEORIES.keys()}"
         )
     return __all_theories__[name].load_as_dataset()
 
@@ -46,7 +45,7 @@ def _normalize_dataset_name(path: str | Path) -> Path:
     if not path.exists():
         raise ValueError(
             f"Dataset file '{path.name}' not found. "
-            f"Available datasets: {KNOWN_PAPERS.keys()}"
+            f"Available datasets: {KNOWN_LIMITS.keys()}"
         )
 
     return path
