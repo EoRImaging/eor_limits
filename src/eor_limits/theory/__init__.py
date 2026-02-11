@@ -7,7 +7,7 @@ KNOWN_THEORIES = {
  'Mesinger2016Bright': THEORY_PATH / "mesinger_2016_bright_galaxies/",
  'Munoz2018FDM3': THEORY_PATH / "munoz_2018_fdm3.yaml",
  'Munoz2022AllGalaxies': THEORY_PATH / "munoz_2022_allgalaxies/",
- 'Munoz2022Optimistic': THEORY_PATH / "munoz_2022_optimistic//",
+ 'Munoz2022Optimistic': THEORY_PATH / "munoz_2022_optimistic/",
  'PaganoLiu2020Beta1.00': THEORY_PATH / "pagano_liu_2020.npz",
  'PaganoLiu2020Beta0.84': THEORY_PATH / "pagano_liu_2020.npz",
  'PaganoLiu2020Beta0.76': THEORY_PATH / "pagano_liu_2020.npz",
@@ -20,6 +20,4 @@ KNOWN_THEORIES = {
  'PaganoLiu2020Beta-0.84': THEORY_PATH / "pagano_liu_2020.npz",
  'PaganoLiu2020Beta-1.00': THEORY_PATH / "pagano_liu_2020.npz",
 }
-
-# Import the individual theory processors to populate the __all_theories__ dictionary
 __all_theories__ = {}
