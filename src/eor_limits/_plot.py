@@ -66,50 +66,77 @@ def make_plot(
     Parameters
     ----------
     limits : list of str
-        List of limits to include in the plot (specified as 'AuthorYear').
-        These must be present in the data folder.
+        List of limits to include in the plot. See `KNOWN_LIMITS` for available limits and their keys.
         Defaults to `None` meaning include all papers in the data folder.
-    theories
-        Theories to plot, (specified as a list of theory paper keys.
-        These must be present in the theory folder.
-        Defaults to `None` meaning no theories are plotted.
-    theory_redshifts : list of float
-        List specifying which redshifts to plot for theory lines. The default is to use
-        the closest redshift to the centre of the prescribed redshift range. Multiple
-        redshifts can be used.
-    delta_squared_range : list of float
-        Range of delta squared values to include in plot (yaxis range). Must be
-        length 2 with second element greater than first element. Defaults to [1e3, 1e6]
-        if theories are not included and [1e0, 1e6] otherwise.
-    z_range : list of float
-        Range of redshifts to include in the plot. Must be length 2 with the second
-        element greater than the first element.
-    k_range : list of float
-        Range of ks to include in the plot. Must be length 2 with the second element
-        greater than the first element.
-    shade_limits : {'generational', 'alpha', False}
-        How to shade above plotted limits. 'generational' shading shades dark grey for
-        all generation 1 papers and light grey for later generation papers. 'alpha'
-        shading shades all papers with semi-transparent grey. Setting this to False
-        results in no shading.
-    shade_theory : {'flat', 'alpha', False}
-        How to shade below theory lines. 'flat' shading shades light grey below all
-        theory lines. 'alpha' shading shades below all theory lines with
-        semi-transparent grey. Setting this to False results in no shading.
-    colormap : str
-        Matplotlib colormap to use for redshift.
-    linewidths : dict
-        Dict specifying line widths to use for specific papers, to override the line
-        widths specified in the paper yamls. Keys are paper names, values are desired
-        line widths. Default of 'None' means use the values in the paper yamls.
+    base_limit_style : dict
+        Base style parameters for plotting limits, applied to all limits before any
+        individual overrides. For example, `{'alpha': 0.7}` to make all limits slightly
+        transparent.
+    limit_styles : dict of dict
+        Dictionary of style parameters for plotting limits. The keys are the limit
+        keys (e.g. `'Paciga2013'`), and the values are dictionaries with style parameters for
+        plotting, e.g. `{'color': 'C0', 's': 100}` for points or `{'color': 'C0', 'linewidth': 3}` for lines.
     bold_limits : list of str
-        List of limits to bold in caption.
-        List of papers to bold in caption.
-    fontsize : float
-        Font size to use on plot.
-    plot_filename : str
-        File name to save plot to.
-
+        List of limits to bold in the legend (specified as limit keys, e.g. `'Paciga2013'`).
+    shade_limits : float
+        If not `None`, the alpha value to use for shading the area above each limit line
+        (or points, if plotted as points). If `None`, no shading is applied.
+    aspoints : list of str
+        List of limits to plot as points instead of lines (specified as limit keys, e.g. `'Paciga2013'`).
+        If not specified, the function will automatically determine whether to plot as points 
+        or lines based on the number of k values (see `nk_for_lines`).
+    aslines : list of str
+        List of limits to plot as lines instead of points (specified as limit keys, e.g. `'Paciga2013'`).
+        If not specified, the function will automatically determine whether to plot as points
+        or lines based on the number of k values (see `nk_for_lines`).
+    nk_for_lines : int
+        Threshold for the number of k values to determine whether to plot a limit as points
+        or lines if not specified in `aspoints` or `aslines`. If a limit has more than this
+        number of k values, it will be plotted as a line by default; otherwise, it will be
+        plotted as points by default.
+    theories : list of str
+        List of theories to include in the plot. See `KNOWN_THEORIES` for available theories and their keys.
+        Defaults to `None` meaning no theories are plotted.
+    theory_redshifts : dict of list
+        Dictionary specifying which redshifts to plot for each theory. The keys are the theory keys
+        (e.g. `'Mesinger2016Faint'`), and the values are lists of redshifts to plot for that theory.
+        If not specified, the function will plot the line closest to the center of the redshift range.
+    base_theory_style : dict
+        Base style parameters for plotting theories, applied to all theories before any individual
+        overrides. For example, `{'alpha': 0.7}` to make all theories slightly transparent.
+    theory_styles : dict of dict
+        Dictionary of style parameters for plotting theories. The keys are the theory keys
+        (e.g. `'Mesinger2016Faint'`), and the values are dictionaries with style parameters 
+        for plotting, e.g. `{'color': 'C1', 'linestyle': '--'}`.
+    bold_theories : list of str
+        List of theories to bold in the legend.
+    shade_theories : float
+        If not `None`, the alpha value to use for shading the area below each theory line.
+        If `None`, defaults to 1 divided by the number of theories.
+    sensitivities : dict
+        Dictionary of sensitivities to plot on the figure. The keys are labels for each
+        sensitivity estimate, and the values are the file names of the
+        sensitivities to plot, which must be outputs from 21cmSense v2+.
+    sensitivity_style : dict
+        Dictionary of style parameters for plotting sensitivities. The keys are
+        labels for each sensitivity estimate, and the values are dictionaries with
+        style parameters for plotting, e.g. `{'color': 'k', 'linestyle': '--', 'linewidth': 3}`.
+        An additional key 'sensitivity_kind' can be used to specify which kind of
+        sensitivity to plot, e.g. `'sample+thermal'`, `'sample'` or `'thermal'`.
+    colormap : str
+        Matplotlib colormap to use for coloring limits by redshift. Defaults to `'Spectral_r'`.
+    fontsize : int
+        Font size to use in the legend and axis labels. Defaults to `15`.
+    fig_ratio : float
+        Height to width ratio of the figure. If not specified, the height will be 1
+        times the width if theories are plotted, and 0.5 times the width if no theories are plotted.
+    fig : matplotlib.figure.Figure
+        If specified, the figure to plot on. If not specified, a new figure will be created.
+    ax : matplotlib.axes.Axes
+        If specified, the axis to plot on. If not specified, a new axis will be created.
+    out : str or Path
+        If specified, the file name to save the figure to. If not specified, the figure
+        will be returned as a matplotlib figure object.
     """
     
     ###################################################################################
@@ -429,7 +456,7 @@ def build_theory_styles(
         style = {
             "linewidth": 2,
             "linestyle": "--",
-            "c": "lightsteelblue",
+            "color": "lightsteelblue",
         }
         style |= base_override if base_override else {}
         style |= overrides.get(f"{theory.key}", {}) if overrides else {}
@@ -504,7 +531,7 @@ def plot_limits(
             line = plt.scatter(
                 k,
                 dsq,
-                c=scalar_map.to_rgba(z),
+                color=scalar_map.to_rgba(z),
                 label=label,
                 zorder=10,
                 **limit_style,
@@ -574,7 +601,7 @@ def plot_limits(
                 plt.plot(
                     k_edges,
                     delta_edges,
-                    c="black",
+                    color="black",
                     linewidth=limit_style["linewidth"] + 2,
                     zorder=2,
                 )
@@ -582,7 +609,7 @@ def plot_limits(
                 (this_line,) = plt.plot(
                     k_edges,
                     delta_edges,
-                    c=color_val,
+                    color=color_val,
                     linewidth=limit_style["linewidth"],
                     label=label,
                     zorder=2,
@@ -634,7 +661,7 @@ def plot_theories(
         if shade_theories is None:
             shade_theories = 1.0 / len(theories)
         if shade_theories:
-            color_use = theory_style["c"]
+            color_use = theory_style["color"]
             zorder = 0
             alpha = shade_theories
             plt.fill_between(
@@ -687,8 +714,8 @@ def plot_sensitivities(sensitivities, sensitivity_style, fontsize):
             ks,
             sense,
             color=style.get("color", "k"),
-            ls=style.get("ls", ["--", ":", "-."][indx % 3]),
-            lw=style.get("lw", [3, 2, 4][indx // 3]),
+            linestyle=style.get("linestyle", ["--", ":", "-."][indx % 3]),
+            linewidth=style.get("linewidth", [3, 2, 4][indx // 3]),
         )
 
         # Put the instrument name right on the plot.
