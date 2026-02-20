@@ -258,6 +258,10 @@ def make_plot(
     ###################################################################################
     # SENSITIVITIES
 
+    # Build styles for sensitivity lines, applying any overrides specified by the user.
+    sensitivity_style = build_sensitivity_styles(sensitivities, sensitivity_style)
+    
+    # Plot the sensitivity curves.
     plot_sensitivities(sensitivities, sensitivity_style, fontsize)
     
     ###################################################################################
@@ -461,6 +465,23 @@ def build_theory_styles(
         style |= base_override if base_override else {}
         style |= overrides.get(f"{theory.key}", {}) if overrides else {}
         styles[f"{theory.key}"] = style
+    return styles
+
+def build_sensitivity_styles(
+    sensitivities: dict[str, str],
+    sensitivity_style: dict[str, dict[str, Any]] | None,
+) -> dict[str, dict[str, Any]]:
+    """Build a dictionary of styles to use for each sensitivity curve."""
+    styles = {}
+    for name in sensitivities.keys():
+        style = {
+            "sensitivity_kind": "sample+thermal",
+            "linestyle": "--",
+            "linewidth": 3,
+            "color": "k",
+        }
+        style |= sensitivity_style.get(name, {}) if sensitivity_style else {}
+        styles[name] = style
     return styles
 
 
@@ -688,7 +709,7 @@ def plot_sensitivities(sensitivities, sensitivity_style, fontsize):
         else:
             style = sensitivity_style
 
-        sense_kind = style.get("sensitivity_kind", "sample+thermal")
+        sense_kind = style["sensitivity_kind"]
 
         if sense_kind not in ["sample+thermal", "sample", "thermal"]:
             raise ValueError(
@@ -713,9 +734,9 @@ def plot_sensitivities(sensitivities, sensitivity_style, fontsize):
         plt.plot(
             ks,
             sense,
-            color=style.get("color", "k"),
-            linestyle=style.get("linestyle", ["--", ":", "-."][indx % 3]),
-            linewidth=style.get("linewidth", [3, 2, 4][indx // 3]),
+            color=style["color"],
+            linestyle=style["linestyle"],
+            linewidth=style["linewidth"],
         )
 
         # Put the instrument name right on the plot.
