@@ -137,20 +137,23 @@ def make_plot(
         limits = [DataSet.load(l).drop_nan() for l in limits]
     
     # Select the specified k and z ranges from the limits
-    if z_range is None:
+    def _get_z_range_from_limits(limits):
         z_min = min(min(limit.data.z) for limit in limits)
         z_max = max(max(limit.data.z) for limit in limits)
-        z_range = (z_min, z_max)
+        return (z_min, z_max)
     
-    if k_range is None:
+    def _get_k_range_from_limits(limits):
         k_min = min(min(k) for limit in limits for k in limit.data.k)
         k_max = max(max(k) for limit in limits for k in limit.data.k)
         min_factor = 10 ** np.ceil(np.log10(k_min) * -1)
         max_factor = 10 ** np.ceil(np.log10(k_max) * -1)
-        k_range = (
+        return (
             np.floor(k_min * min_factor) / min_factor,
             np.ceil(k_max * max_factor) / max_factor,
         )
+        
+    z_range = z_range or _get_z_range_from_limits(limits)
+    k_range = k_range or _get_k_range_from_limits(limits)
     
     if delta_squared_range is None:
         if theories is not None:
@@ -159,6 +162,9 @@ def make_plot(
             delta_squared_range = (1e3, 1e6)
     
     limits = select_k_and_z_ranges(limits, z_range, k_range, delta_squared_range)
+    
+    z_range = _get_z_range_from_limits(limits) # again, since we removed some limits
+    k_range = _get_k_range_from_limits(limits) # again, since we removed some limits
     
     # Set up colormap for redshift.
     if z_range[0] == z_range[1]:
