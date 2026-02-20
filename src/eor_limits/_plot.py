@@ -132,7 +132,7 @@ def make_plot(
     if limits is None:
         limits = list(KNOWN_LIMITS.keys())
         limits = [DataSet.load(l).drop_nan() for l in limits]
-        #limits = limits.sort(key=lambda limit: limit.year)
+        limits.sort(key=lambda limit: limit.year)
     else:
         limits = [DataSet.load(l).drop_nan() for l in limits]
     
@@ -198,16 +198,16 @@ def make_plot(
     # Downselecting to specified redshifts for theories,
     # or closest redshift to centre of redshift range if no redshifts specified.
     theory_redshifts = theory_redshifts or {} # equivalent to: if theory_redshifts is None: theory_redshifts = {}
-    new_theory_data = []
+    new_theories = []
     for theory in theories:
         if theory.key not in theory_redshifts:
             theory_redshifts[theory.key] = [0.5 * (z_range[0] + z_range[1])]
         for z in theory_redshifts[theory.key]:
-            new_theory_data.append(theory.select_closest_z(z))
-    theory_data = new_theory_data
+            new_theories.append(theory.select_closest_z(z))
+    theories = new_theories
     
     # Build styles for theory lines, applying any overrides specified by the user.
-    theory_styles = build_theory_styles(theory_data, base_theory_style, theory_styles)
+    theory_styles = build_theory_styles(theories, base_theory_style, theory_styles)
     
     # Whether to bold each theory in the legend
     bold_theories = bold_theories or [] # equivalent to: if bold_theories is None: bold_theories = []
@@ -394,7 +394,7 @@ def build_limit_styles(
                 style["as_line"] = True
         
         # Set the style, if plotting as points, applying any overrides.
-        if style["as_line"] == "points":
+        if not style["as_line"]:
             style["s"] = 150
             style |= base_override if base_override else {}
             style["marker"] = DEFAULT_TELESCOPE_MARKERS.get(limit.telescope, "o")
@@ -447,16 +447,19 @@ def get_latex_limit_label(paper: DataSet, bold: bool = False) -> str:
     )
 
 
-def get_latex_theory_label(paper: DataSet) -> str:
+def get_latex_theory_label(paper: DataSet, bold: bool = False) -> str:
     """Get a LaTeX label for a theory paper."""
+    label_start = " $\\bf{Theory:" if bold else " $\\bf{Theory:} \\rm{"
+    label_end = "}$"
     return (
-        " $\\bf{Theory:} \\rm{ "
+        label_start
         + r"\ ".join(paper.telescope.split(" "))
         + r"\ ("
         + r"\ ".join(paper.author.split(" "))
         + r",\ "
         + str(paper.year)
-        + ")}$"
+        + ")"
+        + label_end
     )
 
 
@@ -480,9 +483,9 @@ def plot_limits(
         as_line = limit_style.pop("as_line") # we pop this since it's not a valid argument 
                                              # for plt.plot or plt.scatter
                                              
-        # If we are plotting as lines, we need to flatten the data 
-        # since the k and delta_squared values are given as lists of arrays for each redshift.
-        if as_line:
+        # If we are plotting as points, we plot each redshift with specific colors
+        # and making sure to meet towards the right edges to avoid overlaps.
+        if not as_line:
             
             k = np.concatenate(limit.data.k)
             dsq = np.concatenate(limit.data.delta_squared)
@@ -527,8 +530,8 @@ def plot_limits(
                         zorder=zorder,
                     )
         
-        # If we are plotting as points, we plot each redshift with specific colors
-        # and making sure to meet towards the right edges to avoid overlaps.
+        # If we are plotting as lines, we need to flatten the data 
+        # since the k and delta_squared values are given as lists of arrays for each redshift.
         else:
             
            for ind, redshift in enumerate(limit.data.z):
@@ -623,7 +626,7 @@ def plot_theories(
         )
         
         if shade_theories is None:
-            shade_theory_alpha = 1.0 / len(theories)
+            shade_theories = 1.0 / len(theories)
         if shade_theories:
             color_use = theory_style["c"]
             zorder = 0
