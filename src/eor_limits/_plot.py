@@ -28,31 +28,35 @@ logger = logging.getLogger("eor_limits")
 
 @app.command
 def make_plot(
+    # Limit plotting options
     limits: list[str] | None = None,
-    delta_squared_range: tuple[float, float] | None = None,
-    z_range: tuple[float, float] | None = None,
-    k_range: tuple[float, float] | None = None,
+    limit_redshifts: dict[str, list[float]] | None = None,
     base_limit_style: dict[str, Any] | None = None,
     limit_styles: dict[str, dict[str, Any]] | None = None,
-    limit_linewidths: dict | None = None,
     bold_limits: list[str] | None = None,
     shade_limits: float | None = 0.5,
-    
-    theories: list[str] | None = None,
-    theory_redshifts: dict[str, list[float]] | None = None,
-    theory_linewidths: dict[str, float] | None = None,
-    shade_theory_alpha: float | None = 0.5,
-    
-    sensitivities: dict | None = None,
-    sensitivity_style: dict | None = None,
-
-    colormap: str = "Spectral_r",
-    fontsize: int = 15,
-    fig_ratio: float | None = None,
     aspoints: list[str] | None = None,
     aslines: list[str] | None = None,
     nk_for_lines: int = 10,
-    
+    # Limits selection options
+    delta_squared_range: tuple[float, float] | None = None,
+    z_range: tuple[float, float] | None = None,
+    k_range: tuple[float, float] | None = None,
+    # Theory plotting options
+    theories: list[str] | None = None,
+    theory_redshifts: dict[str, list[float]] | None = None,
+    base_theory_style: dict[str, Any] | None = None,
+    theory_styles: dict[str, dict[str, Any]] | None = None,
+    bold_theories: list[str] | None = None,
+    shade_theories: float | None = 0.5,
+    # Sensitivity plotting options
+    sensitivities: dict | None = None,
+    sensitivity_style: dict | None = None,
+    # General plotting options
+    colormap: str = "Spectral_r",
+    fontsize: int = 15,
+    fig_ratio: float | None = None,
+    # Output options
     fig: plt.Figure | None = None,
     ax: plt.Axes | None = None,
     out: Path | None = None,
@@ -130,8 +134,6 @@ def make_plot(
 
     if bold_limits is None:
         bold_limits = []
-    if limit_linewidths is None:
-        limit_linewidths = {}
     if theory_linewidths is None:
         theory_linewidths = {}
 
