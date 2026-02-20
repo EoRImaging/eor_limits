@@ -3,6 +3,7 @@
 import logging
 from itertools import chain
 from typing import Any, Literal
+from pathlib import Path
 
 import matplotlib.cm as cmx
 import matplotlib.colors as colors
@@ -21,65 +22,62 @@ DEFAULT_TELESCOPE_MARKERS = {
     "GMRT": "v",
 }
 
-logger = logging.getLogger(__name__)
+app = App()
 
+logger = logging.getLogger("eor_limits")
 
+@app.command
 def make_plot(
-    papers: list[str] | None = None,
-    theories: list[str] | None = None,
-    theory_redshifts: list[float] | None = None,
-    theory_legend: bool = True,
+    limits: list[str] | None = None,
     delta_squared_range: tuple[float, float] | None = None,
     z_range: tuple[float, float] | None = None,
     k_range: tuple[float, float] | None = None,
-    shade_limits: str = "generational",
-    shade_theory_alpha: float | None = None,
-    colormap: str = "Spectral_r",
     base_limit_style: dict[str, Any] | None = None,
     limit_styles: dict[str, dict[str, Any]] | None = None,
-    linewidths: dict | None = None,
-    bold_papers: list[str] | None = None,
-    fontsize: int = 15,
-    fig_ratio: float | None = None,
+    limit_linewidths: dict | None = None,
+    bold_limits: list[str] | None = None,
+    shade_limits: float | None = 0.5,
+    
+    theories: list[str] | None = None,
+    theory_redshifts: dict[str, list[float]] | None = None,
+    theory_linewidths: dict[str, float] | None = None,
+    shade_theory_alpha: float | None = 0.5,
+    
     sensitivities: dict | None = None,
     sensitivity_style: dict | None = None,
+
+    colormap: str = "Spectral_r",
+    fontsize: int = 15,
+    fig_ratio: float | None = None,
     aspoints: list[str] | None = None,
     aslines: list[str] | None = None,
     nk_for_lines: int = 10,
+    
     fig: plt.Figure | None = None,
     ax: plt.Axes | None = None,
+    out: Path | None = None,
 ) -> plt.Figure:
     """
     Plot the current EoR Limits as a function of k and redshift.
 
     Parameters
     ----------
-    papers : list of str
-        List of papers to include in the plot (specified as 'author_year',
-        must be present in the data folder).
+    limits : list of str
+        List of limits to include in the plot (specified as 'AuthorYear').
+        These must be present in the data folder.
         Defaults to `None` meaning include all papers in the data folder.
-    include_theory : bool
-        Flag to include theory lines on plots.
-    theory_params : dict
-        Dictionary specifying theory lines to include on the plot. Dictionary
-        parameters depend on the theory paper. E.g. for lines from Mesinger et al. 2016,
-        the options are 'model' which can be 'bright' or 'faint', 'nf' which specifies
-        a neutral fraction and 'redshift'. See the paper specific modules for more
-        examples. Only used if `include_theory` is True.
-    theory_legend : bool
-        Option to exclude theory lines from the legend. Used by some users who prefer
-        to add the annotations on the lines by hand to improve readability.
+    theories
+        Theories to plot, (specified as a list of theory paper keys.
+        These must be present in the theory folder.
+        Defaults to `None` meaning no theories are plotted.
     theory_redshifts : list of float
         List specifying which redshifts to plot for theory lines. The default is to use
         the closest redshift to the centre of the prescribed redshift range. Multiple
         redshifts can be used.
-    plot_as_points : list of str
-        List of papers that have a line type data model to be plotted as points rather
-        that a line. This can help simplify the plot so that it's not so busy.
     delta_squared_range : list of float
         Range of delta squared values to include in plot (yaxis range). Must be
         length 2 with second element greater than first element. Defaults to [1e3, 1e6]
-        if include_theory is False and [1e0, 1e6] otherwise.
+        if theories are not included and [1e0, 1e6] otherwise.
     z_range : list of float
         Range of redshifts to include in the plot. Must be length 2 with the second
         element greater than the first element.
@@ -101,7 +99,8 @@ def make_plot(
         Dict specifying line widths to use for specific papers, to override the line
         widths specified in the paper yamls. Keys are paper names, values are desired
         line widths. Default of 'None' means use the values in the paper yamls.
-    bold_papers : list of str
+    bold_limits : list of str
+        List of limits to bold in caption.
         List of papers to bold in caption.
     fontsize : float
         Font size to use on plot.
@@ -109,18 +108,19 @@ def make_plot(
         File name to save plot to.
 
     """
+    
     if aspoints is None:
         aspoints = []
     if aslines is None:
         aslines = []
 
-    if papers is None:
+    if limits is None:
         # use all the papers. This gives weird ordering which we will fix later
-        papers_sorted = False
-        papers = list(KNOWN_LIMITS.keys())
+        limits_sorted = False
+        limits = list(KNOWN_LIMITS.keys())
     else:
         # if a list is passed in by hand, don't reorder it
-        papers_sorted = True
+        limits_sorted = True
 
     if delta_squared_range is None:
         if theories is not None:
@@ -128,14 +128,16 @@ def make_plot(
         else:
             delta_squared_range = (1e3, 1e6)
 
-    if bold_papers is None:
-        bold_papers = []
-    if linewidths is None:
-        linewidths = {}
+    if bold_limits is None:
+        bold_limits = []
+    if limit_linewidths is None:
+        limit_linewidths = {}
+    if theory_linewidths is None:
+        theory_linewidths = {}
 
     limits = [load_limit_data(p).drop_nan() for p in papers]
 
-    if not papers_sorted:
+    if not limits_sorted:
         limits.sort(key=lambda limit: limit.year)
 
     limits = select_k_and_z_ranges(limits, z_range, k_range, delta_squared_range)
@@ -156,7 +158,7 @@ def make_plot(
     norm = set_cmap_norm_via_zrange(actual_z_range)
     scalar_map = cmx.ScalarMappable(norm=norm, cmap=colormap)
 
-    fig_width = 25 if theory_legend else 20
+    fig_width = 25
     if theories is not None:
         fig_height = fig_width * (fig_ratio or 1)
     else:
@@ -179,7 +181,7 @@ def make_plot(
     legend_names, lines, paper_ks = plot_limit_papers(
         limits,
         limit_styles,
-        bold_papers,
+        bold_limits,
         shade_limits,
         colormap,
         norm,
@@ -195,19 +197,24 @@ def make_plot(
         # to those specified by the user, or the closest redshift to the centre of the
         # redshift range if no redshifts are specified.
         if theory_redshifts is not None:
-            theory_data = [
-                data.select_closest_z(z)
-                for data in theory_data
-                for z in theory_redshifts
-            ]
+            # theory_redshifts is now a dict mapping theory names to lists of redshifts
+            new_theory_data = []
+            for data in theory_data:
+                if data.key in theory_redshifts:
+                    for z in theory_redshifts[data.key]:
+                        new_theory_data.append(data.select_closest_z(z))
+                else:
+                    # Use closest to centre if no redshifts specified for this theory
+                    z_centre = 0.5 * (actual_z_range[0] + actual_z_range[1])
+                    new_theory_data.append(data.select_closest_z(z_centre))
+            theory_data = new_theory_data
         else:
             z_centre = 0.5 * (actual_z_range[0] + actual_z_range[1])
             theory_data = [data.select_closest_z(z_centre) for data in theory_data]
 
-        theory_styles = build_theory_styles(theory_data, linewidths)
+        theory_styles = build_theory_styles(theory_data, theory_linewidths)
 
         theory_lines, theory_labels = plot_theory_lines(
-            theory_legend,
             delta_squared_range,
             shade_theory_alpha,
             theory_data,
@@ -268,7 +275,12 @@ def make_plot(
 
     plt.subplots_adjust(bottom=plot_bottom)
     fig.tight_layout()
-    return fig
+    
+    if out is not None:
+        fig.savefig(out)
+        return None
+    else:
+        return fig
 
 
 def select_k_and_z_ranges(
@@ -386,7 +398,6 @@ def plot_sensitivities(fontsize, sensitivities, sensitivity_style):
 
 
 def plot_theory_lines(
-    theory_legend: bool,
     delta_squared_range: tuple[float, float],
     shade_theory_alpha: float,
     theory_paper_list: list[DataSet],
@@ -421,10 +432,7 @@ def plot_theory_lines(
             )
 
         lines.append(line)
-        if theory_styles.get(paper.key, {}).get("linewidth", 0) > 0 and theory_legend:
-            labels.append(label)
-        else:
-            labels.append(None)
+        labels.append(label)
 
     return lines, labels
 
@@ -531,7 +539,7 @@ def get_points_or_lines(
 def plot_limit_papers(
     limits: list[DataSet],
     limit_styles: dict[str, dict[str, Any]],
-    bold_papers: list[str],
+    bold_limits: list[str],
     shade_limits,
     colormap,
     norm,
@@ -545,7 +553,7 @@ def plot_limit_papers(
     paper_ks = []
     for paper in limits:
         logger.info(f"Plotting {paper.author} {paper.year}")
-        label = get_latex_paper_label(paper, bold=paper.key in bold_papers)
+        label = get_latex_paper_label(paper, bold=paper.key in bold_limits)
         if points_or_lines[paper.key] == "points":
             these_ks, line = plot_limit_paper_as_points(
                 shade_limits,
