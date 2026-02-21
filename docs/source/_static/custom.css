@@ -1,0 +1,4 @@
+/* Increase page width for sphinx-book-theme */
+.bd-main .bd-content .bd-article-container {
+    max-width: 90%;  /* Default is typically 60-70% */
+}
