@@ -226,6 +226,8 @@ class DataSet:
 
     def __attrs_post_init__(self) -> None:
         """Initialize computed fields after all other fields are set."""
+        if self._key:
+            return  # if already set, skip (e.g. when evolving)
         author = (
             self.author.split()[0]
             if "collaboration" in self.author.lower()
