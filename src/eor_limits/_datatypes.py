@@ -219,10 +219,20 @@ class DataSet:
     year: int = attrs.field(converter=int)
     doi: str = attrs.field(converter=str)
     data: Data = attrs.field(validator=attrs.validators.instance_of(Data))
-
     notes: tuple[str, ...] = attrs.field(
         default=(), validator=attrs.validators.instance_of(tuple)
     )
+    _key: str = attrs.field(default="")
+
+    def __attrs_post_init__(self) -> None:
+        """Initialize computed fields after all other fields are set."""
+        author = (
+            self.author.split()[0]
+            if "collaboration" in self.author.lower()
+            else self.author
+        )
+        year = str(self.year)
+        object.__setattr__(self, "_key", f"{author}{year}")
 
     def __repr__(self) -> str:
         """Return a string representation of the DataSet, including metadata."""
@@ -405,7 +415,7 @@ class DataSet:
     @property
     def key(self) -> str:
         """Return a unique key for this dataset based on its metadata."""
-        return f"{self.author}{self.year}"
+        return self._key
 
     def drop_nan(self) -> Self:
         """Return a new DataSet with any rows containing NaN values removed."""
