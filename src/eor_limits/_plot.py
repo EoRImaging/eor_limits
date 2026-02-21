@@ -2,16 +2,14 @@
 
 import logging
 from itertools import chain
-from typing import Any, Annotated
 from pathlib import Path
+from typing import Annotated, Any
 
 import h5py
-import json
 import matplotlib.cm as cmx
 import matplotlib.colors as colors
 import matplotlib.pyplot as plt
 import numpy as np
-
 from cyclopts import Parameter
 
 from ._data_loading import load_limit_data, load_theory_model
@@ -25,6 +23,7 @@ DEFAULT_TELESCOPE_MARKERS = {
     "HERA": "H",
     "GMRT": "v",
 }
+
 
 def make_plot(
     # Limit plotting options
@@ -65,7 +64,7 @@ def make_plot(
     Parameters
     ----------
     limits : list of str
-        List of limits to include in the plot. See `KNOWN_LIMITS` for available limits and their keys.
+        List of limits to include in the plot. See `KNOWN_LIMITS` for available limits.
         Defaults to `None` meaning include all papers in the data folder.
     base_limit_style : dict
         Base style parameters for plotting limits, applied to all limits before any
@@ -73,55 +72,62 @@ def make_plot(
         transparent.
     limit_styles : dict of dict
         Dictionary of style parameters for plotting limits. The keys are the limit
-        keys (e.g. `'Paciga2013'`), and the values are dictionaries with style parameters for
-        plotting, e.g. `{'color': 'C0', 's': 100}` for points or `{'color': 'C0', 'linewidth': 3}` for lines.
+        keys (e.g. `'Paciga2013'`), and the values are dictionaries with style
+        parameters for plotting, e.g. `{'color': 'C0', 's': 100}` for points or
+        `{'color': 'C0', 'linewidth': 3}` for lines.
     bold_limits : list of str
-        List of limits to bold in the legend (specified as limit keys, e.g. `'Paciga2013'`).
+        List of limits to bold in the legend (specified as limit keys,
+        e.g. `'Paciga2013'`).
     shade_limits : float
         If not `None`, the alpha value to use for shading the area above each limit line
         (or points, if plotted as points). If `None`, no shading is applied.
     aspoints : list of str
-        List of limits to plot as points instead of lines (specified as limit keys, e.g. `'Paciga2013'`).
-        If not specified, the function will automatically determine whether to plot as points 
-        or lines based on the number of k values (see `nk_for_lines`).
+        List of limits to plot as points instead of lines (specified as limit keys,
+        e.g. `'Paciga2013'`).
+        If not specified, the function will automatically determine whether to plot as
+        points or lines based on the number of k values (see `nk_for_lines`).
     aslines : list of str
-        List of limits to plot as lines instead of points (specified as limit keys, e.g. `'Paciga2013'`).
-        If not specified, the function will automatically determine whether to plot as points
-        or lines based on the number of k values (see `nk_for_lines`).
+        List of limits to plot as lines instead of points (specified as limit keys,
+        e.g. `'Paciga2013'`).
+        If not specified, the function will automatically determine whether to plot as
+        points or lines based on the number of k values (see `nk_for_lines`).
     nk_for_lines : int
-        Threshold for the number of k values to determine whether to plot a limit as points
-        or lines if not specified in `aspoints` or `aslines`. If a limit has more than this
-        number of k values, it will be plotted as a line by default; otherwise, it will be
-        plotted as points by default.
+        Threshold for the number of k values to determine whether to plot a limit as
+        points or lines if not specified in `aspoints` or `aslines`. If a limit has
+        more than this number of k values, it will be plotted as a line by default;
+        otherwise, it will be plotted as points by default.
     z_range : tuple of float
-        Tuple specifying the redshift range to include in the plot, in the form `(z_min, z_max)`.
-        If not specified, all redshifts will be included.
+        Tuple specifying the redshift range to include in the plot, in the form
+        `(z_min, z_max)`. If not specified, all redshifts will be included.
     k_range : tuple of float
-        Tuple specifying the k range to include in the plot, in the form `(k_min, k_max)`.
-        If not specified, all k values will be included.
+        Tuple specifying the k range to include in the plot, in the form
+        `(k_min, k_max)`. If not specified, all k values will be included.
     delta_squared_range : tuple of float
         Tuple specifying the delta squared range to include in the plot, in the form
-        `(delta_squared_min, delta_squared_max)`. If not specified, the range will be set
-        to `[1e0, 1e6]` if theories are plotted and `[1e3, 1e6]` if no theories are plotted.
+        `(delta_squared_min, delta_squared_max)`. If not specified, the range will be
+         set to `[1e0, 1e6]` if theories are plotted and `[1e3, 1e6]` otherwise.
     theories : list of str
-        List of theories to include in the plot. See `KNOWN_THEORIES` for available theories and their keys.
-        Defaults to `None` meaning no theories are plotted.
+        List of theories to include in the plot. See `KNOWN_THEORIES` for available
+        theories and their keys. Defaults to `None` meaning no theories are plotted.
     theory_redshifts : dict of list
-        Dictionary specifying which redshifts to plot for each theory. The keys are the theory keys
-        (e.g. `'Mesinger2016Faint'`), and the values are lists of redshifts to plot for that theory.
-        If not specified, the function will plot the line closest to the center of the redshift range.
+        Dictionary specifying which redshifts to plot for each theory. The keys are the
+         theory keys (e.g. `'Mesinger2016Faint'`), and the values are lists of redshifts
+         to plot for that theory.
+         If not specified, the function will plot the line closest to the center of
+         the redshift range.
     base_theory_style : dict
-        Base style parameters for plotting theories, applied to all theories before any individual
-        overrides. For example, `{'alpha': 0.7}` to make all theories slightly transparent.
+        Base style parameters for plotting theories, applied to all theories before any
+        individualoverrides. For example, `{'alpha': 0.7}` to make all theories
+        slightly transparent.
     theory_styles : dict of dict
-        Dictionary of style parameters for plotting theories. The keys are the theory keys
-        (e.g. `'Mesinger2016Faint'`), and the values are dictionaries with style parameters 
-        for plotting, e.g. `{'color': 'C1', 'linestyle': '--'}`.
+        Dictionary of style parameters for plotting theories. The keys are the theory
+        keys (e.g. `'Mesinger2016Faint'`), and the values are dictionaries with
+        style parameters for plotting, e.g. `{'color': 'C1', 'linestyle': '--'}`.
     bold_theories : list of str
         List of theories to bold in the legend.
     shade_theories : float
-        If not `None`, the alpha value to use for shading the area below each theory line.
-        If `None`, defaults to 1 divided by the number of theories.
+        If not `None`, the alpha value to use for shading the area below each theory
+        line. If `None`, defaults to 1 divided by the number of theories.
     sensitivities : dict
         Dictionary of sensitivities to plot on the figure. The keys are labels for each
         sensitivity estimate, and the values are the file names of the
@@ -129,25 +135,28 @@ def make_plot(
     sensitivity_style : dict
         Dictionary of style parameters for plotting sensitivities. The keys are
         labels for each sensitivity estimate, and the values are dictionaries with
-        style parameters for plotting, e.g. `{'color': 'k', 'linestyle': '--', 'linewidth': 3}`.
+        style parameters for plotting,
+        e.g. `{'color': 'k', 'linestyle': '--', 'linewidth': 3}`.
         An additional key 'sensitivity_kind' can be used to specify which kind of
         sensitivity to plot, e.g. `'sample+thermal'`, `'sample'` or `'thermal'`.
     colormap : str
-        Matplotlib colormap to use for coloring limits by redshift. Defaults to `'Spectral_r'`.
+        Matplotlib colormap to use for coloring limits by redshift.
+        Defaults to `'Spectral_r'`.
     fontsize : int
         Font size to use in the legend and axis labels. Defaults to `15`.
     fig_ratio : float
         Height to width ratio of the figure. If not specified, the height will be 1
-        times the width if theories are plotted, and 0.5 times the width if no theories are plotted.
+        times the width if theories are plotted, and 0.5 times the width if no theories
+        are plotted.
     fig : matplotlib.figure.Figure
-        If specified, the figure to plot on. If not specified, a new figure will be created.
+        If specified, the figure to plot on. If not specified, a new figure
+        will be created.
     ax : matplotlib.axes.Axes
-        If specified, the axis to plot on. If not specified, a new axis will be created.
+        If specified, the axis to plot on. If not specified, a new axis
+        will be created.
     out : str or Path or None
-        If specified, the file name to save the figure to. If not specified, the figure
-        will be returned as a matplotlib figure object.
+        If specified, the file name to save the figure to.
     """
-    
     ###################################################################################
     # Set up the figure and axis
     fig_width = 25
@@ -160,10 +169,10 @@ def make_plot(
         fig = plt.figure(figsize=(fig_width, fig_height))
     elif ax is not None:
         plt.sca(ax)
-    
+
     ###################################################################################
     # OBSERVATIONAL LIMITS
-    
+
     # Load data for limits and sort by year.
     if limits is None:
         limits = list(KNOWN_LIMITS.keys())
@@ -177,7 +186,7 @@ def make_plot(
         z_min = min(min(limit.data.z) for limit in limits)
         z_max = max(max(limit.data.z) for limit in limits)
         return (z_min, z_max)
-    
+
     def _get_k_range_from_limits(limits):
         k_min = min(min(k) for limit in limits for k in limit.data.k)
         k_max = max(max(k) for limit in limits for k in limit.data.k)
@@ -187,21 +196,21 @@ def make_plot(
             np.floor(k_min * min_factor) / min_factor,
             np.ceil(k_max * max_factor) / max_factor,
         )
-        
+
     z_range = z_range or _get_z_range_from_limits(limits)
     k_range = k_range or _get_k_range_from_limits(limits)
-    
+
     if delta_squared_range is None:
         if theories is not None:
             delta_squared_range = (1e0, 1e6)
         else:
             delta_squared_range = (1e3, 1e6)
-    
+
     limits = select_k_and_z_ranges(limits, z_range, k_range, delta_squared_range)
-    
-    z_range = _get_z_range_from_limits(limits) # again, since we removed some limits
-    k_range = _get_k_range_from_limits(limits) # again, since we removed some limits
-    
+
+    z_range = _get_z_range_from_limits(limits)  # again, since we removed some limits
+    k_range = _get_k_range_from_limits(limits)  # again, since we removed some limits
+
     # Set up colormap for redshift.
     if z_range[0] == z_range[1]:
         z_range_use = [z_range[0] - 1, z_range[0] + 1]
@@ -212,15 +221,20 @@ def make_plot(
 
     # Building plotting styles for each limit.
     limit_styles = build_limit_styles(
-        limits, aspoints, aslines, nk_for_lines,
-        base_limit_style, limit_styles
+        limits, aspoints, aslines, nk_for_lines, base_limit_style, limit_styles
     )
-    
-    # Whether to bold each limit in the legend
-    bold_limits = bold_limits or [] # equivalent to: if bold_limits is None: bold_limits = []
-    limit_labels = [get_latex_limit_label(limit, bold=(limit.key in bold_limits)) for limit in limits]
 
-    # Plotting the limits as points or lines, depending on the number of k values and user specifications.
+    # Whether to bold each limit in the legend
+    bold_limits = (
+        bold_limits or []
+    )  # equivalent to: if bold_limits is None: bold_limits = []
+    limit_labels = [
+        get_latex_limit_label(limit, bold=(limit.key in bold_limits))
+        for limit in limits
+    ]
+
+    # Plotting the limits as points or lines, depending on the number of k values
+    # or user specifications.
     limit_lines = plot_limits(
         limits,
         limit_styles,
@@ -229,32 +243,40 @@ def make_plot(
         delta_squared_range,
         scalar_map,
     )
-    
+
     ###################################################################################
     # THEORY MODELS
-    
+
     # Loading data for theories
-    theories = theories or [] # equivalent to: if theories is None: theories = []
+    theories = theories or []  # equivalent to: if theories is None: theories = []
     theories = [load_theory_model(theory) for theory in theories]
-    
+
     # Downselecting to specified redshifts for theories,
     # or closest redshift to centre of redshift range if no redshifts specified.
-    theory_redshifts = theory_redshifts or {} # equivalent to: if theory_redshifts is None: theory_redshifts = {}
+    theory_redshifts = (
+        theory_redshifts or {}
+    )  # equivalent to: if theory_redshifts is None: theory_redshifts = {}
     new_theories = []
     for theory in theories:
         if theory.key not in theory_redshifts:
             theory_redshifts[theory.key] = [0.5 * (z_range[0] + z_range[1])]
-        for z in theory_redshifts[theory.key]:
-            new_theories.append(theory.select_closest_z(z))
+        new_theories.extend([
+            theory.select_closest_z(z) for z in theory_redshifts[theory.key]
+        ])
     theories = new_theories
-    
+
     # Build styles for theory lines, applying any overrides specified by the user.
     theory_styles = build_theory_styles(theories, base_theory_style, theory_styles)
-    
+
     # Whether to bold each theory in the legend
-    bold_theories = bold_theories or [] # equivalent to: if bold_theories is None: bold_theories = []
-    theory_labels = [get_latex_theory_label(theory, bold=(theory.key in bold_theories)) for theory in theories]
-    
+    bold_theories = (
+        bold_theories or []
+    )  # equivalent to: if bold_theories is None: bold_theories = []
+    theory_labels = [
+        get_latex_theory_label(theory, bold=(theory.key in bold_theories))
+        for theory in theories
+    ]
+
     # Plotting the theory lines.
     theory_lines = plot_theories(
         theories,
@@ -263,19 +285,21 @@ def make_plot(
         shade_theories,
         delta_squared_range,
     )
-    
+
     ###################################################################################
     # SENSITIVITIES
-    
+
     # If sensitivities are specified, build styles and plot them.
-    sensitivities = sensitivities or {} # equivalent to: if sensitivities is None: sensitivities = {}
+    sensitivities = (
+        sensitivities or {}
+    )  # equivalent to: if sensitivities is None: sensitivities = {}
 
     # Build styles for sensitivity lines, applying any overrides specified by the user.
     sensitivity_style = build_sensitivity_styles(sensitivities, sensitivity_style)
-    
+
     # Plot the sensitivity curves.
     plot_sensitivities(sensitivities, sensitivity_style, fontsize)
-    
+
     ###################################################################################
     # PLOT ADJUSTMENTS
 
@@ -327,10 +351,10 @@ def make_plot(
 
     plt.subplots_adjust(bottom=plot_bottom)
     fig.tight_layout()
-    
+
     if out is not None:
         fig.savefig(out)
-        
+
     return fig
 
 
@@ -346,13 +370,13 @@ def select_k_and_z_ranges(
         if z_range is not None:
             if len(z_range) != 2:
                 raise ValueError(
-                    "redshift range must have 2 elements with the second element greater "
-                    "than the first element."
+                    "redshift range must have 2 elements with the second element "
+                    "greater than the first element."
                 )
             if z_range[0] > z_range[1]:
                 raise ValueError(
-                    "redshift range must have 2 elements with the second element greater "
-                    "than the first element."
+                    "redshift range must have 2 elements with the second element "
+                    "greater than the first element."
                 )
             try:
                 limit = limit.select_z_range(*z_range)
@@ -366,13 +390,13 @@ def select_k_and_z_ranges(
         if k_range is not None:
             if len(k_range) != 2:
                 raise ValueError(
-                    "k range must have 2 elements with the second element greater than "
-                    "the first element."
+                    "k range must have 2 elements with the second element "
+                    "greater than the first element."
                 )
             if k_range[0] > k_range[1]:
                 raise ValueError(
-                    "k range must have 2 elements with the second element greater than "
-                    "the first element."
+                    "k range must have 2 elements with the second element "
+                    "greater than the first element."
                 )
             try:
                 limit = limit.select_k_range(*k_range)
@@ -404,13 +428,14 @@ def select_k_and_z_ranges(
                 continue
 
         new_limits.append(limit)
-        
+
     if not new_limits:
         raise ValueError(
             "No limits in specified redshift, k and/or delta squared range."
         )
-        
+
     return new_limits
+
 
 def build_limit_styles(
     limits: list[DataSet],
@@ -421,14 +446,13 @@ def build_limit_styles(
     overrides: dict[str, dict[str, Any]] | None = None,
 ) -> dict[str, dict[str, Any]]:
     """Build a dictionary of styles to use for each limit paper."""
-    aspoints = aspoints or [] # equivalent to: if aspoints is None: aspoints = []
-    aslines = aslines or [] # equivalent to: if aslines is None: aslines = []
+    aspoints = aspoints or []  # equivalent to: if aspoints is None: aspoints = []
+    aslines = aslines or []  # equivalent to: if aslines is None: aslines = []
     styles = {}
     for limit in limits:
-        
         style = {}
-        
-        # Determine whether to plot as points or lines, based on user specifications 
+
+        # Determine whether to plot as points or lines, based on user specifications
         # and number of k values.
         if limit.key in aspoints:
             style["as_line"] = False
@@ -440,14 +464,14 @@ def build_limit_styles(
                 style["as_line"] = False
             else:
                 style["as_line"] = True
-        
+
         # Set the style, if plotting as points, applying any overrides.
         if not style["as_line"]:
             style["s"] = 150
             style |= base_override if base_override else {}
             style["marker"] = DEFAULT_TELESCOPE_MARKERS.get(limit.telescope, "o")
             style |= overrides.get(f"{limit.key}", {}) if overrides else {}
-            
+
         # Set the style, if plotting as lines, applying any overrides.
         else:
             style["linewidth"] = 2
@@ -456,7 +480,7 @@ def build_limit_styles(
             style |= overrides.get(f"{limit.key}", {}) if overrides else {}
 
         styles[f"{limit.key}"] = style
-        
+
     return styles
 
 
@@ -478,13 +502,14 @@ def build_theory_styles(
         styles[f"{theory.key}"] = style
     return styles
 
+
 def build_sensitivity_styles(
     sensitivities: dict[str, str],
     sensitivity_style: dict[str, dict[str, Any]] | None,
 ) -> dict[str, dict[str, Any]]:
     """Build a dictionary of styles to use for each sensitivity curve."""
     styles = {}
-    for name in sensitivities.keys():
+    for name in sensitivities:
         style = {
             "sensitivity_kind": "sample+thermal",
             "linestyle": "--",
@@ -537,28 +562,28 @@ def plot_limits(
     scalar_map: cmx.ScalarMappable,
 ):
     """Plot limit papers on the current plot."""
-    
     lines = []
-    
-    for limit, label in zip(limits, limit_labels):
-        
-        logging.getLogger("eor_limits").info(
-            f"Plotting {limit.author} {limit.year}"
-        )
-        
+
+    for limit, label in zip(limits, limit_labels, strict=True):
+        logging.getLogger("eor_limits").info(f"Plotting {limit.author} {limit.year}")
+
         limit_style = limit_styles[limit.key]
-        as_line = limit_style.pop("as_line") # we pop this since it's not a valid argument 
-                                             # for plt.plot or plt.scatter
-                                             
+        as_line = limit_style.pop(
+            "as_line"
+        )  # we pop this since it's not a valid argument
+        # for plt.plot or plt.scatter
+
         # If we are plotting as points, we plot each redshift with specific colors
         # and making sure to meet towards the right edges to avoid overlaps.
         if not as_line:
-            
             k = np.concatenate(limit.data.k)
             dsq = np.concatenate(limit.data.delta_squared)
             z = list(
                 chain.from_iterable(
-                    ([z] * len(kk) for z, kk in zip(limit.data.z, limit.data.k, strict=True)),
+                    (
+                        [z] * len(kk)
+                        for z, kk in zip(limit.data.z, limit.data.k, strict=True)
+                    ),
                 )
             )
 
@@ -596,12 +621,11 @@ def plot_limits(
                         alpha=alpha,
                         zorder=zorder,
                     )
-        
-        # If we are plotting as lines, we need to flatten the data 
-        # since the k and delta_squared values are given as lists of arrays for each redshift.
+
+        # If we are plotting as lines, we need to flatten the data
+        # since the k and delta_squared values are given as lists of arrays for each z.
         else:
-            
-           for ind, redshift in enumerate(limit.data.z):
+            for ind, redshift in enumerate(limit.data.z):
                 k_vals = limit.data.k[ind]
                 delta_squared = limit.data.delta_squared[ind]
                 k_lower = (
@@ -630,7 +654,7 @@ def plot_limits(
                 )).T.flatten()
 
                 color_val = scalar_map.to_rgba(redshift)
-                
+
                 # make black outline by plotting thicker black line first
                 plt.plot(
                     k_edges,
@@ -663,10 +687,11 @@ def plot_limits(
 
                 if ind == 0:
                     line = this_line
-            
+
         lines.append(line)
 
     return lines
+
 
 def plot_theories(
     theories: list[DataSet],
@@ -676,28 +701,24 @@ def plot_theories(
     delta_squared_range: tuple[float, float],
 ):
     """Plot theory lines on the current plot."""
-    
     lines = []
-    
+
     if shade_theories is None:
         shade_theories = 1.0 / len(theories)
-    
-    for theory, label in zip(theories, theory_labels):
-        
-        logging.getLogger("eor_limits").info(
-            f"Plotting {theory.author} {theory.year}"
-        )
-        
+
+    for theory, label in zip(theories, theory_labels, strict=True):
+        logging.getLogger("eor_limits").info(f"Plotting {theory.author} {theory.year}")
+
         theory_style = theory_styles[theory.key]
-        
+
         (line,) = plt.plot(
             theory.data.k[0],
             theory.data.delta_squared[0],
             label=label,
             zorder=2,
-            **theory_style
+            **theory_style,
         )
-        
+
         if shade_theories:
             color_use = theory_style["color"]
             zorder = 0
@@ -714,6 +735,7 @@ def plot_theories(
         lines.append(line)
 
     return lines
+
 
 def plot_sensitivities(sensitivities, sensitivity_style, fontsize):
     """Plot the sensitivity curves."""

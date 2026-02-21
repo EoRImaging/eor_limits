@@ -5,7 +5,6 @@
 
 import functools
 import logging
-from pathlib import Path
 
 from cyclopts import App
 from rich.logging import RichHandler
@@ -14,6 +13,7 @@ from ._plot import make_plot as _make_plot
 
 app = App()
 logger = logging.getLogger("eor_limits")
+
 
 @functools.wraps(_make_plot)
 def make_plot(**kwargs):
@@ -25,6 +25,6 @@ def make_plot(**kwargs):
         handlers=[RichHandler(rich_tracebacks=True)],
     )
     _make_plot(**kwargs)
-    
-app.command(make_plot)
 
+
+app.command(make_plot)
