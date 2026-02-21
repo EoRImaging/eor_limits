@@ -30,7 +30,7 @@ keywords = ["cosmology"]
 dynamic = ["version"]
 
 [project.scripts]
-eor-limits = "eor_limits._plot:app"
+eor-limits = "eor_limits._cli:app"
 
 [build-system]
 requires = ["hatchling", "uv-dynamic-versioning"]

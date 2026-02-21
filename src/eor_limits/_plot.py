@@ -2,13 +2,17 @@
 
 import logging
 from itertools import chain
-from typing import Any, Literal
+from typing import Any, Annotated
 from pathlib import Path
 
+import h5py
+import json
 import matplotlib.cm as cmx
 import matplotlib.colors as colors
 import matplotlib.pyplot as plt
 import numpy as np
+
+from cyclopts import Parameter
 
 from ._data_loading import load_limit_data, load_theory_model
 from ._datatypes import DataSet
@@ -22,11 +26,6 @@ DEFAULT_TELESCOPE_MARKERS = {
     "GMRT": "v",
 }
 
-app = App()
-
-logger = logging.getLogger("eor_limits")
-
-@app.command
 def make_plot(
     # Limit plotting options
     limits: list[str] | None = None,
@@ -38,9 +37,9 @@ def make_plot(
     aslines: list[str] | None = None,
     nk_for_lines: int = 10,
     # Limits selection options
-    delta_squared_range: tuple[float, float] | None = None,
     z_range: tuple[float, float] | None = None,
     k_range: tuple[float, float] | None = None,
+    delta_squared_range: tuple[float, float] | None = None,
     # Theory plotting options
     theories: list[str] | None = None,
     theory_redshifts: dict[str, list[float]] | None = None,
@@ -56,9 +55,9 @@ def make_plot(
     fontsize: int = 15,
     fig_ratio: float | None = None,
     # Output options
-    fig: plt.Figure | None = None,
-    ax: plt.Axes | None = None,
-    out: Path | None = None,
+    fig: Annotated[plt.Figure | None, Parameter(show=False)] = None,
+    ax: Annotated[plt.Axes | None, Parameter(show=False)] = None,
+    out: str | Path | None = None,
 ) -> plt.Figure:
     """
     Plot the current EoR Limits as a function of k and redshift.
@@ -94,6 +93,16 @@ def make_plot(
         or lines if not specified in `aspoints` or `aslines`. If a limit has more than this
         number of k values, it will be plotted as a line by default; otherwise, it will be
         plotted as points by default.
+    z_range : tuple of float
+        Tuple specifying the redshift range to include in the plot, in the form `(z_min, z_max)`.
+        If not specified, all redshifts will be included.
+    k_range : tuple of float
+        Tuple specifying the k range to include in the plot, in the form `(k_min, k_max)`.
+        If not specified, all k values will be included.
+    delta_squared_range : tuple of float
+        Tuple specifying the delta squared range to include in the plot, in the form
+        `(delta_squared_min, delta_squared_max)`. If not specified, the range will be set
+        to `[1e0, 1e6]` if theories are plotted and `[1e3, 1e6]` if no theories are plotted.
     theories : list of str
         List of theories to include in the plot. See `KNOWN_THEORIES` for available theories and their keys.
         Defaults to `None` meaning no theories are plotted.
@@ -134,7 +143,7 @@ def make_plot(
         If specified, the figure to plot on. If not specified, a new figure will be created.
     ax : matplotlib.axes.Axes
         If specified, the axis to plot on. If not specified, a new axis will be created.
-    out : str or Path
+    out : str or Path or None
         If specified, the file name to save the figure to. If not specified, the figure
         will be returned as a matplotlib figure object.
     """
@@ -158,10 +167,10 @@ def make_plot(
     # Load data for limits and sort by year.
     if limits is None:
         limits = list(KNOWN_LIMITS.keys())
-        limits = [DataSet.load(l).drop_nan() for l in limits]
+        limits = [load_limit_data(l).drop_nan() for l in limits]
         limits.sort(key=lambda limit: limit.year)
     else:
-        limits = [DataSet.load(l).drop_nan() for l in limits]
+        limits = [load_limit_data(l).drop_nan() for l in limits]
     
     # Select the specified k and z ranges from the limits
     def _get_z_range_from_limits(limits):
@@ -346,7 +355,7 @@ def select_k_and_z_ranges(
             try:
                 limit = limit.select_z_range(*z_range)
             except ValueError:
-                logger.info(
+                logging.getLogger("eor_limits").info(
                     f"{limit.key} skipped since its outside redshift range "
                     f"[{z_range[0]} < z < {z_range[1]}]"
                 )
@@ -366,7 +375,7 @@ def select_k_and_z_ranges(
             try:
                 limit = limit.select_k_range(*k_range)
             except ValueError:
-                logger.info(
+                logging.getLogger("eor_limits").info(
                     f"{limit.key} skipped since its outside k range "
                     f"[{k_range[0]} < k < {k_range[1]}]"
                 )
@@ -386,7 +395,7 @@ def select_k_and_z_ranges(
             try:
                 limit = limit.select_delta_squared_range(*delta_squared_range)
             except ValueError:
-                logger.info(
+                logging.getLogger("eor_limits").info(
                     f"{limit.key} skipped since its outside delta squared range "
                     f"[{delta_squared_range[0]} < delta^2 < {delta_squared_range[1]}]"
                 )
@@ -531,7 +540,9 @@ def plot_limits(
     
     for limit, label in zip(limits, limit_labels):
         
-        logger.info(f"Plotting {limit.author} {limit.year}")
+        logging.getLogger("eor_limits").info(
+            f"Plotting {limit.author} {limit.year}"
+        )
         
         limit_style = limit_styles[limit.key]
         as_line = limit_style.pop("as_line") # we pop this since it's not a valid argument 
@@ -668,7 +679,9 @@ def plot_theories(
     
     for theory, label in zip(theories, theory_labels):
         
-        logger.info(f"Plotting {theory.author} {theory.year}")
+        logging.getLogger("eor_limits").info(
+            f"Plotting {theory.author} {theory.year}"
+        )
         
         theory_style = theory_styles[theory.key]
         
