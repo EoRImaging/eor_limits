@@ -28,7 +28,41 @@ def _tuple_of_floatarrays(x):
 
 @attrs.define(frozen=True, kw_only=True)
 class Data:
-    """A class representing the data for a single dataset."""
+    """
+    Class representing the data for a single dataset.
+
+    The data consists of arrays of redshift values, k values
+    for those redshifts, and the corresponding power spectrum upper limits
+    (delta_squared), along with optional lower and upper bounds
+    on the redshift and k values.
+
+    Parameters
+    ----------
+    z : np.ndarray
+        A 1D array of redshift values.
+    z_lower : np.ndarray | None
+        A 1D array of lower bounds on the redshift values,
+        or None if not available.
+    z_upper : np.ndarray | None
+        A 1D array of upper bounds on the redshift values,
+        or None if not available.
+    z_tags : tuple[str, ...] | None
+        A 1D array of tags for the redshift values (e.g. 'Pol E-W', 'Field 1'),
+        or None if not available. Thus, different polarizations or fields
+        are treated as separate redshift entries with the same $z$ value
+        but different tags.
+    k : tuple[np.ndarray, ...]
+        A tuple of 1D arrays of k values, one for each redshift value.
+    k_lower : tuple[np.ndarray, ...] | None
+        A tuple of 1D arrays of lower bounds on the k values, one for each
+        redshift value, or None if not available.
+    k_upper : tuple[np.ndarray, ...] | None
+        A tuple of 1D arrays of upper bounds on the k values, one for each
+        redshift value, or None if not available.
+    delta_squared : tuple[np.ndarray, ...]
+        A tuple of 1D arrays of delta_squared values,
+        one for each redshift value.
+    """
 
     z: np.ndarray = attrs.field(converter=_floatarray)
     z_lower: np.ndarray | None = attrs.field(
@@ -153,7 +187,12 @@ class Data:
         raise ValueError("Either delta_squared or delta must be provided.")
 
     def as_pandas_df(self) -> pd.DataFrame:
-        """Convert the Data object to a pandas DataFrame."""
+        """
+        Convert the Data object to a pandas DataFrame.
+
+        This is useful for viewing the data in a tabular format
+        or using the slicing/conversion capabilities of pandas.
+        """
         # Create DataFrame row by row for each z value
         rows = []
         for i in range(len(self.z)):
@@ -205,13 +244,33 @@ class Data:
 
 @attrs.define(frozen=True)
 class DataSet:
-    """A class representing a dataset, including metadata and the data itself.
+    """
+    A class representing a dataset, including metadata and the data itself.
 
     The data is stored in a Data object, which contains arrays of z, k and
-    delta_squared values.
+    delta_squared values. The metadata includes the telescope,
+    author, year and doi of the dataset, as well as any additional notes.
 
-    The metadata includes the telescope, author, year and doi of the dataset, as well
-    as any additional notes.
+    Attributes
+    ----------
+    telescope : str
+        The name of the telescope or experiment that produced the dataset.
+    author : str
+        The name of the first author of the dataset,
+        or the collaboration name if applicable.
+    year : int
+        The year the dataset was published.
+    doi : str
+        The DOI of the dataset. Only published datasets with DOIs should be
+        included in the repository.
+    data : Data
+        The data for the dataset, stored in a Data object.
+    notes : tuple[str, ...]
+        Any additional notes about the dataset, such as details of the analysis
+        or assumptions made about $k$-bins.
+    key : str
+        A unique key for the dataset, automatically generated from the author and
+        year (e.g. "Paciga2013"). This is used for referencing the dataset.
     """
 
     telescope: str = attrs.field(converter=str)

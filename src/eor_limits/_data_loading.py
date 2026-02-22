@@ -14,7 +14,21 @@ __all___ = [
 
 
 def load_theory_model(name: str) -> DataSet:
-    """Get the theory data processor for a given theory name."""
+    """
+    Load a theory model from the known theories.
+
+    Parameters
+    ----------
+    name : str
+        The name of the theory model to load
+        (see ``KNOWN_THEORIES`` for available models).
+
+    Returns
+    -------
+    DataSet
+        The loaded theory model as a DataSet object.
+
+    """
     if name not in KNOWN_THEORIES:
         raise ValueError(
             f"Theory '{name}' not found. Available theories: {KNOWN_THEORIES.keys()}"
@@ -22,8 +36,21 @@ def load_theory_model(name: str) -> DataSet:
     return __all_theories__[name].load_as_dataset()
 
 
-def load_limit_data(name: str | Path, /) -> DataSet:
-    """Load the limit data for a given paper name."""
+def load_limit_data(name: str | Path) -> DataSet:
+    """
+    Load observational limits data from existing datasets or from a YAML file.
+
+    Parameters
+    ----------
+    name : str | Path
+        The name of the dataset to load (see ``KNOWN_LIMITS`` for available datasets)
+        or a path to a YAML file containing the dataset.
+
+    Returns
+    -------
+    DataSet
+        The loaded observational limits as a DataSet object.
+    """
     return DataSet.load(name)
 
 

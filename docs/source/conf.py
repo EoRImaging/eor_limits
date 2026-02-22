@@ -41,7 +41,6 @@ extensions = [
     "sphinx.ext.ifconfig",
     "sphinx.ext.mathjax",
     "sphinx.ext.napoleon",
-    "sphinx.ext.autosectionlabel",
     "numpydoc",
     "nbsphinx",
     "IPython.sphinxext.ipython_console_highlighting",
@@ -49,16 +48,18 @@ extensions = [
     "myst_parser",
 ]
 
-# Autosectionlabel
-autosectionlabel_prefix_document = True
 # Autosummary
-autosummary_generate = True
+autosummary_generate = True  # Automatically generate summary files for documented items
+# Autodoc
+autodoc_typehints = "none"  # No type hints, let numpydoc handle them in the docstrings
 # Numpydoc
-numpydoc_show_class_members = False
+numpydoc_show_class_members = False  # Don't show class members by default
+numpydoc_class_members_toctree = False  # Don't create toctree for class members
+numpydoc_xref_param_type = True  # Enable cross-referencing for parameter types
 # Napoleon
-napoleon_use_ivar = True
-napoleon_use_rtype = False
-napoleon_use_param = False
+napoleon_use_ivar = True  # Use instance variables for attributes
+napoleon_use_rtype = False  # Don't use rtype for return types (use :returns:)
+napoleon_use_param = False  # Don't use :param: for parameters (use :Parameters:)
 # MathJax
 mathjax_path = (
     "http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"
