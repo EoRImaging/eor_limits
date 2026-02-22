@@ -35,13 +35,11 @@ class BaseTheoryProcessor(ABC):
     @classmethod
     def load_as_dataset(cls) -> DataSet:
         """Load the data as a DataSet."""
-        dataset = DataSet(
+        return DataSet(
             telescope=cls.simulator,
             author=cls.author,
             year=cls.year,
             doi=cls.doi,
             data=cls._load_data(),
+            key=cls.__name__,
         )
-        # Override the default key convention (a bit hacky but it works)
-        object.__setattr__(dataset, "_key", f"{cls.__name__}")
-        return dataset
