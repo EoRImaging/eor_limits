@@ -228,13 +228,7 @@ class DataSet:
         """Initialize computed fields after all other fields are set."""
         if self._key:
             return  # if already set, skip (e.g. when evolving)
-        author = (
-            self.author.split()[0]
-            if "collaboration" in self.author.lower()
-            else self.author
-        )
-        year = str(self.year)
-        object.__setattr__(self, "_key", f"{author}{year}")
+        object.__setattr__(self, "_key", f"{self.author}{self.year}")
 
     def __repr__(self) -> str:
         """Return a string representation of the DataSet, including metadata."""
