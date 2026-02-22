@@ -254,7 +254,7 @@ class DataSet:
     @classmethod
     def load(cls, path: str | Path, /) -> Self:
         """Load a DataSet from a YAML file or a known dataset name."""
-        from ._loading import _normalize_dataset_name
+        from ._data_loading import _normalize_dataset_name
 
         path = _normalize_dataset_name(path)
 
