@@ -10,6 +10,6 @@ from eor_limits import plots
 Then make a plot like this:
 
 ```python
-fig = plots.make_plot()
+fig = plots.plot_vs_k()
 fig.show()  # or savefig, or whatever
 ```

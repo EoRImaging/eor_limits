@@ -9,14 +9,14 @@ import logging
 from cyclopts import App
 from rich.logging import RichHandler
 
-from ._plot import make_plot as _make_plot
+from ._plot import plot_vs_k as _plot_vs_k
 
 app = App()
 logger = logging.getLogger("eor_limits")
 
 
-@functools.wraps(_make_plot)
-def make_plot(**kwargs):
+@functools.wraps(_plot_vs_k)
+def plot_vs_k(**kwargs):
     """CLI wrapper for plotting EoR limits."""
     logging.basicConfig(
         level=logging.INFO,
@@ -24,7 +24,7 @@ def make_plot(**kwargs):
         datefmt="[%X]",
         handlers=[RichHandler(rich_tracebacks=True)],
     )
-    _make_plot(**kwargs)
+    _plot_vs_k(**kwargs)
 
 
-app.command(make_plot)
+app.command(plot_vs_k)
