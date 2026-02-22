@@ -27,7 +27,7 @@ def load_limit_data(name: str | Path, /) -> DataSet:
     return DataSet.load(name)
 
 
-def _normalize_dataset_name(path: str | Path) -> Path:
+def _normalize_dataset_name(path: str | Path, /) -> Path:
     if isinstance(path, str) and not path.endswith(".yaml"):
         path = DATA_PATH / (path + ".yaml")
     elif isinstance(path, str):
