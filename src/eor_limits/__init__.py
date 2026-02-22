@@ -10,7 +10,7 @@ from ._data_loading import (
     load_theory_model,
 )
 from ._datatypes import Data, DataSet
-from ._plot import make_plot
+from ._plot import plot_vs_k
 from .data import KNOWN_LIMITS
 from .theory import KNOWN_THEORIES
 
@@ -21,5 +21,5 @@ __all__ = [
     "DataSet",
     "load_limit_data",
     "load_theory_model",
-    "make_plot",
+    "plot_vs_k",
 ]
