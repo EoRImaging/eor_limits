@@ -47,10 +47,10 @@ class CLIError(Exception):
 
 
 @functools.wraps(_plot_vs_k)
-def plot_vs_k(**kwargs):
+def plot_vs_k(*args, **kwargs):
     """CLI wrapper for plotting limits vs scale, k."""
     try:
-        _plot_vs_k(**kwargs)
+        _plot_vs_k(*args, **kwargs)
     except Exception as e:
         error = CLIError(str(e), title="Error")
         console.print(error.render())
@@ -58,10 +58,10 @@ def plot_vs_k(**kwargs):
 
 
 @functools.wraps(_plot_vs_z)
-def plot_vs_z(**kwargs):
+def plot_vs_z(*args, **kwargs):
     """CLI wrapper for plotting limits vs scale, z."""
     try:
-        _plot_vs_z(**kwargs)
+        _plot_vs_z(*args, **kwargs)
     except Exception as e:
         error = CLIError(str(e), title="Error")
         console.print(error.render())
