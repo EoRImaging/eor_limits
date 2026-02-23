@@ -40,10 +40,14 @@ def load_limit_data(name: str | Path) -> DataSet:
     """
     Load observational limits data from existing datasets or from a YAML file.
 
+    This function wraps and provides the same functionality
+    as :func:`eor_limits.DataSet.load`, see docs there for more details.
+
     Parameters
     ----------
     name : str | Path
-        The name of the dataset to load (see ``KNOWN_LIMITS`` for available datasets)
+        The name of the limits data to load
+        (see ``KNOWN_LIMITS`` for available limits)
         or a path to a YAML file containing the dataset.
 
     Returns
