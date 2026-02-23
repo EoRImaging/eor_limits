@@ -32,24 +32,24 @@ def plot_vs_z(*args, **kwargs):
 
 def plot_vs_k(
     # Limit plotting options
-    limits: list[str] | None = None,
+    limits: Annotated[list[str] | None, Parameter(consume_multiple=True)] = None,
     base_limit_style: dict[str, Any] | None = None,
     limit_styles: dict[str, dict[str, Any]] | None = None,
-    bold_limits: list[str] | None = None,
+    bold_limits: Annotated[list[str] | None, Parameter(consume_multiple=True)] = None,
     shade_limits: bool = True,
-    aspoints: list[str] | None = None,
-    aslines: list[str] | None = None,
+    aspoints: Annotated[list[str] | None, Parameter(consume_multiple=True)] = None,
+    aslines: Annotated[list[str] | None, Parameter(consume_multiple=True)] = None,
     nk_for_lines: int = 10,
     # Limits selection options
     z_range: tuple[float, float] | None = None,
     k_range: tuple[float, float] | None = None,
     delta_squared_range: tuple[float, float] | None = None,
     # Theory plotting options
-    theories: list[str] | None = None,
+    theories: Annotated[list[str] | None, Parameter(consume_multiple=True)] = None,
     theory_redshifts: dict[str, list[float]] | None = None,
     base_theory_style: dict[str, Any] | None = None,
     theory_styles: dict[str, dict[str, Any]] | None = None,
-    bold_theories: list[str] | None = None,
+    bold_theories: Annotated[list[str] | None, Parameter(consume_multiple=True)] = None,
     shade_theories: bool = True,
     # Sensitivity plotting options
     sensitivities: dict | None = None,
