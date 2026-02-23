@@ -12,7 +12,7 @@ munoz_fdm3_path = THEORY_PATH / "Munoz2018" / "munoz_2018_fdm3.yaml"
 class Munoz2018FDM3(BaseTheoryProcessor):
     """Processor for Muñoz 2018 Mini-Charged DM model with f_DM=0.3."""
 
-    simulator = "(F_DM=0.3)"
+    simulator = "f_{DM}=0.3"
     author = "Muñoz"
     year = 2018
     doi = "10.1038/s41586-018-0151-x"

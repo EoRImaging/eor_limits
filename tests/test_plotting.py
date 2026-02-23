@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from eor_limits import KNOWN_LIMITS, KNOWN_THEORIES, load_theory_model, plot_vs_k
+from eor_limits import KNOWN_LIMITS, KNOWN_THEORIES, plot_vs_k
 from eor_limits._cli import app
 
 # Output directory for test PDFs
@@ -21,47 +21,13 @@ def test_plot_vs_k_basic():
     assert fig is not None
 
 
-def test_plot_vs_k_with_specific_limits():
-    """Test making a plot with specific limits."""
-    limits = list(KNOWN_LIMITS.keys())[:2]  # Use first 2 limits
-    fig = plot_vs_k(
-        limits=limits, out=OUTPUT_DIR / "test_plot_vs_k_with_specific_limits.pdf"
-    )
-    assert fig is not None
-
-
-def test_plot_vs_k_with_multiple_theories():
-    """Test making a plot with multiple theories."""
-    theories = list(KNOWN_THEORIES.keys())[:2]  # Use first 2 theories
-    theory_redshifts = []
-    for theory in theories:
-        theory = load_theory_model(theory)
-        theory_redshifts.append(theory.data.z[:3])
-    fig = plot_vs_k(
-        theories=theories, out=OUTPUT_DIR / "test_plot_vs_k_with_multiple_theories.pdf"
-    )
-    assert fig is not None
-
-
-def test_plot_vs_k_with_limits_and_theories():
-    """Test making a plot with both limits and theories."""
-    limits = list(KNOWN_LIMITS.keys())[:2]  # Use first 2 limits
-    theories = list(KNOWN_THEORIES.keys())[:2]  # Use first 2 theories
-    fig = plot_vs_k(
-        limits=limits,
-        theories=theories,
-        out=OUTPUT_DIR / "test_plot_vs_k_with_limits_and_theories.pdf",
-    )
-    assert fig is not None
-
-
-def test_plot_vs_k_with_styling_options():
+def test_plot_vs_k_with_fig_styling():
     """Test making a plot with custom styling parameters."""
     fig = plot_vs_k(
         fontsize=12,
         colormap="viridis",
-        shade_limits=0.3,
-        out=OUTPUT_DIR / "test_plot_vs_k_with_styling_options.pdf",
+        fig_ratio=2.0,
+        out=OUTPUT_DIR / "test_plot_vs_k_with_fig_styling.pdf",
     )
     assert fig is not None
 
@@ -91,29 +57,9 @@ def test_plot_vs_k_with_delta_squared_range():
     assert fig is not None
 
 
-def test_plot_vs_k_with_bold_limits():
-    """Test making a plot with bolded specific limits."""
-    limits = list(KNOWN_LIMITS.keys())[:3]
-    bold_limits = limits[:2]
-    fig = plot_vs_k(
-        limits=limits,
-        bold_limits=bold_limits,
-        out=OUTPUT_DIR / "test_plot_vs_k_with_bold_limits.pdf",
-    )
-    assert fig is not None
-
-
-def test_plot_vs_k_no_shade_limits():
-    """Test making a plot with shading disabled for limits."""
-    fig = plot_vs_k(
-        shade_limits=None, out=OUTPUT_DIR / "test_plot_vs_k_no_shade_limits.pdf"
-    )
-    assert fig is not None
-
-
 def test_plot_vs_k_with_aspoints():
     """Test making a plot with specific limits as points."""
-    limits = list(KNOWN_LIMITS.keys())[:2]
+    limits = list(KNOWN_LIMITS.keys())
     fig = plot_vs_k(
         limits=limits,
         aspoints=limits,
@@ -124,7 +70,7 @@ def test_plot_vs_k_with_aspoints():
 
 def test_plot_vs_k_with_aslines():
     """Test making a plot with specific limits as lines."""
-    limits = list(KNOWN_LIMITS.keys())[:2]
+    limits = list(KNOWN_LIMITS.keys())
     fig = plot_vs_k(
         limits=limits,
         aslines=limits,
@@ -133,9 +79,21 @@ def test_plot_vs_k_with_aslines():
     assert fig is not None
 
 
+def test_plot_vs_k_with_bold_limits():
+    """Test making a plot with bolded specific limits."""
+    limits = list(KNOWN_LIMITS.keys())
+    bold_limits = limits[:2]
+    fig = plot_vs_k(
+        limits=limits,
+        bold_limits=bold_limits,
+        out=OUTPUT_DIR / "test_plot_vs_k_with_bold_limits.pdf",
+    )
+    assert fig is not None
+
+
 def test_plot_vs_k_with_bold_theories():
     """Test making a plot with bolded specific theories."""
-    theories = list(KNOWN_THEORIES.keys())[:2]
+    theories = list(KNOWN_THEORIES.keys())
     bold_theories = theories[:2]
     fig = plot_vs_k(
         theories=theories,
@@ -145,20 +103,21 @@ def test_plot_vs_k_with_bold_theories():
     assert fig is not None
 
 
-def test_plot_vs_k_with_dark_shade_theories():
-    """Test making a plot with dark shading for theories."""
-    theories = list(KNOWN_THEORIES.keys())[:2]
+def test_plot_vs_k_with_limit_and_theory_styling():
+    """Test making a plot with custom styling parameters for limits and theories."""
+    limits = list(KNOWN_LIMITS.keys())[:10]  # Use first 10 limits
+    all_theories = list(KNOWN_THEORIES.keys())
+    theories = [all_theories[0], all_theories[7]]  # Use first and 8th theories
     fig = plot_vs_k(
+        limits=limits,
         theories=theories,
-        shade_theories=0.75,
-        out=OUTPUT_DIR / "test_plot_vs_k_with_dark_shade_theories.pdf",
-    )
-    assert fig is not None
-
-
-def test_plot_vs_k_custom_fig_ratio():
-    """Test making a plot with custom figure aspect ratio."""
-    fig = plot_vs_k(
-        fig_ratio=2.0, out=OUTPUT_DIR / "test_plot_vs_k_custom_fig_ratio.pdf"
+        base_limit_style={"linewidth": 5, "shade_alpha": 0.1},
+        limit_styles={limits[0]: {"shade_alpha": 0.25, "shade_color": "C3"}},
+        base_theory_style={"linestyle": "-."},
+        theory_styles={
+            theories[0]: {"color": "C0", "shade_alpha": 0.5, "shade_color": "C2"},
+            theories[1]: {"color": "C1", "shade_alpha": 0.1, "shade_color": "C2"},
+        },
+        out=OUTPUT_DIR / "test_plot_vs_k_with_limit_and_theory_styling.pdf",
     )
     assert fig is not None

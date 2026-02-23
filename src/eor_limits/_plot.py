@@ -468,7 +468,7 @@ def build_limit_styles(
             else max(len(k) for k in limit.data.k) > nk_for_lines
         )
         # Set defaults for points
-        if style["as_line"]:
+        if not style["as_line"]:
             style.setdefault("s", 150)
             style.setdefault(
                 "marker", DEFAULT_TELESCOPE_MARKERS.get(limit.telescope, "o")
@@ -680,9 +680,9 @@ def plot_limits(
                     k_edges,
                     delta_edges,
                     color=color_val,
-                    linewidth=limit_style["linewidth"],
                     label=label,
                     zorder=1,
+                    **limit_style,
                 )
                 if shade_limits:
                     plt.fill_between(
