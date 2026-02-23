@@ -82,7 +82,7 @@ def test_plot_vs_k_with_aslines():
 def test_plot_vs_k_with_bold_limits():
     """Test making a plot with bolded specific limits."""
     limits = list(KNOWN_LIMITS.keys())
-    bold_limits = limits[:2]
+    bold_limits = ["HERA2022", "HERA2023"]
     fig = plot_vs_k(
         limits=limits,
         bold_limits=bold_limits,
@@ -94,7 +94,7 @@ def test_plot_vs_k_with_bold_limits():
 def test_plot_vs_k_with_bold_theories():
     """Test making a plot with bolded specific theories."""
     theories = list(KNOWN_THEORIES.keys())
-    bold_theories = theories[:2]
+    bold_theories = ["Mesinger2016Faint", "Mesinger2016Bright"]
     fig = plot_vs_k(
         theories=theories,
         bold_theories=bold_theories,
@@ -105,18 +105,25 @@ def test_plot_vs_k_with_bold_theories():
 
 def test_plot_vs_k_with_limit_and_theory_styling():
     """Test making a plot with custom styling parameters for limits and theories."""
-    limits = list(KNOWN_LIMITS.keys())[:10]  # Use first 10 limits
-    all_theories = list(KNOWN_THEORIES.keys())
-    theories = [all_theories[0], all_theories[7]]  # Use first and 8th theories
+    limits = list(KNOWN_LIMITS.keys())
+    theories = ["Mesinger2016Faint", "Mesinger2016Bright"]
     fig = plot_vs_k(
         limits=limits,
         theories=theories,
         base_limit_style={"linewidth": 5, "shade_alpha": 0.1},
-        limit_styles={limits[0]: {"shade_alpha": 0.25, "shade_color": "C3"}},
+        limit_styles={"HERA2023": {"shade_alpha": 0.25, "shade_color": "C3"}},
         base_theory_style={"linestyle": "-."},
         theory_styles={
-            theories[0]: {"color": "C0", "shade_alpha": 0.5, "shade_color": "C2"},
-            theories[1]: {"color": "C1", "shade_alpha": 0.1, "shade_color": "C2"},
+            "Mesinger2016Faint": {
+                "color": "C0",
+                "shade_alpha": 0.5,
+                "shade_color": "C2",
+            },
+            "Mesinger2016Bright": {
+                "color": "C1",
+                "shade_alpha": 0.1,
+                "shade_color": "C2",
+            },
         },
         out=OUTPUT_DIR / "test_plot_vs_k_with_limit_and_theory_styling.pdf",
     )
