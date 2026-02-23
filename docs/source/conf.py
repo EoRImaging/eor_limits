@@ -52,7 +52,7 @@ autosummary_generate = True  # Automatically generate summary files for document
 # Autodoc
 autodoc_typehints = "none"  # No type hints, let numpydoc handle them in the docstrings
 # Numpydoc
-numpydoc_show_class_members = False  # Don't show class members by default
+numpydoc_show_class_members = True  # Don't show class members by default
 numpydoc_class_members_toctree = False  # Don't create toctree for class members
 numpydoc_xref_param_type = True  # Enable cross-referencing for parameter types
 numpydoc_xref_aliases = {
