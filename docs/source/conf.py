@@ -52,17 +52,25 @@ autosummary_generate = True  # Automatically generate summary files for document
 # Autodoc
 autodoc_typehints = "none"  # No type hints, let numpydoc handle them in the docstrings
 # Numpydoc
-numpydoc_show_class_members = True  # Don't show class members by default
+numpydoc_show_class_members = False  # Don't show class members by default
 numpydoc_class_members_toctree = False  # Don't create toctree for class members
 numpydoc_xref_param_type = True  # Enable cross-referencing for parameter types
 numpydoc_xref_aliases = {
     "np.ndarray": "numpy.ndarray",
     "Path": "pathlib.Path",
+    "Any": "typing.Any",
 }  # Map common aliases to full module paths for linking
-# MathJax
-mathjax_path = (
-    "http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"
-)
+# MathJax v3
+mathjax_path = "https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"
+# Global substitutions available in rst/docstrings.
+rst_prolog = """
+.. |z| replace:: :math:`z`
+.. |k| replace:: :math:`k`
+.. |delta| replace:: :math:`\\Delta_{21}`
+.. |dsq| replace:: :math:`\\Delta_{21}^2`
+.. |mK^2| replace:: :math:`\\mathrm{mK}^2`
+.. |h/Mpc| replace:: :math:`h\\,\\mathrm{Mpc}^{-1}`
+"""
 # Intersphinx
 python_version = ".".join(map(str, sys.version_info[:2]))
 intersphinx_mapping = {

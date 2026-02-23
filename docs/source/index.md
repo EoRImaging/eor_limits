@@ -5,7 +5,7 @@
 
 ```{toctree}
 :maxdepth: 2
-
+:hidden:
 Usage <usage_overview>
 API Reference <reference>
 ```

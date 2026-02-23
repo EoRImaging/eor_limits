@@ -26,7 +26,11 @@ DEFAULT_TELESCOPE_MARKERS = {
 
 
 def plot_vs_z(*args, **kwargs):
-    """Plot 21-cm power spectrum limits as a function of redshift, z [TBD]."""
+    """
+    Plot 21-cm power spectrum limits as a function of redshift, z.
+
+    Not yet implemented. Stay tuned!
+    """
     raise NotImplementedError("This function is not yet implemented. Stay tuned!")
 
 
@@ -64,103 +68,99 @@ def plot_vs_k(
     out: str | Path | None = None,
 ) -> plt.Figure:
     """
-    Plot 21-cm power spectrum limits as a function of scale, k.
+    Plot 21-cm power spectrum limits as a function of scale |k|.
 
     Parameters
     ----------
-    limits : list[str] | None
-        List of limits to include in the plot.
-        See ``KNOWN_LIMITS`` for available limits.
-        Defaults to ``None`` meaning include all papers in the data folder.
-    base_limit_style : dict[str, Any]
+    limits : list[str] | None (default: ``None``)
+        List of limits to include in the plot
+        (see ``KNOWN_LIMITS`` for available limits).
+        If not specified, **all** limits are plotted.
+    base_limit_style : dict[str, Any] | None (default: ``None``)
         Base style parameters for plotting limits, applied to all limits before any
         individual overrides. For example, ``{'alpha': 0.7}`` to make all limits
         slightly transparent.
-    limit_styles : dict of dict
+    limit_styles : dict[str, dict[str, Any]] | None (default: ``None``)
         Dictionary of style parameters for plotting limits. The keys are the limit
         keys (e.g. ``'Paciga2013'``), and the values are dictionaries with style
         parameters for plotting, e.g. ``{'color': 'C0', 's': 100}`` for points or
         ``{'color': 'C0', 'linewidth': 3}`` for lines.
-    bold_limits : list of str
-        List of limits to bold in the legend (specified as limit keys,
-        e.g. ``'Paciga2013'``).
-    shade_limits : float
-        If not ``None``, the alpha value to use for shading the area above each limit
-        line (or points, if plotted as points). If ``None``, no shading is applied.
-    aspoints : list of str
-        List of limits to plot as points instead of lines (specified as limit keys,
-        e.g. ``'Paciga2013'``).
-        If not specified, the function will automatically determine whether to plot as
-        points or lines based on the number of k values (see ``nk_for_lines``).
-    aslines : list of str
-        List of limits to plot as lines instead of points (specified as limit keys,
-        e.g. ``'Paciga2013'``).
-        If not specified, the function will automatically determine whether to plot as
-        points or lines based on the number of k values (see ``nk_for_lines``).
-    nk_for_lines : int
-        Threshold for the number of k values to determine whether to plot a limit as
-        points or lines if not specified in ``aspoints`` or ``aslines``. If a limit has
-        more than this number of k values, it will be plotted as a line by default;
-        otherwise, it will be plotted as points by default.
-    z_range : tuple of float
+    bold_limits : list[str] | None (default: ``None``)
+        List of limits to bold in the legend. If no specified, no limits are bolded.
+    shade_limits : float | None (default: ``0.5``)
+        The alpha value to use for shading the area above each limit
+        line (or points, if plotted as points). If not specified, no shading is applied.
+    aspoints : list[str] | None (default: ``None``)
+        List of limits to plot as points instead of lines.
+        If not specified, the function automatically determines whether to plot as
+        points or lines based on the number of |k| bins (see ``nk_for_lines``).
+    aslines : list[str] | None (default: ``None``)
+        List of limits to plot as lines instead of points.
+        If not specified, the function automatically determines whether to plot as
+        points or lines based on the number of |k| bins (see ``nk_for_lines``).
+    nk_for_lines : int (default: ``10``)
+        Threshold :math:`n_k` (number of |k| bins) to determine whether to plot a limit
+        as points or lines if not specified in ``aspoints`` or ``aslines``.
+        If a limit has :mathm:`len(k) > n_k`, it will be plotted as a line;
+        otherwise, it will be plotted as points.
+    z_range : tuple[float, float] | None (default: ``None``)
         Tuple specifying the redshift range to include in the plot, in the form
         ``(z_min, z_max)``. If not specified, all redshifts will be included.
-    k_range : tuple of float
-        Tuple specifying the k range to include in the plot, in the form
-        ``(k_min, k_max)``. If not specified, all k values will be included.
-    delta_squared_range : tuple of float
+    k_range : tuple[float, float] | None (default: ``None``)
+        Tuple specifying the |k| range to include in the plot, in the form
+        ``(k_min, k_max)``. If not specified, all |k| values will be included.
+    delta_squared_range : tuple[float, float] | None (default: ``None``)
         Tuple specifying the delta squared range to include in the plot, in the form
-        ``(delta_squared_min, delta_squared_max)``. If not specified, the range will be
-        set to ``[1e0, 1e6]`` if theories are plotted and ``[1e3, 1e6]`` otherwise.
-    theories : list of str
-        List of theories to include in the plot. See ``KNOWN_THEORIES`` for available
-        theories and their keys. Defaults to ``None`` meaning no theories are plotted.
-    theory_redshifts : dict of list
+        ``(delta_squared_min, delta_squared_max)``. If not specified, set to
+        ``[1e0, 1e6]`` if theories are plotted and ``[1e3, 1e6]`` otherwise.
+    theories : list[str] | None (default: ``None``)
+        List of theories to include in the plot (see ``KNOWN_THEORIES`` for available
+        models). If not specified, **no** theories are plotted.
+    theory_redshifts : dict[str, list[float]] | None (default: ``None``)
         Dictionary specifying which redshifts to plot for each theory. The keys are the
         theory keys (e.g. ``'Mesinger2016Faint'``), and the values are lists of
         redshifts to plot for that theory.
-        If not specified, the function will plot the line closest to the center of
-        the redshift range.
-    base_theory_style : dict
+        If not specified, plots the line closest to the center of the ``z_range``.
+    base_theory_style : dict[str, Any] | None (default: ``None``)
         Base style parameters for plotting theories, applied to all theories before any
         individualoverrides. For example, ``{'alpha': 0.7}`` to make all theories
         slightly transparent.
-    theory_styles : dict of dict
+    theory_styles : dict[str, dict[str, Any]] | None (default: ``None``)
         Dictionary of style parameters for plotting theories. The keys are the theory
         keys (e.g. ``'Mesinger2016Faint'``), and the values are dictionaries with
         style parameters for plotting, e.g. ``{'color': 'C1', 'linestyle': '--'}``.
-    bold_theories : list of str
+    bold_theories : list[str] | None (default: ``None``)
         List of theories to bold in the legend.
-    shade_theories : float
-        If not ``None``, the alpha value to use for shading the area below each theory
-        line. If ``None``, defaults to 1 divided by the number of theories.
-    sensitivities : dict
+        If not specified, no theories are bolded.
+    shade_theories : float | None (default: ``0.5``)
+        The alpha value to use for shading the area below each theory
+        line. If not specified, defaults to ``1/len(theories)``.
+    sensitivities : dict | None (default: ``None``)
         Dictionary of sensitivities to plot on the figure. The keys are labels for each
         sensitivity estimate, and the values are the file names of the
         sensitivities to plot, which must be outputs from 21cmSense v2+.
-    sensitivity_style : dict
+        If not specified, no sensitivities are plotted.
+    sensitivity_style : dict | None (default: ``None``)
         Dictionary of style parameters for plotting sensitivities. The keys are
         labels for each sensitivity estimate, and the values are dictionaries with
         style parameters for plotting,
         e.g. ``{'color': 'k', 'linestyle': '--', 'linewidth': 3}``.
         An additional key 'sensitivity_kind' can be used to specify which kind of
         sensitivity to plot, e.g. ``'sample+thermal'``, ``'sample'`` or ``'thermal'``.
-    colormap : str
+    colormap : str (default: ``'Spectral_r'``)
         Matplotlib colormap to use for coloring limits by redshift.
-        Defaults to ``'Spectral_r'``.
-    fontsize : int
-        Font size to use in the legend and axis labels. Defaults to ``15``.
-    fig_ratio : float
-        Height to width ratio of the figure. If not specified, the height will be 1
-        times the width if theories are plotted, and 0.5 times the width if no theories
-        are plotted.
-    fig : matplotlib.figure.Figure
+    fontsize : int (default: ``15``)
+        Font size to use in the legend and axis labels.
+    fig_ratio : float | None (default: ``None``)
+        Height to width ratio of the figure. If not specified, ``height= 1*width``
+        if theories are plotted, and ``height= 0.5*width`` if no theories are plotted.
+    fig : matplotlib.figure.Figure | None
         If specified, the figure to plot on. If not specified, a new figure
         will be created.
-    ax : matplotlib.axes.Axes
+    ax : matplotlib.axes.Axes| None
         If specified, the axis to plot on. If not specified, a new axis
         will be created.
-    out : str or Path or None
+    out : str | Path | None
         If specified, the file name to save the figure to.
 
     Returns
