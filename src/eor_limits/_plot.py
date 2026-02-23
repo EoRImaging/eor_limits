@@ -87,9 +87,11 @@ def plot_vs_k(
         ``{'color': 'C0', 'linewidth': 3}`` for lines.
     bold_limits : list[str] | None (default: ``None``)
         List of limits to bold in the legend. If no specified, no limits are bolded.
-    shade_limits : float | None (default: ``0.5``)
-        The alpha value to use for shading the area above each limit
-        line (or points, if plotted as points). If not specified, no shading is applied.
+    shade_limits : bool (default: ``True``)
+        Whether to shade the area above each limit line (or points, if plotted as
+        points). If ``True``, the area above each limit will be shaded with the color
+        specified in the limit styles as ``shade_color`` (default grey) and an alpha
+        value specified in the limit styles as ``shade_alpha`` (default 0.5).
     aspoints : list[str] | None (default: ``None``)
         List of limits to plot as points instead of lines.
         If not specified, the function automatically determines whether to plot as
@@ -132,9 +134,11 @@ def plot_vs_k(
     bold_theories : list[str] | None (default: ``None``)
         List of theories to bold in the legend.
         If not specified, no theories are bolded.
-    shade_theories : float | None (default: ``0.5``)
-        The alpha value to use for shading the area below each theory
-        line. If not specified, defaults to ``1/len(theories)``.
+    shade_theories : bool (default: ``True``)
+        Whether to shade the area below each theory line. If ``True``, the area below
+        each theory will be shaded with the color specified in the theory styles as
+        ``shade_color`` (default lightsteelblue) and an alpha value specified in the
+        theory styles as ``shade_alpha`` (default ``1/len(theories)``).
     sensitivities : dict | None (default: ``None``)
         Dictionary of sensitivities to plot on the figure. The keys are labels for each
         sensitivity estimate, and the values are the file names of the
