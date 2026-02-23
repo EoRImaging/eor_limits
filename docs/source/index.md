@@ -1,11 +1,13 @@
 ```{include} ../../README.md
 :start-after: "# eor-limits"
-:end-before: "# Community Guidelines"
+:end-before: "# Installation and dependencies"
 ```
 
 ```{toctree}
 :maxdepth: 2
 :hidden:
-Usage <usage_overview>
+Installation and dependencies <installation>
+Usage and examples <usage>
+Community guidelines <guidelines>
 API Reference <reference>
 ```
