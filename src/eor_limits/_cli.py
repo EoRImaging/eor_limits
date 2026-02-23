@@ -6,6 +6,7 @@
 import functools
 import logging
 import sys
+from typing import Any
 
 from cyclopts import App
 from rich.console import Console
@@ -46,10 +47,44 @@ class CLIError(Exception):
         )
 
 
+def _coerce_types(val: Any) -> Any:
+    """
+    Recursively convert string numbers to floats.
+
+    Cyclopts does not support nested dictionaries very well, and all values are
+    passed as strings. This function attempts to convert any string that can be
+    converted to a float, while leaving non-numeric strings unchanged.
+
+    Additionally, it tries to parse strings that look like JSON objects or arrays
+    to allow for more complex structures to be passed as command-line arguments.
+    """
+    if isinstance(val, str):
+        try:
+            return float(val)  # Try converting to float first
+        except ValueError:
+            return val  # Keep as string (colors, etc.)
+    if isinstance(val, dict):
+        return {k: _coerce_types(v) for k, v in val.items()}
+    if isinstance(val, list):
+        return [_coerce_types(v) for v in val]
+    return val
+
+
 @functools.wraps(_plot_vs_k)
 def plot_vs_k(*args, **kwargs):
     """CLI wrapper for plotting limits vs scale, k."""
     try:
+        dict_keys = [
+            "base_limit_style",
+            "limit_styles",
+            "base_theory_style",
+            "theory_styles",
+            "sensitivity_style",
+            "theory_redshifts",
+        ]
+        for key in dict_keys:
+            if kwargs.get(key):
+                kwargs[key] = _coerce_types(kwargs[key])
         _plot_vs_k(*args, **kwargs)
     except Exception as e:
         error = CLIError(str(e), title="Error")
@@ -61,6 +96,17 @@ def plot_vs_k(*args, **kwargs):
 def plot_vs_z(*args, **kwargs):
     """CLI wrapper for plotting limits vs scale, z."""
     try:
+        dict_keys = [
+            "base_limit_style",
+            "limit_styles",
+            "base_theory_style",
+            "theory_styles",
+            "sensitivity_style",
+            "theory_redshifts",
+        ]
+        for key in dict_keys:
+            if kwargs.get(key):
+                kwargs[key] = _coerce_types(kwargs[key])
         _plot_vs_z(*args, **kwargs)
     except Exception as e:
         error = CLIError(str(e), title="Error")
