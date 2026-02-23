@@ -25,6 +25,11 @@ DEFAULT_TELESCOPE_MARKERS = {
 }
 
 
+def plot_vs_z(*args, **kwargs):
+    """Plot 21-cm power spectrum limits as a function of redshift, z [TBD]."""
+    raise NotImplementedError("This function is not yet implemented. Stay tuned!")
+
+
 def plot_vs_k(
     # Limit plotting options
     limits: list[str] | None = None,
