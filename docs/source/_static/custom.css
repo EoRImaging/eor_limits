@@ -2,3 +2,18 @@
 .bd-main .bd-content .bd-article-container {
     max-width: 90%;  /* Default is typically 60-70% */
 }
+
+/* This resets the "code" formatting for external (intersphinx)
+links making them look cleaner. */
+a.reference.external code,
+a.reference.external .docutils.literal,
+a.reference.external code.docutils.literal {
+    font-family: inherit;
+    font-size: inherit;
+    font-weight: normal;
+    font-style: italic;
+    background: none;
+    border: 0;
+    border-radius: 0;
+    padding: 0;
+}
