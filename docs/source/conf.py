@@ -82,6 +82,8 @@ intersphinx_mapping = {
     "pandas": ("https://pandas.pydata.org/pandas-docs/stable/", None),
     "scipy": ("https://docs.scipy.org/doc/scipy/", None),
 }
+# MyST-parser
+myst_enable_extensions = ["dollarmath"]
 # Templates path.
 templates_path = ["_templates"]
 # The suffix of source filenames.
