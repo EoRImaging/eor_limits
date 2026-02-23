@@ -6,7 +6,6 @@
 ```{toctree}
 :maxdepth: 2
 
-Home <index>
 Usage <usage_overview>
 API Reference <reference>
 ```

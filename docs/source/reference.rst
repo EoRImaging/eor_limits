@@ -10,4 +10,4 @@ API Reference
     eor_limits.DataSet
     eor_limits.load_limit_data
     eor_limits.load_theory_model
-    eor_limits.make_plot
+    eor_limits.plot_vs_k

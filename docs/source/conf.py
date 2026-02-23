@@ -40,7 +40,6 @@ extensions = [
     "sphinx.ext.doctest",
     "sphinx.ext.ifconfig",
     "sphinx.ext.mathjax",
-    "sphinx.ext.napoleon",
     "numpydoc",
     "nbsphinx",
     "IPython.sphinxext.ipython_console_highlighting",
@@ -56,10 +55,10 @@ autodoc_typehints = "none"  # No type hints, let numpydoc handle them in the doc
 numpydoc_show_class_members = False  # Don't show class members by default
 numpydoc_class_members_toctree = False  # Don't create toctree for class members
 numpydoc_xref_param_type = True  # Enable cross-referencing for parameter types
-# Napoleon
-napoleon_use_ivar = True  # Use instance variables for attributes
-napoleon_use_rtype = False  # Don't use rtype for return types (use :returns:)
-napoleon_use_param = False  # Don't use :param: for parameters (use :Parameters:)
+numpydoc_xref_aliases = {
+    "np.ndarray": "numpy.ndarray",
+    "Path": "pathlib.Path",
+}  # Map common aliases to full module paths for linking
 # MathJax
 mathjax_path = (
     "http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"
