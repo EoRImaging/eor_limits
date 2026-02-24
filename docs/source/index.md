@@ -1,6 +1,6 @@
 ```{include} ../../README.md
-:start-after: "# eor-limits"
-:end-before: "# Installation and dependencies"
+:relative-images:
+:end-before: "## Installation and dependencies"
 ```
 
 ```{toctree}
