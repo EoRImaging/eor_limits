@@ -8,6 +8,7 @@
 :hidden:
 Installation and dependencies <installation>
 Usage and examples <usage>
+Tutorial notebook <tutorial>
 Community guidelines <guidelines>
 API Reference <reference>
 ```

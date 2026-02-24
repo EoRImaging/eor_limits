@@ -64,21 +64,21 @@ A more customized plot can be made by using the various options. For example, in
 ```python
 from eor_limits import plot_vs_k
 plot_vs_k(
-    limits=['HERA2022', 'HERA2023', 'HERA2026'],
-    bold_limits=['HERA2023'],
+    limits=["HERA2022", "HERA2023", "HERA2026"],
+    bold_limits=["HERA2026"],
     shade_limits=True,
-    base_limit_style={'linewidth': 5, 'shade_alpha': 0.1},
+    base_limit_style={"linewidth": 5, "shade_alpha": 0.1},
     limit_styles={
-        'HERA2023': {'shade_alpha': 0.25, 'shade_color': 'C3'}
+        "HERA2023": {"shade_alpha": 0.25, "shade_color": "C1"}
     },
-    theories=['Mesinger2016Faint', 'Mesinger2016Bright'],
+    theories=["Mesinger2016Faint", "Mesinger2016Bright"],
     shade_theories=True,
-    base_theory_style={'linestyle': '-.'},
+    base_theory_style={"linestyle": "-."},
     theory_styles={
-        'Mesinger2016Faint': {'color': 'C0', 'shade_alpha': 0.5, 'shade_color': 'C2'},
-        'Mesinger2016Bright': {'color': 'C1', 'shade_alpha': 0.1, 'shade_color': 'C2'}
+        "Mesinger2016Faint": {"color": "C3", "shade_alpha": 0.5, "shade_color": "C3"},
+        "Mesinger2016Bright": {"color": "C4", "shade_alpha": 0.1, "shade_color": "C4"}
     },
-    out='MyPlot.pdf'
+    out="MyPlot.pdf"
 )
 ```
 
@@ -95,21 +95,21 @@ To make the same customized plot as in the library example, you can run:
 ```bash
 eor-limits plot-vs-k \
     --limits=HERA2022 HERA2023 HERA2026 \
-    --bold-limits=HERA2023 \
+    --bold-limits=HERA2026 \
     --shade-limits \
     --base-limit-style.linewidth=5 \
     --base-limit-style.shade_alpha=0.1 \
     --limit-styles.HERA2023.shade_alpha=0.25 \
-    --limit-styles.HERA2023.shade_color='C3' \
+    --limit-styles.HERA2023.shade_color='C1' \
     --theories=Mesinger2016Faint Mesinger2016Bright \
     --shade-theories \
     --base-theory-style.linestyle='-.' \
-    --theory-styles.Mesinger2016Faint.color='C0' \
+    --theory-styles.Mesinger2016Faint.color='C3' \
     --theory-styles.Mesinger2016Faint.shade_alpha=0.5 \
-    --theory-styles.Mesinger2016Faint.shade_color='C2' \
-    --theory-styles.Mesinger2016Bright.color='C1' \
+    --theory-styles.Mesinger2016Faint.shade_color='C3' \
+    --theory-styles.Mesinger2016Bright.color='C4' \
     --theory-styles.Mesinger2016Bright.shade_alpha=0.1 \
-    --theory-styles.Mesinger2016Bright.shade_color='C2' \
+    --theory-styles.Mesinger2016Bright.shade_color='C4' \
     --out MyPlot.pdf
 ```
 
