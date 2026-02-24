@@ -1,3 +1,6 @@
+# Community guidelines
+
 ```{include} ../../README.md
-:start-after: "# Community guidelines"
+:relative-images:
+:start-after: "## Community guidelines"
 ```
