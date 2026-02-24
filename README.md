@@ -52,14 +52,14 @@ There are three main ways to use the code: as a library within a notebook or pyt
 
 ### Using the library
 
-The library allows you to load, slice and dice the data in various ways, and also includes plotting functionality. For a detailed tutorial on how to use the library, see the Notebooks. Here we just give a brief overview of how to make plots. To make the default plot of all the limits as a function of scale $k$, run:
+The library allows you to load, slice and dice the data in various ways, and also includes plotting functionality. For a detailed tutorial on how to use the library, see the [tutorial notebook](docs/source/tutorial.ipynb). Here we just give a brief overview of how to make plots. To make the default plot of all the limits as a function of scale $k$, run:
 
 ```python
 from eor_limits import plot_vs_k
 plot_vs_k()
 ```
 
-A more customized plot can be made by using the various options. For example, in order to plot the HERA2023 limit with a thicker line and a shaded region, and to plot the Mesinger2016Faint and Mesinger2016Bright simulations with different colors and shaded regions:
+A more customized plot can be also be made. For example, we can plot the HERA limits, shading the 2023 ones and bolding the legend item, and Mesinger2016Faint and Mesinger2016Bright simulations with different colors and shaded regions:
 
 ```python
 from eor_limits import plot_vs_k
