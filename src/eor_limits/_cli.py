@@ -5,6 +5,7 @@
 
 import functools
 import logging
+import os
 import sys
 from typing import Any
 
@@ -13,10 +14,12 @@ from rich.console import Console
 from rich.logging import RichHandler
 from rich.panel import Panel
 from rich.text import Text
+from rich.traceback import install
 
 from ._plot import plot_vs_k as _plot_vs_k
 from ._plot import plot_vs_z as _plot_vs_z
 
+install(show_locals=True)
 app = App(
     help="A package for plotting and comparing "
     "21-cm power spectrum limits and theories.",
@@ -51,9 +54,9 @@ def _coerce_types(val: Any) -> Any:
     """
     Recursively convert string numbers to floats.
 
-    Cyclopts does not support nested dictionaries very well, and all values are
-    passed as strings. This function attempts to convert any string that can be
-    converted to a float, while leaving non-numeric strings unchanged.
+    Cyclopts does not support nested dictionaries or Any types in its CLI arguments,
+    and all values are passed as strings. This function attempts to convert any string
+    that can be converted to a float, while leaving non-numeric strings unchanged.
 
     Additionally, it tries to parse strings that look like JSON objects or arrays
     to allow for more complex structures to be passed as command-line arguments.
@@ -80,13 +83,14 @@ def plot_vs_k(*args, **kwargs):
             "base_theory_style",
             "theory_styles",
             "sensitivity_style",
-            "theory_redshifts",
         ]
         for key in dict_keys:
             if kwargs.get(key):
                 kwargs[key] = _coerce_types(kwargs[key])
         _plot_vs_k(*args, **kwargs)
     except Exception as e:
+        if os.getenv("EOR_LIMITS_DEBUG"):
+            raise
         error = CLIError(str(e), title="Error")
         console.print(error.render())
         sys.exit(1)
@@ -102,13 +106,14 @@ def plot_vs_z(*args, **kwargs):
             "base_theory_style",
             "theory_styles",
             "sensitivity_style",
-            "theory_redshifts",
         ]
         for key in dict_keys:
             if kwargs.get(key):
                 kwargs[key] = _coerce_types(kwargs[key])
         _plot_vs_z(*args, **kwargs)
     except Exception as e:
+        if os.getenv("EOR_LIMITS_DEBUG"):
+            raise
         error = CLIError(str(e), title="Error")
         console.print(error.render())
         sys.exit(1)
