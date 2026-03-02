@@ -34,13 +34,13 @@ jobs:
 
       - name: Run Tests
         run: |
-          uv run pytest
+          uv run pytest --cov eor_limits --cov-report xml:coverage.xml
 
-      - uses: codecov/codecov-action@v5
-        if: matrix.os == 'ubuntu-latest' && success()
-        with:
-          file: ./coverage.xml #optional
-          verbose: true
-          fail_ci_if_error: true
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+#      - uses: codecov/codecov-action@v5
+#        if: matrix.os == 'ubuntu-latest' && success()
+#        with:
+#          file: ./coverage.xml #optional
+#          verbose: true
+#          fail_ci_if_error: true
+#        env:
+#          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
