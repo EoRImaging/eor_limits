@@ -222,12 +222,12 @@ class DataSet:
     notes: tuple[str, ...] = attrs.field(
         default=(), validator=attrs.validators.instance_of(tuple)
     )
-    _key: str = attrs.field(default="", converter=str)
+    _key: str = attrs.field(converter=str)
 
-    def __attrs_post_init__(self) -> None:
-        """Populate _key if it was not explicitly provided."""
-        if not self._key:
-            object.__setattr__(self, "_key", f"{self.author}{self.year}")
+    @_key.default
+    def _default_key(self) -> str:
+        """Generate a default key based on the author and year."""
+        return f"{self.author}{self.year}"
 
     def __repr__(self) -> str:
         """Return a string representation of the DataSet, including metadata."""
