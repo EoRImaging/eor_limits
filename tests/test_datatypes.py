@@ -23,7 +23,7 @@ def test_drop_nan():
 
 def test_select_z_range():
     """Test selecting a range of z values from a dataset."""
-    dataset = DataSet.load("HERA2025")
+    dataset = DataSet.load("HERA2026")
     z_val = dataset.data.z[5]
     selected = dataset.select_z_range(z_val - 0.1, z_val + 0.1)
     assert isinstance(selected, DataSet)
@@ -32,7 +32,7 @@ def test_select_z_range():
 
 def test_select_k():
     """Test selecting a range of k values from a dataset."""
-    dataset = DataSet.load("HERA2025")
+    dataset = DataSet.load("HERA2026")
     k_val = dataset.data.k[0][5]
     kmin = k_val - 0.25
     kmax = k_val + 0.25
@@ -45,7 +45,7 @@ def test_select_k():
 
 def test_select_delta_squared_range():
     """Test selecting a range of delta_squared values from a dataset."""
-    dataset = DataSet.load("HERA2025")
+    dataset = DataSet.load("HERA2026")
     ds_val = dataset.data.delta_squared[0][5]
     dsmin = ds_val / 10
     dsmax = ds_val * 10
@@ -59,7 +59,7 @@ def test_select_delta_squared_range():
 
 def test_select_closest_z():
     """Test selecting the closest z value from a dataset."""
-    dataset = DataSet.load("HERA2025")
+    dataset = DataSet.load("HERA2026")
     z_val = dataset.data.z[5]
     selected = dataset.select_closest_z(z_val)
     assert isinstance(selected, DataSet)
@@ -69,7 +69,7 @@ def test_select_closest_z():
 
 def test_select_closest_k():
     """Test selecting the closest k value from a dataset."""
-    dataset = DataSet.load("HERA2025")
+    dataset = DataSet.load("HERA2026")
     k_val = dataset.data.k[0][5]
     selected = dataset.select_closest_k(k_val)
     assert isinstance(selected, DataSet)
@@ -79,7 +79,7 @@ def test_select_closest_k():
 
 def test_select_lowest_delta_squared():
     """Test selecting the lowest delta_squared value from a dataset."""
-    dataset = DataSet.load("HERA2025")
+    dataset = DataSet.load("HERA2026")
     selected = dataset.select_lowest_delta_squared()
     assert isinstance(selected, DataSet)
     for ds_arr in selected.data.delta_squared:
