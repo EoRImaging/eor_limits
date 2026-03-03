@@ -81,22 +81,16 @@ To make the same customized plot as in the library example, you can run:
 
 ```bash
 eor-limits plot-vs-k \
-    --limits=HERA2022 HERA2023 HERA2026 \
-    --bold-limits=HERA2026 \
+    --limits HERA2022 HERA2023 HERA2026 \
+    --bold-limits HERA2026 \
     --shade-limits \
-    --base-limit-style.linewidth=5 \
-    --base-limit-style.shade_alpha=0.1 \
-    --limit-styles.HERA2023.shade_alpha=0.25 \
-    --limit-styles.HERA2023.shade_color='C1' \
-    --theories=Mesinger2016Faint Mesinger2016Bright \
+    --base-limit-style '{"linewidth": 5, "shade_alpha": 0.1}' \
+    --limit-styles '{"HERA2023": {"shade_alpha": 0.25, "shade_color": "C1"}}' \
+    --theories Mesinger2016Faint Mesinger2016Bright \
     --shade-theories \
-    --base-theory-style.linestyle='-.' \
-    --theory-styles.Mesinger2016Faint.color='C3' \
-    --theory-styles.Mesinger2016Faint.shade_alpha=0.5 \
-    --theory-styles.Mesinger2016Faint.shade_color='C3' \
-    --theory-styles.Mesinger2016Bright.color='C4' \
-    --theory-styles.Mesinger2016Bright.shade_alpha=0.1 \
-    --theory-styles.Mesinger2016Bright.shade_color='C4' \
+    --base-theory-style '{"linestyle": "-."}' \
+    --theory-styles '{"Mesinger2016Faint": {"color": "C3", "shade_alpha": 0.5, "shade_color": "C3"},
+                     "Mesinger2016Bright": {"color": "C4", "shade_alpha": 0.1, "shade_color": "C4"}}' \
     --out MyPlot.pdf
 ```
 
