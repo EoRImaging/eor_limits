@@ -1,6 +1,8 @@
 """Module defining a plotting function for EoR limits vs k and redshift."""
 
+import json
 import logging
+from collections.abc import Sequence
 from itertools import chain
 from pathlib import Path
 from typing import Annotated, Any
@@ -10,7 +12,7 @@ import matplotlib.cm as cmx
 import matplotlib.colors as colors
 import matplotlib.pyplot as plt
 import numpy as np
-from cyclopts import Parameter
+from cyclopts import Parameter, Token
 
 from ._data_loading import load_limit_data, load_theory_model
 from ._datatypes import DataSet
@@ -25,6 +27,15 @@ DEFAULT_TELESCOPE_MARKERS = {
 }
 
 
+def _json_str_to_dict(type_, tokens: Sequence[Token]) -> dict:
+    """Convert a JSON string to a dictionary."""
+    try:
+        json_str = tokens[0].value
+        return json.loads(json_str) if json_str else {}
+    except json.JSONDecodeError as e:
+        raise ValueError(f"Invalid JSON string: {json_str}") from e
+
+
 def plot_vs_z(*args, **kwargs):
     """
     Plot 21-cm power spectrum limits as a function of redshift, z.
@@ -37,8 +48,12 @@ def plot_vs_z(*args, **kwargs):
 def plot_vs_k(
     # Limit plotting options
     limits: Annotated[list[str] | None, Parameter(consume_multiple=True)] = None,
-    base_limit_style: dict[str, Any] | None = None,
-    limit_styles: dict[str, dict[str, Any]] | None = None,
+    base_limit_style: Annotated[
+        dict[str, Any] | None, Parameter(converter=_json_str_to_dict)
+    ] = None,
+    limit_styles: Annotated[
+        dict[str, dict[str, Any]] | None, Parameter(converter=_json_str_to_dict)
+    ] = None,
     bold_limits: Annotated[list[str] | None, Parameter(consume_multiple=True)] = None,
     shade_limits: bool = True,
     aspoints: Annotated[list[str] | None, Parameter(consume_multiple=True)] = None,
@@ -51,8 +66,12 @@ def plot_vs_k(
     # Theory plotting options
     theories: Annotated[list[str] | None, Parameter(consume_multiple=True)] = None,
     theory_redshifts: dict[str, list[float]] | None = None,
-    base_theory_style: dict[str, Any] | None = None,
-    theory_styles: dict[str, dict[str, Any]] | None = None,
+    base_theory_style: Annotated[
+        dict[str, Any] | None, Parameter(converter=_json_str_to_dict)
+    ] = None,
+    theory_styles: Annotated[
+        dict[str, dict[str, Any]] | None, Parameter(converter=_json_str_to_dict)
+    ] = None,
     bold_theories: Annotated[list[str] | None, Parameter(consume_multiple=True)] = None,
     shade_theories: bool = True,
     # Sensitivity plotting options
