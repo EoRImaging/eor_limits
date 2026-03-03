@@ -8,9 +8,9 @@ of generated plots.
 
 def pytest_collection_modifyitems(items):
     """Ensure test_plotting runs before test_cli_plotting."""
-    plotting_tests = [
-        i for i in items if "test_plotting" in i.nodeid and "cli" not in i.nodeid
+    lib_plot_tests = [i for i in items if "test_lib_plotting" in i.nodeid]
+    cli_plot_tests = [i for i in items if "test_cli_plotting" in i.nodeid]
+    other_tests = [
+        i for i in items if i not in lib_plot_tests and i not in cli_plot_tests
     ]
-    cli_tests = [i for i in items if "test_cli_plotting" in i.nodeid]
-    other_tests = [i for i in items if i not in plotting_tests and i not in cli_tests]
-    items[:] = other_tests + plotting_tests + cli_tests
+    items[:] = other_tests + lib_plot_tests + cli_plot_tests

@@ -28,7 +28,7 @@ def _assert_images_match(test_name: str, cli_path: Path) -> None:
     This helper skips the test if the reference image is missing, so CLI tests
     can be run in isolation without depending on test_plotting side effects.
     """
-    ref_path = OUTPUT_DIR / f"test_plot_vs_k_{test_name}.png"
+    ref_path = OUTPUT_DIR / f"test_lib_plot_vs_k_{test_name}.png"
     if not ref_path.exists():
         pytest.skip(
             f"Reference image not found: {ref_path}. "
