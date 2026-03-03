@@ -11,7 +11,7 @@ OUTPUT_DIR.mkdir(exist_ok=True)
 
 def test_plot_vs_k_basic():
     """Test making a plot with default parameters."""
-    fig = plot_vs_k(out=OUTPUT_DIR / "test_plot_vs_k_basic.pdf")
+    fig = plot_vs_k(out=OUTPUT_DIR / "test_plot_vs_k_basic.png")
     assert fig is not None
 
 
@@ -21,7 +21,7 @@ def test_plot_vs_k_with_fig_styling():
         fontsize=12,
         colormap="viridis",
         fig_ratio=2.0,
-        out=OUTPUT_DIR / "test_plot_vs_k_with_fig_styling.pdf",
+        out=OUTPUT_DIR / "test_plot_vs_k_with_fig_styling.png",
     )
     assert fig is not None
 
@@ -29,7 +29,7 @@ def test_plot_vs_k_with_fig_styling():
 def test_plot_vs_k_with_z_range():
     """Test making a plot with redshift range filtering."""
     fig = plot_vs_k(
-        z_range=(6.0, 10.0), out=OUTPUT_DIR / "test_plot_vs_k_with_z_range.pdf"
+        z_range=(6.0, 10.0), out=OUTPUT_DIR / "test_plot_vs_k_with_z_range.png"
     )
     assert fig is not None
 
@@ -37,7 +37,7 @@ def test_plot_vs_k_with_z_range():
 def test_plot_vs_k_with_k_range():
     """Test making a plot with k range filtering."""
     fig = plot_vs_k(
-        k_range=(0.1, 1.0), out=OUTPUT_DIR / "test_plot_vs_k_with_k_range.pdf"
+        k_range=(0.1, 1.0), out=OUTPUT_DIR / "test_plot_vs_k_with_k_range.png"
     )
     assert fig is not None
 
@@ -46,7 +46,7 @@ def test_plot_vs_k_with_delta_squared_range():
     """Test making a plot with delta_squared range filtering."""
     fig = plot_vs_k(
         delta_squared_range=(1e3, 1e5),
-        out=OUTPUT_DIR / "test_plot_vs_k_with_delta_squared_range.pdf",
+        out=OUTPUT_DIR / "test_plot_vs_k_with_delta_squared_range.png",
     )
     assert fig is not None
 
@@ -57,7 +57,7 @@ def test_plot_vs_k_with_aspoints():
     fig = plot_vs_k(
         limits=limits,
         aspoints=limits,
-        out=OUTPUT_DIR / "test_plot_vs_k_with_aspoints.pdf",
+        out=OUTPUT_DIR / "test_plot_vs_k_with_aspoints.png",
     )
     assert fig is not None
 
@@ -68,7 +68,7 @@ def test_plot_vs_k_with_aslines():
     fig = plot_vs_k(
         limits=limits,
         aslines=limits,
-        out=OUTPUT_DIR / "test_plot_vs_k_with_aslines.pdf",
+        out=OUTPUT_DIR / "test_plot_vs_k_with_aslines.png",
     )
     assert fig is not None
 
@@ -80,7 +80,7 @@ def test_plot_vs_k_with_bold_limits():
     fig = plot_vs_k(
         limits=limits,
         bold_limits=bold_limits,
-        out=OUTPUT_DIR / "test_plot_vs_k_with_bold_limits.pdf",
+        out=OUTPUT_DIR / "test_plot_vs_k_with_bold_limits.png",
     )
     assert fig is not None
 
@@ -92,7 +92,7 @@ def test_plot_vs_k_with_bold_theories():
     fig = plot_vs_k(
         theories=theories,
         bold_theories=bold_theories,
-        out=OUTPUT_DIR / "test_plot_vs_k_with_bold_theories.pdf",
+        out=OUTPUT_DIR / "test_plot_vs_k_with_bold_theories.png",
     )
     assert fig is not None
 
@@ -119,6 +119,6 @@ def test_plot_vs_k_with_limit_and_theory_styling():
                 "shade_color": "C2",
             },
         },
-        out=OUTPUT_DIR / "test_plot_vs_k_with_limit_and_theory_styling.pdf",
+        out=OUTPUT_DIR / "test_plot_vs_k_with_limit_and_theory_styling.png",
     )
     assert fig is not None
