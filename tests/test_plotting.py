@@ -3,21 +3,15 @@
 from pathlib import Path
 
 from eor_limits import KNOWN_LIMITS, KNOWN_THEORIES, plot_vs_k
-from eor_limits._cli import app
 
 # Output directory for test PDFs
 OUTPUT_DIR = Path(__file__).parent / "figures"
 OUTPUT_DIR.mkdir(exist_ok=True)
 
 
-def test_cli_app_exists():
-    """Test that the CLI app is properly instantiated."""
-    assert app is not None
-
-
 def test_plot_vs_k_basic():
     """Test making a plot with default parameters."""
-    fig = plot_vs_k()
+    fig = plot_vs_k(out=OUTPUT_DIR / "test_plot_vs_k_basic.pdf")
     assert fig is not None
 
 
