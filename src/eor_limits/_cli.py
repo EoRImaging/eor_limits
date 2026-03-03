@@ -9,7 +9,7 @@ import os
 import sys
 from typing import Any
 
-from cyclopts import App
+from cyclopts import App, Parameter
 from rich.console import Console
 from rich.logging import RichHandler
 from rich.panel import Panel
@@ -23,7 +23,10 @@ install(show_locals=True)
 app = App(
     help="A package for plotting and comparing "
     "21-cm power spectrum limits and theories.",
-    help_format="rich",
+    help_format="markdown",
+    # show_default=True shows [default: None] for all None-typed params
+    # negative="" remove the --empty options that cyclopts adds for None-typed params
+    default_parameter=Parameter(show_default=True, negative=""),
 )
 logger = logging.getLogger("eor_limits")
 logging.basicConfig(
