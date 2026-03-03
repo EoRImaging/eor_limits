@@ -1,12 +1,10 @@
 # eor-limits
 
-`eor-limits` is a small utility that provides a compendium of published
-upper limits on the 21-cm power spectrum from the Epoch of Reionization (EoR)
-and Cosmic Dawn. It also provides functionality to plot these limits as a function of scale $k$ and redshift $z$, along with some theoretical predictions from simulations.
+`eor-limits` is a small utility that provides a compendium of published upper limits on the 21-cm power spectrum from the Epoch of Reionization (EoR) and Cosmic Dawn. It also provides functionality to plot these limits as a function of scale $k$ and redshift $z$, along with some theoretical predictions from simulations.
 
 The published limits are included in human-readable yaml files in the data folder, and the plotting functionality is highly customizable through keywords. It is possible to read in custom yaml files to add new limits or simulations, and we welcome pull requests to add new data sets or simulations from published papers.
 
-Before you dive in, check out the brand new [online interface](https://eorlimits.streamlit.app/) to explore the limits and make plots without needing to install anything!
+To use the code, check out the _Usage and examples_. For users who want to quickly explore the limits and make plots without needing to install anything, check out the new online interface: [eorlimits.streamlit.app](https://eorlimits.streamlit.app/)!
 
 ![Example EoR Limit plot](docs/source/_static/eor_limits.png)
 
@@ -31,28 +29,17 @@ run ```pip install .``` (including the dot).
 * To use pre-commit to prevent committing code that does not follow our style,
 you'll need to run `pre-commit install` in the top level `eor_limits` directory.
 
-
-### Dependencies
-
-If you prefer to manage dependencies manually, you will
-need to install the following packages:
-
-* cattrs>=25.3.0
-* cyclopts>=4.5.1
-* h5py>=3.15.1
-* matplotlib>=3.10.8
-* numpy>=2.4.1
-* pandas>=3.0.0
-* pyyaml>=6.0.3
-* rich>=14.3.1
-
 ## Usage and examples
 
-There are three main ways to use the code: as a library within a notebook or python script, through the command line interface (CLI), or through the [online interface](https://eorlimits.streamlit.app/).
+There are three main ways to use the code: through the online interface, as a library within a notebook or python script, or through the command line interface (CLI).
+
+### Using the online interface
+
+We recommend using the online interface for users who just want to explore the limits and make plots without needing to install anything. The interface is built using [Streamlit](https://streamlit.io/) and provides an easy-to-use interface for selecting which limits to include in the plot, filtering them in various ways, and downloading the data and the plot. You can access the online interface at [eorlimits.streamlit.app](https://eorlimits.streamlit.app/).
 
 ### Using the library
 
-The library allows you to load, slice and dice the data in various ways, and also includes plotting functionality. For a detailed tutorial on how to use the library, see the [tutorial notebook](docs/source/tutorial.ipynb). Here we just give a brief overview of how to make plots. To make the default plot of all the limits as a function of scale $k$, run:
+The library also allows you to load, slice and dice the data in various ways, and also includes plotting functionality. For a detailed tutorial on how to use the library, see the _Tutorial notebook_. Here we just give a brief overview of how to make plots. To make the default plot of all the limits as a function of scale $k$, run:
 
 ```python
 from eor_limits import plot_vs_k
@@ -84,10 +71,10 @@ plot_vs_k(
 
 ### Using the CLI
 
-After installation, you can use the `eor-limits` command from the terminal to make plots. In the terminal, you can run ```eor-limits -h``` or ```eor-limits plot-vs-k -h``` to see the various options for customizing the plot. The CLI provides the same functionality as the library, but allows you to make plots without needing to write any code. For the default plot of all the limits as a function of scale $k$, you can simply run:
+After installation, you can also use the `eor-limits` command from the terminal to make plots. In the terminal, you can run ```eor-limits -h``` or ```eor-limits plot-vs-k -h``` to see the various options for customizing the plot. The CLI provides the same functionality as the library, but allows you to make plots without needing to write any code. For the default plot of all the limits as a function of scale $k$, you can simply run:
 
 ```bash
-eor-limits plot-vs-k --out=MyPlot.png
+eor-limits plot-vs-k --out=MyPlot.pdf
 ```
 
 To make the same customized plot as in the library example, you can run:
@@ -113,17 +100,23 @@ eor-limits plot-vs-k \
     --out MyPlot.pdf
 ```
 
-### Using the online interface
-
-We have also created an online interface to make it easy for users to explore the limits and make plots without needing to install anything. You can access the online interface at [https://eorlimits.streamlit.app/](https://eorlimits.streamlit.app/). The online interface allows you to select which limits to include in the plot, filter them in various ways, and download the data and the plot.
-
 ## Community guidelines
 
 ### Contributing to the repository
 
 We welcome contributions to this repository from the community. If you would like to contribute, please follow these guidelines:
 
-* If you would like to add new data sets or simulations, ensure that they come from peer-reviewed published papers and make a pull request to add them to the repository (see Developer Installation for how to set up your environment).
+* If you would like to add new data sets or simulations, ensure that they come from peer-reviewed published papers and make a pull request to add them to the repository (see _Developer Installation_ for information on how to set up your environment). The data should be added in the form of a YAML file in the data folder, following the format of the existing files:
+    ```yaml
+    telescope: GMRT
+    author: Paciga
+    year: 2013
+    doi: 10.1093/mnras/stt753
+    data:
+        delta_squared: [[6.15e4]]
+        k: [[0.5]]
+        z: [8.6]
+    ```
 
 * If you would like to add unpublished data or simulations to a plot, please fork this repository and add the data or simulations in your fork. If the data or simulations are subsequently published we welcome a pull request from your fork to add them to this repository.
 
