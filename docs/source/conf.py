@@ -17,8 +17,12 @@ import sys
 
 project = "eor-limits"  # The name of the project.
 master_doc = "index"  # The master toctree document.
-copyright = "2025, Nichole Barry & Bryna Hazelton"  # noqa: A001
-author = "Nichole Barry & Bryna Hazelton"
+copyright = (  # noqa: A001
+    "2019 (Nichole Barry & Bryna Hazelton), "
+    "2026 (Jiten Dhandha, Steven Murray & all contributors)"
+)
+
+author = "Jiten Dhandha, Steven Murray, Nichole Barry, Bryna Hazelton"
 try:
     from eor_limits import __version__ as version
 except ImportError:
