@@ -103,7 +103,7 @@ def plot_vs_k(
     nk_for_lines : int (default: ``10``)
         Threshold :math:`n_k` (number of |k| bins) to determine whether to plot a limit
         as points or lines if not specified in ``aspoints`` or ``aslines``.
-        If a limit has :mathm:`len(k) > n_k`, it will be plotted as a line;
+        If a limit has :math:`len(k) > n_k`, it will be plotted as a line;
         otherwise, it will be plotted as points.
     z_range : tuple[float, float] | None (default: ``None``)
         Tuple specifying the redshift range to include in the plot, in the form
