@@ -36,6 +36,13 @@ def _json_str_to_dict(type_, tokens: Sequence[Token]) -> dict:
         raise ValueError(f"Invalid JSON string: {json_str}") from e
 
 
+StrList = Annotated[list[str] | None, Parameter(consume_multiple=True)]
+JsonDict = Annotated[dict[str, Any] | None, Parameter(converter=_json_str_to_dict)]
+JsonNestedDict = Annotated[
+    dict[str, dict[str, Any]] | None, Parameter(converter=_json_str_to_dict)
+]
+
+
 def plot_vs_z(*args, **kwargs):
     """
     Plot 21-cm power spectrum limits as a function of redshift, z.
@@ -47,32 +54,24 @@ def plot_vs_z(*args, **kwargs):
 
 def plot_vs_k(
     # Limit plotting options
-    limits: Annotated[list[str] | None, Parameter(consume_multiple=True)] = None,
-    base_limit_style: Annotated[
-        dict[str, Any] | None, Parameter(converter=_json_str_to_dict)
-    ] = None,
-    limit_styles: Annotated[
-        dict[str, dict[str, Any]] | None, Parameter(converter=_json_str_to_dict)
-    ] = None,
-    bold_limits: Annotated[list[str] | None, Parameter(consume_multiple=True)] = None,
+    limits: StrList = None,
+    base_limit_style: JsonDict = None,
+    limit_styles: JsonNestedDict = None,
+    bold_limits: StrList = None,
     shade_limits: bool = True,
-    aspoints: Annotated[list[str] | None, Parameter(consume_multiple=True)] = None,
-    aslines: Annotated[list[str] | None, Parameter(consume_multiple=True)] = None,
+    aspoints: StrList = None,
+    aslines: StrList = None,
     nk_for_lines: int = 10,
     # Limits selection options
     z_range: tuple[float, float] | None = None,
     k_range: tuple[float, float] | None = None,
     delta_squared_range: tuple[float, float] | None = None,
     # Theory plotting options
-    theories: Annotated[list[str] | None, Parameter(consume_multiple=True)] = None,
+    theories: StrList = None,
     theory_redshifts: dict[str, list[float]] | None = None,
-    base_theory_style: Annotated[
-        dict[str, Any] | None, Parameter(converter=_json_str_to_dict)
-    ] = None,
-    theory_styles: Annotated[
-        dict[str, dict[str, Any]] | None, Parameter(converter=_json_str_to_dict)
-    ] = None,
-    bold_theories: Annotated[list[str] | None, Parameter(consume_multiple=True)] = None,
+    base_theory_style: JsonDict = None,
+    theory_styles: JsonNestedDict = None,
+    bold_theories: StrList = None,
     shade_theories: bool = True,
     # Sensitivity plotting options
     sensitivities: dict | None = None,
