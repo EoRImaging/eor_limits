@@ -15,11 +15,18 @@ OUTPUT_DIR.mkdir(exist_ok=True)
 IMAGE_TOL = 0.1
 
 
-def _run_plot_vs_k(*args: str) -> None:
+def _run_plot_vs_k(*args: str, expect_success: bool = True) -> None:
     """Invoke the CLI plot-vs-k command with provided args."""
     with pytest.raises(SystemExit) as exc_info:
-        app(["plot-vs-k", *args], exit_on_error=False)
-    assert exc_info.value.code == 0
+        app(["plot-vs-k", *args], exit_on_error=True)
+    if expect_success:
+        assert exc_info.value.code == 0
+        if "--out" in args:
+            out_index = args.index("--out") + 1
+            out_path = Path(args[out_index])
+            assert out_path.exists(), f"Expected output file not found: {out_path}"
+    else:
+        assert exc_info.value.code != 0  # negative test case
 
 
 def _assert_images_match(test_name: str, cli_path: Path) -> None:
@@ -48,8 +55,7 @@ def test_cli_app_exists():
 def test_cli_plot_vs_k_basic():
     """Test making a plot with default parameters through the CLI."""
     out = OUTPUT_DIR / "test_cli_plot_vs_k_basic.png"
-    _run_plot_vs_k("--out", str(out))
-    assert out.exists()
+    _run_plot_vs_k("--out", str(out), expect_success=True)
     _assert_images_match("basic", out)
 
 
@@ -65,32 +71,31 @@ def test_cli_plot_vs_k_with_fig_styling():
         "2.0",
         "--out",
         str(out),
+        expect_success=True,
     )
-    assert out.exists()
     _assert_images_match("with_fig_styling", out)
 
 
 def test_cli_plot_vs_k_with_z_range():
     """Test making a plot with redshift range filtering through the CLI."""
     out = OUTPUT_DIR / "test_cli_plot_vs_k_with_z_range.png"
-    _run_plot_vs_k("--z-range", "6.0", "10.0", "--out", str(out))
-    assert out.exists()
+    _run_plot_vs_k("--z-range", "6.0", "10.0", "--out", str(out), expect_success=True)
     _assert_images_match("with_z_range", out)
 
 
 def test_cli_plot_vs_k_with_k_range():
     """Test making a plot with k range filtering through the CLI."""
     out = OUTPUT_DIR / "test_cli_plot_vs_k_with_k_range.png"
-    _run_plot_vs_k("--k-range", "0.1", "1.0", "--out", str(out))
-    assert out.exists()
+    _run_plot_vs_k("--k-range", "0.1", "1.0", "--out", str(out), expect_success=True)
     _assert_images_match("with_k_range", out)
 
 
 def test_cli_plot_vs_k_with_delta_squared_range():
     """Test making a plot with delta squared range filtering through the CLI."""
     out = OUTPUT_DIR / "test_cli_plot_vs_k_with_delta_squared_range.png"
-    _run_plot_vs_k("--delta-squared-range", "1e3", "1e5", "--out", str(out))
-    assert out.exists()
+    _run_plot_vs_k(
+        "--delta-squared-range", "1e3", "1e5", "--out", str(out), expect_success=True
+    )
     _assert_images_match("with_delta_squared_range", out)
 
 
@@ -105,8 +110,8 @@ def test_cli_plot_vs_k_with_aspoints():
         *limits,
         "--out",
         str(out),
+        expect_success=True,
     )
-    assert out.exists()
     _assert_images_match("with_aspoints", out)
 
 
@@ -121,8 +126,8 @@ def test_cli_plot_vs_k_with_aslines():
         *limits,
         "--out",
         str(out),
+        expect_success=True,
     )
-    assert out.exists()
     _assert_images_match("with_aslines", out)
 
 
@@ -138,8 +143,8 @@ def test_cli_plot_vs_k_with_bold_limits():
         "HERA2023",
         "--out",
         str(out),
+        expect_success=True,
     )
-    assert out.exists()
     _assert_images_match("with_bold_limits", out)
 
 
@@ -155,14 +160,20 @@ def test_cli_plot_vs_k_with_bold_theories():
         "Mesinger2016Bright",
         "--out",
         str(out),
+        expect_success=True,
     )
-    assert out.exists()
     _assert_images_match("with_bold_theories", out)
 
 
 def test_cli_plot_vs_k_with_limit_and_theory_styling():
-    """Test making a plot with custom limit/theory styling through the CLI."""
+    """Test making a plot with custom limit/theory styling through the CLI.
+
+    Also exercises the error path for invalid JSON passed to style arguments,
+    asserting that the CLI exits non-zero and emits an informative message.
+    """
     limits = list(eor_limits.KNOWN_LIMITS.keys())
+
+    # Positive case: valid JSON style arguments work and produce an output file.
     out = OUTPUT_DIR / "test_cli_plot_vs_k_with_limit_and_theory_styling.png"
     _run_plot_vs_k(
         "--limits",
@@ -184,5 +195,19 @@ def test_cli_plot_vs_k_with_limit_and_theory_styling():
         "--out",
         str(out),
     )
-    assert out.exists()
     _assert_images_match("with_limit_and_theory_styling", out)
+
+    # Negative case: invalid JSON should trigger a non-zero exit and an error message.
+    bad_out = OUTPUT_DIR / "test_cli_plot_vs_k_with_invalid_style_json.png"
+    _run_plot_vs_k(
+        "--limits",
+        *limits,
+        "--theories",
+        "Mesinger2016Faint",
+        "Mesinger2016Bright",
+        "--base-limit-style",
+        '{"this-is": "not valid json",',  # Deliberately malformed JSON.
+        "--out",
+        str(bad_out),
+        expect_success=False,  # Negative test case
+    )

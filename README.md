@@ -77,7 +77,7 @@ After installation, you can also use the `eor-limits` command from the terminal 
 eor-limits plot-vs-k --out=MyPlot.pdf
 ```
 
-To make the same customized plot as in the library example, you can run:
+To make the same customized plot as in the library example, the command allows for JSON-style dictionaries as arguments for the various style options, so you can run:
 
 ```bash
 eor-limits plot-vs-k \
