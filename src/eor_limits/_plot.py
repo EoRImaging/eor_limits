@@ -45,7 +45,7 @@ JsonNestedDict = Annotated[
 
 def plot_vs_z(*args, **kwargs):
     """
-    Plot 21-cm power spectrum limits as a function of redshift, z.
+    Plot 21-cm power spectrum limits as a function of redshift |z|.
 
     Not yet implemented. Stay tuned!
     """
