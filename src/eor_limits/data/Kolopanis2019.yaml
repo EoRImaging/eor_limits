@@ -3,7 +3,7 @@ author: Kolopanis
 year: 2019
 doi: 10.3847/1538-4357/ab3e3a
 notes:
-    - The k_lower and k_upper values are not in the paper, they came via private communication from  M. Kolopanis, assuming linear binning from the k values he provided (see data files for the k edges).
+    - The k_lower and k_upper values are not in the paper, they came via private communication from  M. Kolopanis, assuming linear binning from the k values he provided.
 
 data:
     delta_squared: [[8.09e4], [1.28e5], [3.61e4], [1.46e5], [3.8e6], [2.41e6]]

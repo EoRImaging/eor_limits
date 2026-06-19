@@ -1,9 +1,9 @@
 telescope: MWA
 author: Beardsley
-year: 2019
+year: 2016
 doi: 10.3847/1538-4357/833/1/102
 notes:
-    - The k_lower and k_upper values are not in the paper, they came via private communication from N. Barry, who got the files from A. Beardsley (see data files for the k edges).
+    - The k_lower and k_upper values are not in the paper, they came via private communication from N. Barry, who got the files from A. Beardsley.
 
 data:
     delta_squared: [[3.67e+4], [2.70e+4], [3.56e+4], [3.02e+4], [4.70e+4], [3.22e+4]] #, [3.2e4], [2.6e4], [2.5e4]] these last values are not in the original paper
