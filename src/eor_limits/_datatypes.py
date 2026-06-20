@@ -373,8 +373,8 @@ class DataSet:
         field : str, optional
             The field to apply the mask to. Can be "z" (default) or "z_tags".
         """
-        fld = getattr(self.data, field)
-        fld_mask = np.array([mask(q) for q in fld] if field == "z_tags" else mask(fld))
+        fld = np.array(getattr(self.data, field))
+        fld_mask = mask(fld)
         if not fld_mask.any():
             raise ValueError("No data points found with this mask")
         if fld_mask.shape != self.data.z.shape:
@@ -613,16 +613,24 @@ class DataSet:
 
         return self._select_with_k_based_mask(mask, "k")
 
-    def select_lowest_delta_squared(self, collapse_z_tags: bool = False) -> Self:
+    def select_lowest_delta_squared(
+        self, per_z: bool = False, per_tag: bool = False
+    ) -> Self:
         """
         Return a new DataSet with only the lowest |dsq| data points.
 
         Parameters
         ----------
-        collapse_z_tags : bool, optional
+        per_z : bool, optional
             If True, and the dataset has |z| tags (e.g. multiple fields or
             polarizations at the same redshift), collapse across tags by
             keeping only the field with the lowest |dsq|.
+            If False (default), maintains them as separate entries.
+
+        per_tag : bool, optional
+            If True, and the dataset has |z| tags (e.g. multiple fields or
+            polarizations at the same redshift), collapse across |z| by
+            keeping only the |z| with the lowest |dsq|.
             If False (default), maintains them as separate entries.
 
         Returns
@@ -637,20 +645,24 @@ class DataSet:
             m[np.nanargmin(dsq)] = True
             return m
 
+        def z_mask_gen(fld, dsq):
+            m = np.zeros(len(fld), dtype=bool)
+            for f in set(fld):
+                idx = [i for i, g in enumerate(fld) if g == f]
+                m[idx[np.nanargmin([dsq[i][0] for i in idx])]] = True
+            return m
+
         selected = self._select_with_k_based_mask(k_mask, "delta_squared")
 
-        if collapse_z_tags and self.data.z_tags is not None:
-            unique_zs = set(selected.data.z)
-            z_mask = np.zeros(len(selected.data.z), dtype=bool)
-            for z_val in unique_zs:
-                idx = [i for i, z in enumerate(selected.data.z) if z == z_val]
-                dsq_minima = [selected.data.delta_squared[i][0] for i in idx]
-                best = idx[np.nanargmin(dsq_minima)]
-                z_mask[best] = True
-            # The z_mask below is a bit of a hack; it's not a functional mask.
-            # It just forces the custom mask through.
-            selected = selected._select_with_z_based_mask(lambda z: z_mask, "z")
-
+        if self.data.z_tags is not None:
+            if per_z:
+                z_mask = z_mask_gen(selected.data.z, selected.data.delta_squared)
+                selected = selected._select_with_z_based_mask(lambda z: z_mask, "z")
+            if per_tag:
+                z_mask = z_mask_gen(selected.data.z_tags, selected.data.delta_squared)
+                selected = selected._select_with_z_based_mask(
+                    lambda t: z_mask, "z_tags"
+                )
         return selected
 
     @property

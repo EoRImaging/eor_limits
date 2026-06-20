@@ -51,7 +51,6 @@ def test_select_delta_squared_range():
     dsmax = ds_val * 10
     selected = dataset.select_delta_squared_range(dsmin, dsmax)
     assert isinstance(selected, DataSet)
-
     for ds_arr in selected.data.delta_squared:
         assert np.all(dsmin <= ds_arr)
         assert np.all(ds_arr <= dsmax)
@@ -97,10 +96,10 @@ def test_select_lowest_delta_squared():
         assert selected_dsq[0] == np.nanmin(original_dsq)
 
 
-def test_select_lowest_delta_squared_collapse_z_tags():
-    """Test selecting the lowest delta_squared value with collapse_z_tags=True."""
+def test_select_lowest_delta_squared_per_z():
+    """Test selecting the lowest delta_squared value with per_z=True."""
     dataset = DataSet.load("HERA2023")  # known to have multiple z tags
-    selected = dataset.select_lowest_delta_squared(collapse_z_tags=True)
+    selected = dataset.select_lowest_delta_squared(per_z=True)
     assert isinstance(selected, DataSet)
     unique_zs = set(dataset.data.z)
     assert len(selected.data.z) == len(unique_zs)
@@ -109,5 +108,21 @@ def test_select_lowest_delta_squared_collapse_z_tags():
         all_best_dsq = [np.nanmin(dataset.data.delta_squared[i]) for i in idx]
         best_dsq = np.nanmin(all_best_dsq)
         selected_idx = list(selected.data.z).index(z_val)
+        selected_dsq = selected.data.delta_squared[selected_idx][0]
+        assert selected_dsq == best_dsq
+
+
+def test_select_lowest_delta_squared_per_tag():
+    """Test selecting the lowest delta_squared value with per_tag=True."""
+    dataset = DataSet.load("HERA2023")  # known to have multiple z tags
+    selected = dataset.select_lowest_delta_squared(per_tag=True)
+    assert isinstance(selected, DataSet)
+    unique_tags = set(dataset.data.z_tags)
+    assert len(selected.data.z_tags) == len(unique_tags)
+    for tag_val in unique_tags:
+        idx = [i for i, t in enumerate(dataset.data.z_tags) if t == tag_val]
+        all_best_dsq = [np.nanmin(dataset.data.delta_squared[i]) for i in idx]
+        best_dsq = np.nanmin(all_best_dsq)
+        selected_idx = list(selected.data.z_tags).index(tag_val)
         selected_dsq = selected.data.delta_squared[selected_idx][0]
         assert selected_dsq == best_dsq
