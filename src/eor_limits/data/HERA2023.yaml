@@ -51,5 +51,5 @@ data:
     z: [10.37, 10.37, 10.37, 10.37, 10.37, 7.93, 7.93, 7.93, 7.93, 7.93]
     z_lower:
     z_upper:
-    z_tags: ['Band 1 Field A', 'Band 1 Field B', 'Band 1 Field C', 'Band 1 Field D', 'Band 1 Field E',
-            'Band 2 Field A', 'Band 2 Field B', 'Band 2 Field C', 'Band 2 Field D', 'Band 2 Field E']
+    z_tags: ['Field A', 'Field B', 'Field C', 'Field D', 'Field E',
+            'Field A', 'Field B', 'Field C', 'Field D', 'Field E']
