@@ -61,8 +61,9 @@ def test_select_closest_z():
     """Test selecting the closest z value from a dataset."""
     dataset = DataSet.load("HERA2026")
     z_val = dataset.data.z[5]
-    z_neighbour = min(dataset.data.z[4], dataset.data.z[6],
-                      key=lambda z: abs(z - z_val))
+    z_neighbour = min(
+        dataset.data.z[4], dataset.data.z[6], key=lambda z: abs(z - z_val)
+    )
     offset = (z_neighbour - z_val) / 4  # guaranteed closer to z_val than z_neighbour
     selected = dataset.select_closest_z(z_val + offset)
     assert isinstance(selected, DataSet)
@@ -74,8 +75,9 @@ def test_select_closest_k():
     """Test selecting the closest k value from a dataset."""
     dataset = DataSet.load("HERA2026")
     k_val = dataset.data.k[0][5]
-    k_neighbour = min(dataset.data.k[0][4], dataset.data.k[0][6],
-                      key=lambda k: abs(k - k_val))
+    k_neighbour = min(
+        dataset.data.k[0][4], dataset.data.k[0][6], key=lambda k: abs(k - k_val)
+    )
     offset = (k_neighbour - k_val) / 4  # guaranteed closer to k_val than k_neighbour
     selected = dataset.select_closest_k(k_val + offset)
     assert isinstance(selected, DataSet)
@@ -88,9 +90,9 @@ def test_select_lowest_delta_squared():
     dataset = DataSet.load("HERA2026")
     selected = dataset.select_lowest_delta_squared()
     assert isinstance(selected, DataSet)
-    for original_dsq, selected_dsq in zip(dataset.data.delta_squared,
-                                          selected.data.delta_squared,
-                                          strict=True):
+    for original_dsq, selected_dsq in zip(
+        dataset.data.delta_squared, selected.data.delta_squared, strict=True
+    ):
         assert len(selected_dsq) == 1
         assert selected_dsq[0] == np.nanmin(original_dsq)
 
