@@ -53,6 +53,7 @@ def plot_vs_z(*args, **kwargs):
 
 
 def plot_vs_k(
+    *,
     # Limit plotting options
     limits: StrList = None,
     base_limit_style: JsonDict = None,
@@ -239,7 +240,12 @@ def plot_vs_k(
         else:
             delta_squared_range = (1e3, 1e6)
 
-    limits = select_k_and_z_ranges(limits, z_range, k_range, delta_squared_range)
+    limits = select_k_and_z_ranges(
+        limits,
+        z_range=z_range,
+        k_range=k_range,
+        delta_squared_range=delta_squared_range,
+    )
 
     z_range = _get_z_range_from_limits(limits)  # again, since we removed some limits
     k_range = _get_k_range_from_limits(limits)  # again, since we removed some limits
@@ -253,14 +259,14 @@ def plot_vs_k(
     scalar_map = cmx.ScalarMappable(norm=norm, cmap=colormap)
 
     # Building plotting styles for each limit.
-    limit_styles = build_limit_styles(
-        limits,
-        aspoints,
-        aslines,
-        nk_for_lines,
-        shade_limits,
-        base_limit_style,
-        limit_styles,
+    limit_styles = _build_limit_styles(
+        limits=limits,
+        aspoints=aspoints,
+        aslines=aslines,
+        nk_for_lines=nk_for_lines,
+        shade_limits=shade_limits,
+        base_override=base_limit_style,
+        overrides=limit_styles,
     )
 
     # Whether to bold each limit in the legend
@@ -273,13 +279,13 @@ def plot_vs_k(
     # Plotting the limits as points or lines, depending on the number of k values
     # or user specifications.
     limit_lines = plot_limits(
-        ax,
-        limits,
-        limit_styles,
-        limit_labels,
-        shade_limits,
-        delta_squared_range,
-        scalar_map,
+        ax=ax,
+        limits=limits,
+        limit_styles=limit_styles,
+        limit_labels=limit_labels,
+        shade_limits=shade_limits,
+        delta_squared_range=delta_squared_range,
+        scalar_map=scalar_map,
     )
 
     ###################################################################################
@@ -302,8 +308,11 @@ def plot_vs_k(
     theories = new_theories
 
     # Build styles for theory lines, applying any overrides specified by the user.
-    theory_styles = build_theory_styles(
-        theories, shade_theories, base_theory_style, theory_styles
+    theory_styles = _build_theory_styles(
+        theories=theories,
+        shade_theories=shade_theories,
+        base_override=base_theory_style,
+        overrides=theory_styles,
     )
 
     # Whether to bold each theory in the legend
@@ -315,12 +324,12 @@ def plot_vs_k(
 
     # Plotting the theory lines.
     theory_lines = plot_theories(
-        ax,
-        theories,
-        theory_styles,
-        theory_labels,
-        shade_theories,
-        delta_squared_range,
+        ax=ax,
+        theories=theories,
+        theory_styles=theory_styles,
+        theory_labels=theory_labels,
+        shade_theories=shade_theories,
+        delta_squared_range=delta_squared_range,
     )
 
     ###################################################################################
@@ -330,10 +339,15 @@ def plot_vs_k(
     sensitivities = sensitivities or {}
 
     # Build styles for sensitivity lines, applying any overrides specified by the user.
-    sensitivity_style = build_sensitivity_styles(sensitivities, sensitivity_style)
+    sensitivity_style = _build_sensitivity_styles(sensitivities, sensitivity_style)
 
     # Plot the sensitivity curves.
-    plot_sensitivities(ax, sensitivities, sensitivity_style, fontsize)
+    plot_sensitivities(
+        ax=ax,
+        sensitivities=sensitivities,
+        sensitivity_style=sensitivity_style,
+        fontsize=fontsize,
+    )
 
     ###################################################################################
     # PLOT ADJUSTMENTS
@@ -393,11 +407,31 @@ def plot_vs_k(
 
 def select_k_and_z_ranges(
     limits: list[DataSet],
+    *,
     z_range: tuple[float, float] | None,
     k_range: tuple[float, float] | None,
     delta_squared_range: tuple[float, float] | None,
 ) -> list[DataSet]:
-    """Select the specified k and redshift ranges from the limits."""
+    """Select the specified k and redshift ranges from the limits.
+
+    Parameters
+    ----------
+    limits : list[DataSet]
+        The list of power spectrum upper limit datasets to filter.
+    z_range : tuple[float, float] | None
+        The redshift range to select (min, max). If None, do not down-select on
+        redshift.
+    k_range : tuple[float, float] | None
+        The k range to select in 1/Mpc units (min, max). If None, do not down-select
+        on wavenumber.
+    delta_squared_range : tuple[float, float] | None
+        The delta squared range to select. If None, do not down-select on delta squared.
+
+    Returns
+    -------
+    list[DataSet]
+        The filtered list of limit datasets.
+    """
     new_limits = []
     for limit in limits:
         if z_range is not None:
@@ -470,7 +504,8 @@ def select_k_and_z_ranges(
     return new_limits
 
 
-def build_limit_styles(
+def _build_limit_styles(
+    *,
     limits: list[DataSet],
     aspoints: list[str] | None,
     aslines: list[str] | None,
@@ -479,7 +514,32 @@ def build_limit_styles(
     base_override: dict[str, Any] | None = None,
     overrides: dict[str, dict[str, Any]] | None = None,
 ) -> dict[str, dict[str, Any]]:
-    """Build a dictionary of styles to use for each limit paper."""
+    """Build a dictionary of styles to use for each limit paper.
+
+    Note that this is an internal function not meant to be used by users.
+
+    Parameters
+    ----------
+    limits : list[DataSet]
+        The list of limit datasets for which to build styles.
+    aspoints : list[str] | None
+        The list of limit keys to plot as points.
+    aslines : list[str] | None
+        The list of limit keys to plot as lines.
+    nk_for_lines : int
+        The number of k values above which to automatically plot as lines.
+    shade_limits : bool
+        Whether to shade the limits.
+    base_override : dict[str, Any] | None
+        A dictionary of base style overrides.
+    overrides : dict[str, dict[str, Any]] | None
+        A dictionary of style overrides for each limit.
+
+    Returns
+    -------
+    dict[str, dict[str, Any]]
+        A dictionary mapping limit keys to their styles.
+    """
     aspoints = aspoints or []
     aslines = aslines or []
     styles = {}
@@ -518,13 +578,33 @@ def build_limit_styles(
     return styles
 
 
-def build_theory_styles(
+def _build_theory_styles(
+    *,
     theories: list[DataSet],
     shade_theories: bool,
     base_override: dict[str, Any] | None = None,
     overrides: dict[str, dict[str, Any]] | None = None,
 ) -> dict[str, dict[str, Any]]:
-    """Build a dictionary of styles to use for each theory paper."""
+    """Build a dictionary of styles to use for each theory paper.
+
+    Note that this is an internal function not meant to be used by users.
+
+    Parameters
+    ----------
+    theories : list[DataSet]
+        The list of theory datasets for which to build styles.
+    shade_theories : bool
+        Whether to shade the theories.
+    base_override : dict[str, Any] | None
+        A dictionary of base style overrides.
+    overrides : dict[str, dict[str, Any]] | None
+        A dictionary of style overrides for each theory.
+
+    Returns
+    -------
+    dict[str, dict[str, Any]]
+        A dictionary mapping theory keys to their styles.
+    """
     styles = {}
     for theory in theories:
         # Empty
@@ -545,11 +625,26 @@ def build_theory_styles(
     return styles
 
 
-def build_sensitivity_styles(
+def _build_sensitivity_styles(
     sensitivities: dict[str, str],
     sensitivity_style: dict[str, dict[str, Any]] | None,
 ) -> dict[str, dict[str, Any]]:
-    """Build a dictionary of styles to use for each sensitivity curve."""
+    """Build a dictionary of styles to use for each sensitivity curve.
+
+    Note that this is an internal function not meant to be used by users.
+
+    Parameters
+    ----------
+    sensitivities : dict[str, str]
+        A dictionary mapping sensitivity names to their descriptions.
+    sensitivity_style : dict[str, dict[str, Any]] | None
+        A dictionary of style overrides for each sensitivity curve.
+
+    Returns
+    -------
+    dict[str, dict[str, Any]]
+        A dictionary mapping sensitivity names to their styles.
+    """
     styles = {}
     for name in sensitivities:
         style = {
@@ -564,7 +659,20 @@ def build_sensitivity_styles(
 
 
 def get_latex_limit_label(paper: DataSet, bold: bool = False) -> str:
-    """Get a LaTeX label for a limit paper."""
+    """Get a LaTeX label for a limit paper.
+
+    Parameters
+    ----------
+    paper : DataSet
+        The limit paper for which to generate a label.
+    bold : bool, optional
+        Whether to make the label bold, by default False.
+
+    Returns
+    -------
+    str
+        The LaTeX label for the limit paper.
+    """
     label_start = " $\\bf{" if bold else " $\\rm{"
     label_end = "}$"
     return (
@@ -580,7 +688,20 @@ def get_latex_limit_label(paper: DataSet, bold: bool = False) -> str:
 
 
 def get_latex_theory_label(paper: DataSet, bold: bool = False) -> str:
-    """Get a LaTeX label for a theory paper."""
+    """Get a LaTeX label for a theory paper.
+
+    Parameters
+    ----------
+    paper : DataSet
+        The theory paper for which to generate a label.
+    bold : bool, optional
+        Whether to make the label bold, by default False.
+
+    Returns
+    -------
+    str
+        The LaTeX label for the theory paper.
+    """
     label_start = " $\\bf{Theory:} \\bf{" if bold else " $\\bf{Theory:} \\rm{"
     label_end = "}$"
     return (
@@ -596,6 +717,7 @@ def get_latex_theory_label(paper: DataSet, bold: bool = False) -> str:
 
 
 def plot_limits(
+    *,
     ax: plt.Axes,
     limits: list[DataSet],
     limit_styles: dict[str, dict[str, Any]],
@@ -604,7 +726,25 @@ def plot_limits(
     delta_squared_range: tuple[float, float],
     scalar_map: cmx.ScalarMappable,
 ):
-    """Plot limit papers on the given axes."""
+    """Plot limit papers on the given axes.
+
+    Parameters
+    ----------
+    ax : plt.Axes
+        The axes on which to plot the limits.
+    limits : list[DataSet]
+        A list of limit papers to plot.
+    limit_styles : dict[str, dict[str, Any]]
+        A dictionary mapping limit paper keys to their styles.
+    limit_labels : list[str]
+        A list of labels for the limit papers.
+    shade_limits : bool
+        Whether to shade the limit regions.
+    delta_squared_range : tuple[float, float]
+        The range of delta squared values to display.
+    scalar_map : cmx.ScalarMappable
+        A scalar mappable for coloring the points.
+    """
     lines = []
 
     for limit, label in zip(limits, limit_labels, strict=True):
@@ -732,6 +872,7 @@ def plot_limits(
 
 
 def plot_theories(
+    *,
     ax: plt.Axes,
     theories: list[DataSet],
     theory_styles: dict[str, dict[str, Any]],
@@ -739,7 +880,23 @@ def plot_theories(
     shade_theories: bool,
     delta_squared_range: tuple[float, float],
 ):
-    """Plot theory lines on the given axes."""
+    """Plot theory lines on the given axes.
+
+    Parameters
+    ----------
+    ax : plt.Axes
+        The axes on which to plot the theories.
+    theories : list[DataSet]
+        A list of theory papers to plot.
+    theory_styles : dict[str, dict[str, Any]]
+        A dictionary mapping theory paper keys to their styles.
+    theory_labels : list[str]
+        A list of labels for the theory papers.
+    shade_theories : bool
+        Whether to shade the theory regions.
+    delta_squared_range : tuple[float, float]
+        The range of delta squared values to display.
+    """
     lines = []
 
     for theory, label in zip(theories, theory_labels, strict=True):
@@ -775,12 +932,25 @@ def plot_theories(
 
 
 def plot_sensitivities(
+    *,
     ax: plt.Axes,
     sensitivities: dict[str, str] | None,
     sensitivity_style: dict[str, dict[str, Any]] | None,
     fontsize: int,
 ):
-    """Plot the sensitivity curves on the given axes."""
+    """Plot the sensitivity curves on the given axes.
+
+    Parameters
+    ----------
+    ax : plt.Axes
+        The axes on which to plot the sensitivities.
+    sensitivities : dict[str, str] | None
+        A dictionary mapping sensitivity names to their file paths.
+    sensitivity_style : dict[str, dict[str, Any]] | None
+        A dictionary mapping sensitivity names to their styles.
+    fontsize : int
+        The font size for the instrument names.
+    """
     sensitivity_style = sensitivity_style or {}
     sensitivities = sensitivities or {}
     for indx, (name, fname) in enumerate(sensitivities.items()):
