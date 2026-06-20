@@ -4,14 +4,14 @@ updates:
     directory: "/"
     schedule:
       interval: monthly
-      cooldown:
-        default-days: 14
+    cooldown:
+      default-days: 14
   - package-ecosystem: pip
     directory: "/"
     schedule:
       interval: monthly
-      cooldown:
-        default-days: 14
+    cooldown:
+      default-days: 14
     versioning-strategy: lockfile-only
     allow:
       - dependency-type: "all"
