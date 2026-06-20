@@ -584,9 +584,17 @@ class DataSet:
 
         return self._select_with_k_based_mask(mask, "k")
 
-    def select_lowest_delta_squared(self) -> Self:
+    def select_lowest_delta_squared(self, collapse_z_tags=False) -> Self:
         """
         Return a new DataSet with only the lowest |dsq| data points.
+
+        Parameters
+        ----------
+        collapse_z_tags : bool, optional
+            If True, and the dataset has |z| tags (e.g. multiple fields or
+            polarizations at the same redshift), collapse across tags by
+            keeping only the field with the lowest |dsq|.
+            If False (default), maintains them as separate entries.
 
         Returns
         -------
@@ -594,14 +602,26 @@ class DataSet:
             A new DataSet containing only the data point with the lowest |dsq|
             value for each redshift.
         """
+        def k_mask(dsq):
+            m = np.zeros_like(dsq, dtype=bool)
+            m[np.nanargmin(dsq)] = True
+            return m
 
-        def mask(dsq):
-            idx = np.nanargmin(dsq)
-            mask = np.zeros_like(dsq, dtype=bool)
-            mask[idx] = True
-            return mask
+        selected = self._select_with_k_based_mask(k_mask, "delta_squared")
 
-        return self._select_with_k_based_mask(mask, "delta_squared")
+        if collapse_z_tags and self.data.z_tags is not None:
+            unique_zs = set(selected.data.z)
+            z_mask = np.zeros(len(selected.data.z), dtype=bool)
+            for z_val in unique_zs:
+                idx = [i for i, z in enumerate(selected.data.z) if z == z_val]
+                dsq_minima = [selected.data.delta_squared[i][0] for i in idx]
+                best = idx[np.nanargmin(dsq_minima)]
+                z_mask[best] = True
+            # The z_mask below is a bit of a hack; it's not a functional mask.
+            # It just forces the custom mask through.
+            selected = selected._select_with_z_based_mask(lambda z: z_mask, "z")
+
+        return selected
 
     @property
     def key(self) -> str:
