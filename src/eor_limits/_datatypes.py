@@ -361,6 +361,18 @@ class DataSet:
         return converter.structure(yaml_data, cls)
 
     def _select_with_z_based_mask(self, mask: callable, field: str = "z") -> Self:
+        """
+        Return a new DataSet with only the data points that satisfy the given z-mask.
+
+        Parameters
+        ----------
+        mask : callable
+            A callable that takes a single argument (the field value) and returns
+            a boolean indicating whether to keep that data point.
+            e.g. ``lambda z: (z >= z_min) & (z <= z_max)``.
+        field : str, optional
+            The field to apply the mask to. Can be "z" (default) or "z_tags".
+        """
         fld = getattr(self.data, field)
         fld_mask = np.array([mask(q) for q in fld] if field == "z_tags" else mask(fld))
         if not fld_mask.any():
@@ -400,6 +412,18 @@ class DataSet:
         return attrs.evolve(self, data=new_data)
 
     def _select_with_k_based_mask(self, mask: callable, field: str = "k") -> Self:
+        """
+        Return a new DataSet with only the data points that satisfy the given k-mask.
+
+        Parameters
+        ----------
+        mask : callable
+            A callable that takes a single argument (the field value) and returns
+            a boolean array indicating which data points to keep.
+            e.g. ``lambda k: (k >= k_min) & (k <= k_max)``.
+        field : str, optional
+            The field to apply the mask to. Can be "k" (default) or "delta_squared".
+        """
         fld = getattr(self.data, field)
         fld_mask = [mask(q) for q in fld]
         new_data = Data(
@@ -589,7 +613,7 @@ class DataSet:
 
         return self._select_with_k_based_mask(mask, "k")
 
-    def select_lowest_delta_squared(self, collapse_z_tags=False) -> Self:
+    def select_lowest_delta_squared(self, collapse_z_tags: bool = False) -> Self:
         """
         Return a new DataSet with only the lowest |dsq| data points.
 
