@@ -53,7 +53,6 @@ def plot_vs_z(*args, **kwargs):
 
 
 def plot_vs_k(
-    *,
     # Limit plotting options
     limits: StrList = None,
     *,
