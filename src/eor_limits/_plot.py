@@ -214,8 +214,9 @@ def plot_vs_k(
         limits = [load_limit_data(l).drop_nan() for l in limits]
         limits.sort(key=lambda limit: limit.year)
     else:
-        limits = [load_limit_data(l).drop_nan() for l in limits]
-    
+        # DataSet.load() instead of load_limit_data() to allow loading from a YAML file.
+        limits = [DataSet.load(limit).drop_nan() for limit in limits]
+
     # Select the specified k and z ranges from the limits
     def _get_z_range_from_limits(limits):
         z_min = min(min(limit.data.z) for limit in limits)
@@ -273,8 +274,7 @@ def plot_vs_k(
     # Whether to bold each limit in the legend
     bold_limits = bold_limits or []
     limit_labels = [
-        get_latex_label(limit, bold=(limit.key in bold_limits))
-        for limit in limits
+        get_latex_label(limit, bold=(limit.key in bold_limits)) for limit in limits
     ]
 
     # Plotting the limits as points or lines, depending on the number of k values

@@ -561,7 +561,7 @@ class DataSet:
             # some datasets have multiple entries for the same redshift
             # (e.g. different polarizations or fields), so we want to keep all of them.
             closest = z[np.argmin(np.abs(z - z_target))]
-            return (z == closest)
+            return z == closest
 
         return self._select_with_z_based_mask(mask, "z")
 
@@ -607,6 +607,7 @@ class DataSet:
             A new DataSet containing only the data point with the lowest |dsq|
             value for each redshift.
         """
+
         def k_mask(dsq):
             m = np.zeros_like(dsq, dtype=bool)
             m[np.nanargmin(dsq)] = True
