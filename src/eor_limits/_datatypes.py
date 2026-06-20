@@ -360,33 +360,35 @@ class DataSet:
 
         return converter.structure(yaml_data, cls)
 
-    def _select_with_z_based_mask(self, mask: np.ndarray) -> Self:
-        if not mask.any():
+    def _select_with_z_based_mask(self, mask: callable, field: str = "z") -> Self:
+        fld = getattr(self.data, field)
+        fld_mask = np.array([mask(q) for q in fld] if field == "z_tags" else mask(fld))
+        if not fld_mask.any():
             raise ValueError("No data points found with this mask")
-        if mask.shape != self.data.z.shape:
+        if fld_mask.shape != self.data.z.shape:
             raise ValueError("Mask must have the same shape as z.")
         new_data = Data(
-            z=self.data.z[mask],
-            z_lower=self.data.z_lower[mask] if self.data.z_lower is not None else None,
-            z_upper=self.data.z_upper[mask] if self.data.z_upper is not None else None,
+            z=self.data.z[fld_mask],
+            z_lower=self.data.z_lower[fld_mask] if self.data.z_lower is not None else None,
+            z_upper=self.data.z_upper[fld_mask] if self.data.z_upper is not None else None,
             z_tags=tuple(
-                self.data.z_tags[i] for i in range(len(self.data.z)) if mask[i]
+                self.data.z_tags[i] for i in range(len(self.data.z)) if fld_mask[i]
             )
             if self.data.z_tags is not None
             else None,
-            k=tuple(self.data.k[i] for i in range(len(self.data.z)) if mask[i]),
+            k=tuple(self.data.k[i] for i in range(len(self.data.z)) if fld_mask[i]),
             k_lower=tuple(
-                self.data.k_lower[i] for i in range(len(self.data.z)) if mask[i]
+                self.data.k_lower[i] for i in range(len(self.data.z)) if fld_mask[i]
             )
             if self.data.k_lower is not None
             else None,
             k_upper=tuple(
-                self.data.k_upper[i] for i in range(len(self.data.z)) if mask[i]
+                self.data.k_upper[i] for i in range(len(self.data.z)) if fld_mask[i]
             )
             if self.data.k_upper is not None
             else None,
             delta_squared=tuple(
-                self.data.delta_squared[i] for i in range(len(self.data.z)) if mask[i]
+                self.data.delta_squared[i] for i in range(len(self.data.z)) if fld_mask[i]
             ),
         )
         return attrs.evolve(self, data=new_data)
@@ -461,12 +463,16 @@ class DataSet:
             A new DataSet containing only the data points with |z| values
             between ``z_min`` and ``z_max``.
         """
-        mask = (self.data.z >= z_min) & (self.data.z <= z_max)
-        if not mask.any():
+
+        def mask(z):
+            return (z >= z_min) & (z <= z_max)
+        
+        try: 
+            return self._select_with_z_based_mask(mask, "z")
+        except ValueError as err:
             raise ValueError(
-                f"No data points found in the redshift range {z_min} to {z_max}."
-            )
-        return self._select_with_z_based_mask(mask)
+                f"No data points found in the z range {z_min} to {z_max}."
+            ) from err
 
     def select_k_range(self, k_min: float, k_max: float) -> Self:
         """
@@ -543,10 +549,16 @@ class DataSet:
             to ``z_target``.
 
         """
-        idx = np.abs(self.data.z - z_target).argmin()
-        mask = np.zeros_like(self.data.z, dtype=bool)
-        mask[idx] = True
-        return self._select_with_z_based_mask(mask)
+        
+        def mask(z):
+            # Note: this mask is different from select_closest_k because
+            # some datasets have multiple entries for the same redshift 
+            # (e.g. different polarizations or fields), so we want to keep all of them.
+            closest = z[np.argmin(np.abs(z - z_target))]
+            mask = (z == closest)
+            return mask
+        
+        return self._select_with_z_based_mask(mask, "z")
 
     def select_closest_k(self, k_target: float) -> Self:
         """
