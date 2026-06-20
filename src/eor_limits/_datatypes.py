@@ -614,7 +614,7 @@ class DataSet:
         return self._select_with_k_based_mask(mask, "k")
 
     def select_lowest_delta_squared(
-        self, per_z: bool = False, per_tag: bool = False
+        self, per_z: bool = True, per_tag: bool = False
     ) -> Self:
         """
         Return a new DataSet with only the lowest |dsq| data points.
@@ -622,16 +622,16 @@ class DataSet:
         Parameters
         ----------
         per_z : bool, optional
-            If True, and the dataset has |z| tags (e.g. multiple fields or
-            polarizations at the same redshift), collapse across tags by
-            keeping only the field with the lowest |dsq|.
-            If False (default), maintains them as separate entries.
+            If True (default), the lowest |dsq| is returned for each
+            redshift |z|. If False, the lowest |dsq| is returned across all
+            redshifts (i.e. the absolute lowest in case `per_tag` is also False;
+            otherwise, the lowest per |z| tag is returned).
 
         per_tag : bool, optional
             If True, and the dataset has |z| tags (e.g. multiple fields or
-            polarizations at the same redshift), collapse across |z| by
-            keeping only the |z| with the lowest |dsq|.
-            If False (default), maintains them as separate entries.
+            polarizations at the same redshift), they are treated as separate entries
+            and retained in the output If False (default), the lowest |dsq| is returned
+            across all |z| tags.
 
         Returns
         -------
@@ -645,24 +645,39 @@ class DataSet:
             m[np.nanargmin(dsq)] = True
             return m
 
-        def z_mask_gen(fld, dsq):
+        def z_mask_gen(data, field):
+            fld = np.array(getattr(data, field))
+            dsq = np.array(data.delta_squared)
             m = np.zeros(len(fld), dtype=bool)
             for f in set(fld):
                 idx = [i for i, g in enumerate(fld) if g == f]
                 m[idx[np.nanargmin([dsq[i][0] for i in idx])]] = True
             return m
 
+        # First collapse along the k-axis to find the lowest delta_squared value
+        # for each redshift entry.
         selected = self._select_with_k_based_mask(k_mask, "delta_squared")
 
-        if self.data.z_tags is not None:
-            if per_z:
-                z_mask = z_mask_gen(selected.data.z, selected.data.delta_squared)
+        if not per_z:
+            # Next, collapse along the z-axis depending on the per_tag flag.
+            if not per_tag or selected.data.z_tags is None:
+                # The absolute lowest delta_squared value across all z and z_tags
+                z_mask = np.zeros(len(selected.data.z), dtype=bool)
+                min_idx = np.nanargmin([dsq[0] for dsq in selected.data.delta_squared])
+                z_mask[min_idx] = True
                 selected = selected._select_with_z_based_mask(lambda z: z_mask, "z")
-            if per_tag:
-                z_mask = z_mask_gen(selected.data.z_tags, selected.data.delta_squared)
-                selected = selected._select_with_z_based_mask(
-                    lambda t: z_mask, "z_tags"
-                )
+            if per_tag and selected.data.z_tags is not None:
+                # If for some reason, the user wants only lowest per z_tag, but
+                # not per z. Bit of an edge case, but we can still handle it.
+                z_mask = z_mask_gen(selected.data, "z_tags")
+                selected = selected._select_with_z_based_mask(lambda z: z_mask, "z")
+        else:
+            if not per_tag and selected.data.z_tags is not None:
+                # If the user wants lowest per z, but not per z_tag, we need to collapse
+                # across z_tag.
+                z_mask = z_mask_gen(selected.data, "z")
+                selected = selected._select_with_z_based_mask(lambda z: z_mask, "z")
+
         return selected
 
     @property
