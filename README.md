@@ -113,7 +113,7 @@ We welcome contributions to this repository from the community. If you would lik
         z: [8.6]
     ```
 
-* If you would like to add unpublished data or simulations to a plot, please fork this repository and add the data or simulations in your fork. If the data or simulations are subsequently published we welcome a pull request from your fork to add them to this repository.
+* If you would like to plot or compare unpublished data, you can create a local YAML file and load it in the code using  `DataSet.load("/path/to/my_data.yaml")`.
 
 * If you would like to report a bug or request a feature, please file an issue on the github repository.
 

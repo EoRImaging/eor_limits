@@ -369,8 +369,12 @@ class DataSet:
             raise ValueError("Mask must have the same shape as z.")
         new_data = Data(
             z=self.data.z[fld_mask],
-            z_lower=self.data.z_lower[fld_mask] if self.data.z_lower is not None else None,
-            z_upper=self.data.z_upper[fld_mask] if self.data.z_upper is not None else None,
+            z_lower=self.data.z_lower[fld_mask]
+            if self.data.z_lower is not None
+            else None,
+            z_upper=self.data.z_upper[fld_mask]
+            if self.data.z_upper is not None
+            else None,
             z_tags=tuple(
                 self.data.z_tags[i] for i in range(len(self.data.z)) if fld_mask[i]
             )
@@ -388,7 +392,9 @@ class DataSet:
             if self.data.k_upper is not None
             else None,
             delta_squared=tuple(
-                self.data.delta_squared[i] for i in range(len(self.data.z)) if fld_mask[i]
+                self.data.delta_squared[i]
+                for i in range(len(self.data.z))
+                if fld_mask[i]
             ),
         )
         return attrs.evolve(self, data=new_data)
@@ -466,8 +472,8 @@ class DataSet:
 
         def mask(z):
             return (z >= z_min) & (z <= z_max)
-        
-        try: 
+
+        try:
             return self._select_with_z_based_mask(mask, "z")
         except ValueError as err:
             raise ValueError(
@@ -549,15 +555,14 @@ class DataSet:
             to ``z_target``.
 
         """
-        
+
         def mask(z):
             # Note: this mask is different from select_closest_k because
-            # some datasets have multiple entries for the same redshift 
+            # some datasets have multiple entries for the same redshift
             # (e.g. different polarizations or fields), so we want to keep all of them.
             closest = z[np.argmin(np.abs(z - z_target))]
-            mask = (z == closest)
-            return mask
-        
+            return (z == closest)
+
         return self._select_with_z_based_mask(mask, "z")
 
     def select_closest_k(self, k_target: float) -> Self:

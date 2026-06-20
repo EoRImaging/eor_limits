@@ -61,7 +61,8 @@ def test_select_closest_z():
     """Test selecting the closest z value from a dataset."""
     dataset = DataSet.load("HERA2026")
     z_val = dataset.data.z[5]
-    z_neighbour = min(dataset.data.z[4], dataset.data.z[6], key=lambda z: abs(z - z_val))
+    z_neighbour = min(dataset.data.z[4], dataset.data.z[6],
+                      key=lambda z: abs(z - z_val))
     offset = (z_neighbour - z_val) / 4  # guaranteed closer to z_val than z_neighbour
     selected = dataset.select_closest_z(z_val + offset)
     assert isinstance(selected, DataSet)
@@ -73,7 +74,8 @@ def test_select_closest_k():
     """Test selecting the closest k value from a dataset."""
     dataset = DataSet.load("HERA2026")
     k_val = dataset.data.k[0][5]
-    k_neighbour = min(dataset.data.k[0][4], dataset.data.k[0][6], key=lambda k: abs(k - k_val))
+    k_neighbour = min(dataset.data.k[0][4], dataset.data.k[0][6],
+                      key=lambda k: abs(k - k_val))
     offset = (k_neighbour - k_val) / 4  # guaranteed closer to k_val than k_neighbour
     selected = dataset.select_closest_k(k_val + offset)
     assert isinstance(selected, DataSet)
@@ -86,20 +88,24 @@ def test_select_lowest_delta_squared():
     dataset = DataSet.load("HERA2026")
     selected = dataset.select_lowest_delta_squared()
     assert isinstance(selected, DataSet)
-    for original_arr, selected_arr in zip(dataset.data.delta_squared, selected.data.delta_squared):
-        assert len(selected_arr) == 1
-        assert selected_arr[0] == np.nanmin(original_arr)
+    for original_dsq, selected_dsq in zip(dataset.data.delta_squared,
+                                          selected.data.delta_squared,
+                                          strict=True):
+        assert len(selected_dsq) == 1
+        assert selected_dsq[0] == np.nanmin(original_dsq)
 
 
 def test_select_lowest_delta_squared_collapse_z_tags():
-    """Test selecting the lowest delta_squared value from a dataset with collapse_z_tags=True."""
-    dataset = DataSet.load("HERA2023") # known to have multiple z tags
+    """Test selecting the lowest delta_squared value with collapse_z_tags=True."""
+    dataset = DataSet.load("HERA2023")  # known to have multiple z tags
     selected = dataset.select_lowest_delta_squared(collapse_z_tags=True)
     assert isinstance(selected, DataSet)
     unique_zs = set(dataset.data.z)
     assert len(selected.data.z) == len(unique_zs)
     for z_val in unique_zs:
         idx = [i for i, z in enumerate(dataset.data.z) if z == z_val]
-        best_dsq = np.nanmin([np.nanmin(dataset.data.delta_squared[i]) for i in idx])
-        selected_dsq = selected.data.delta_squared[list(selected.data.z).index(z_val)][0]
+        all_best_dsq = [np.nanmin(dataset.data.delta_squared[i]) for i in idx]
+        best_dsq = np.nanmin(all_best_dsq)
+        selected_idx = list(selected.data.z).index(z_val)
+        selected_dsq = selected.data.delta_squared[selected_idx][0]
         assert selected_dsq == best_dsq
