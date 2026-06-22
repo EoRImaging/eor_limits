@@ -121,20 +121,3 @@ html_theme_options = {
 }
 html_static_path = ["_static"]
 html_css_files = ["custom.css"]
-
-
-# -- Options for LaTeX output --------------------------------------------------
-# https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-latex-output
-
-latex_elements = {}
-# Grouping the document tree into LaTeX files. List of tuples
-# (source start file, target name, title, author, documentclass [howto/manual]).
-latex_documents = [
-    (
-        "index",
-        "user_guide.tex",
-        "eor-limits Documentation",
-        "Nichole Barry & Bryna Hazelton",
-        "manual",
-    ),
-]
