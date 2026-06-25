@@ -41,7 +41,7 @@ jobs:
 
       - name: Run Tests
         run: |
-          uv run pytest --cov eor_limits --cov-report xml:coverage.xml
+          uv run --no-sync pytest --cov eor_limits --cov-report xml:coverage.xml
 
       - uses: codecov/codecov-action@v5
         if: success()
