@@ -210,7 +210,7 @@ def plot_vs_k(
     # Load data for limits and sort by year.
     if limits is None:
         limits = list(KNOWN_LIMITS.keys())
-        limits = [load_limit_data(l).drop_nan() for l in limits]
+        limits = [load_limit_data(limit).drop_nan() for limit in limits]
         limits.sort(key=lambda limit: limit.year)
     else:
         # DataSet.load() instead of load_limit_data() to allow loading from a YAML file.
