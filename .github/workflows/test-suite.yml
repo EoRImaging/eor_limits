@@ -44,7 +44,7 @@ jobs:
           uv run pytest --cov eor_limits --cov-report xml:coverage.xml
 
       - uses: codecov/codecov-action@v5
-        if: matrix.os == 'ubuntu-latest' && success()
+        if: success()
         with:
           files: ./coverage.xml #optional
           verbose: true
