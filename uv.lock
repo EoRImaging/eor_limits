@@ -585,6 +585,7 @@ source = { editable = "." }
 dependencies = [
     { name = "cattrs" },
     { name = "cyclopts" },
+    { name = "h5py" },
     { name = "matplotlib" },
     { name = "numpy" },
     { name = "pandas" },
@@ -614,6 +615,7 @@ docs = [
 requires-dist = [
     { name = "cattrs", specifier = ">=25.3.0" },
     { name = "cyclopts", specifier = ">=4.5.1" },
+    { name = "h5py", specifier = ">=3.15.1" },
     { name = "matplotlib", specifier = ">=3.10.8" },
     { name = "numpy", specifier = ">=2.4.1" },
     { name = "pandas", specifier = ">=3.0.0" },
