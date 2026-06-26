@@ -122,8 +122,8 @@ def plot_vs_z(
     # General plotting options
     colormap: str = "Spectral_r",
     colorbar: bool = False,
-    fontsize: int = 15,
-    fig_width: float = 7.0,
+    fontsize: int = 11,
+    fig_width: float = 25.0,
     fig_ratio: float | None = None,
     # Output options
     fig: Annotated[plt.Figure | None, Parameter(show=False)] = None,
@@ -247,7 +247,6 @@ def plot_vs_z(
     """
     ###################################################################################
     # Set up the figure and axis
-    fig_width = 7.0
     if theories is not None:
         fig_height = fig_width * (fig_ratio or 0.8)
     else:
