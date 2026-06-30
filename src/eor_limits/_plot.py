@@ -1011,9 +1011,7 @@ def _build_limit_styles(
         # Empty
         style = {}
         nbins = (
-            max(len(k) for k in limit.data.k)
-            if bin_type == "k"
-            else len(limit.data.z)
+            max(len(k) for k in limit.data.k) if bin_type == "k" else len(limit.data.z)
         )
         # Determine whether to plot as points or lines
         if limit.key in aspoints and limit.key in aslines:
