@@ -77,13 +77,24 @@ def test_cli_plot_vs_k_with_fig_styling():
         "12",
         "--colormap",
         "viridis",
+        "--fig-width",
+        "20.0",
         "--fig-ratio",
         "2.0",
+        "--leg-cols",
+        "2",
         "--out",
         str(out),
         expect_success=True,
     )
     _assert_images_match("plot_vs_k", "with_fig_styling", out)
+
+
+def test_cli_plot_vs_k_without_colorbar():
+    """Test making a plot without a redshift colorbar through the CLI."""
+    out = OUTPUT_DIR / "test_cli_plot_vs_k_without_colorbar.png"
+    _run_plot_vs_k("--no-colorbar", "--out", str(out), expect_success=True)
+    _assert_images_match("plot_vs_k", "without_colorbar", out)
 
 
 def test_cli_plot_vs_k_with_z_range():
