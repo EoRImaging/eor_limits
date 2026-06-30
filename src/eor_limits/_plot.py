@@ -2,7 +2,7 @@
 
 import json
 import logging
-from collections.abc import Callable, Sequence
+from collections.abc import Sequence
 from itertools import chain
 from pathlib import Path
 from typing import Annotated, Any
@@ -42,6 +42,38 @@ JsonDict = Annotated[dict[str, Any] | None, Parameter(converter=_json_str_to_dic
 JsonNestedDict = Annotated[
     dict[str, dict[str, Any]] | None, Parameter(converter=_json_str_to_dict)
 ]
+
+
+def _filter_legend_entries(
+    handles: Sequence[Any], labels: Sequence[str | None]
+) -> tuple[list[Any], list[str]]:
+    """Remove legend entries with no label while keeping handles aligned.
+
+    Parameters
+    ----------
+    handles
+        Matplotlib artists to include in the legend.
+    labels
+        Legend labels corresponding to ``handles``. Entries with ``None`` labels are
+        omitted from the returned handles and labels.
+
+    Returns
+    -------
+    list
+        The legend handles whose corresponding label is not ``None``.
+    list
+        The non-``None`` legend labels.
+    """
+    entries = [
+        (handle, label)
+        for handle, label in zip(handles, labels, strict=True)
+        if label is not None
+    ]
+    if not entries:
+        return [], []
+
+    filtered_handles, filtered_labels = zip(*entries)
+    return list(filtered_handles), list(filtered_labels)
 
 
 def _apply_z_and_delta_squared_filtering(
@@ -125,12 +157,12 @@ def plot_vs_z(
     fontsize: int = 11,
     fig_width: float = 25.0,
     fig_ratio: float | None = None,
+    legend_labeler: JsonDict = None,
+    leg_cols: int = 2,
     # Output options
     fig: Annotated[plt.Figure | None, Parameter(show=False)] = None,
     ax: Annotated[plt.Axes | None, Parameter(show=False)] = None,
     out: str | Path | None = None,
-    legend_labeler: Callable[[DataSet], str | None] | None = None,
-    leg_cols: int = 2,
 ) -> plt.Figure:
     """
     Plot 21-cm power spectrum limits as a function of redshift |z|.
@@ -235,10 +267,9 @@ def plot_vs_z(
         will be created.
     out : str | Path | None
         If specified, the file name to save the figure to.
-    legend_labeler : Callable | None
-        Optional function to customize legend labels. It should take a single argument
-        (the limit or theory object) and return a string for the legend label.
-        If it returns None, that limit or theory will be excluded from the legend.
+    legend_labeler : dict[str, str] | None
+        Optional mapping from limit or theory keys to custom legend labels.
+        Keys not present in the mapping will be excluded from the legend.
 
     Returns
     -------
@@ -333,7 +364,7 @@ def plot_vs_z(
             for limit in limits_vs_z
         ]
     else:
-        limit_labels = [legend_labeler(limit) for limit in limits_vs_z]
+        limit_labels = [legend_labeler.get(limit.key) for limit in limits_vs_z]
 
     # Plotting the limits as points or lines
     limit_lines = plot_limits_vs_z(
@@ -372,7 +403,7 @@ def plot_vs_z(
             for theory in theories
         ]
     else:
-        theory_labels = [legend_labeler(theory) for theory in theories]
+        theory_labels = [legend_labeler.get(theory.key) for theory in theories]
 
     # Plotting the theory curves vs z
     theory_lines = plot_theories_vs_z(
@@ -430,7 +461,8 @@ def plot_vs_z(
         cb.set_label(label="Year", fontsize=fontsize)
     ax.grid(axis="y")
 
-    limit_labels = [llb for llb in limit_labels if llb is not None]
+    limit_lines, limit_labels = _filter_legend_entries(limit_lines, limit_labels)
+    theory_lines, theory_labels = _filter_legend_entries(theory_lines, theory_labels)
     leg_rows = int(np.ceil(len(limit_labels) / leg_cols))
 
     point_size = 1 / 72.0  # typography standard (points/inch)
@@ -491,6 +523,7 @@ def plot_vs_k(
     colormap: str = "Spectral_r",
     fontsize: int = 15,
     fig_ratio: float | None = None,
+    legend_labeler: JsonDict = None,
     # Output options
     fig: Annotated[plt.Figure | None, Parameter(show=False)] = None,
     ax: Annotated[plt.Axes | None, Parameter(show=False)] = None,
@@ -595,6 +628,9 @@ def plot_vs_k(
         will be created.
     out : str | Path | None
         If specified, the file name to save the figure to.
+    legend_labeler : dict[str, str] | None
+        Optional mapping from limit or theory keys to custom legend labels.
+        Keys not present in the mapping will be excluded from the legend.
 
     Returns
     -------
@@ -682,9 +718,12 @@ def plot_vs_k(
 
     # Whether to bold each limit in the legend
     bold_limits = bold_limits or []
-    limit_labels = [
-        get_latex_label(limit, bold=(limit.key in bold_limits)) for limit in limits
-    ]
+    if legend_labeler is None:
+        limit_labels = [
+            get_latex_label(limit, bold=(limit.key in bold_limits)) for limit in limits
+        ]
+    else:
+        limit_labels = [legend_labeler.get(limit.key) for limit in limits]
 
     # Plotting the limits as points or lines, depending on the number of k values
     # or user specifications.
@@ -727,10 +766,13 @@ def plot_vs_k(
 
     # Whether to bold each theory in the legend
     bold_theories = bold_theories or []
-    theory_labels = [
-        get_latex_label(theory, bold=(theory.key in bold_theories), theory=True)
-        for theory in theories
-    ]
+    if legend_labeler is None:
+        theory_labels = [
+            get_latex_label(theory, bold=(theory.key in bold_theories), theory=True)
+            for theory in theories
+        ]
+    else:
+        theory_labels = [legend_labeler.get(theory.key) for theory in theories]
 
     # Plotting the theory lines.
     theory_lines = plot_theories(
@@ -784,6 +826,8 @@ def plot_vs_k(
     else:
         leg_columns = 3
 
+    limit_lines, limit_labels = _filter_legend_entries(limit_lines, limit_labels)
+    theory_lines, theory_labels = _filter_legend_entries(theory_lines, theory_labels)
     leg_rows = int(np.ceil(len(limit_labels) / leg_columns))
 
     point_size = 1 / 72.0  # typography standard (points/inch)
@@ -1492,8 +1536,7 @@ def plot_limits_vs_z(
                     zorder=0,
                 )
 
-        if label is not None:
-            lines.append(line)
+        lines.append(line)
 
     return lines
 
