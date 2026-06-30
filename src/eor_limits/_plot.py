@@ -151,11 +151,11 @@ def plot_vs_z(
     sensitivities: dict | None = None,
     sensitivity_style: dict | None = None,
     # General plotting options
-    colormap: str = "Spectral_r",
     colorbar: bool = False,
-    fontsize: int = 15,
+    colormap: str = "Spectral_r",
     legend_labeler: JsonDict = None,
-    leg_cols: int = 3,
+    legend_ncols: int = 3,
+    fontsize: int = 15,
     fig_width: float = 25.0,
     fig_ratio: float | None = None,
     # Output options
@@ -186,8 +186,11 @@ def plot_vs_z(
         ``{'color': 'C0', 'linewidth': 3}`` for lines.
     bold_limits : list[str] | None (default: ``None``)
         List of limits to bold in the legend. If not specified, no limits are bolded.
-    shade_limits : bool (default: ``True``)
-        Whether to shade the area above each limit line.
+    shade_limits : bool (default: ``False``)
+        Whether to shade the area above each limit line (or points, if plotted as
+        points). If ``True``, the area above each limit will be shaded with the color
+        specified in the limit styles as ``shade_color`` (default grey) and an alpha
+        value specified in the limit styles as ``shade_alpha`` (default 0.5).
     aspoints : list[str] | None (default: ``None``)
         List of limits to plot as points instead of lines.
         If not specified, the function automatically determines whether to plot as
@@ -217,7 +220,7 @@ def plot_vs_z(
         across their k-space data. Only used if theories are specified.
     base_theory_style : dict[str, Any] | None (default: ``None``)
         Base style parameters for plotting theories, applied to all theories before any
-        individualoverrides. For example, ``{'alpha': 0.7}`` to make all theories
+        individual overrides. For example, ``{'alpha': 0.7}`` to make all theories
         slightly transparent.
     theory_styles : dict[str, dict[str, Any]] | None (default: ``None``)
         Dictionary of style parameters for plotting theories. The keys are the theory
@@ -243,22 +246,23 @@ def plot_vs_z(
         e.g. ``{'color': 'k', 'linestyle': '--', 'linewidth': 3}``.
         An additional key 'sensitivity_kind' can be used to specify which kind of
         sensitivity to plot, e.g. ``'sample+thermal'``, ``'sample'`` or ``'thermal'``.
-    colormap : str (default: ``'Spectral_r'``)
-        Matplotlib colormap to use for coloring limits by year.
     colorbar : bool (default: ``False``)
         Whether to display a colorbar showing the year values.
-    fontsize : int (default: ``15``)
-        Font size to use in the legend and axis labels.
+    colormap : str (default: ``'Spectral_r'``)
+        Matplotlib colormap to use for coloring limits by year.
     legend_labeler : dict[str, str] | None
         Optional mapping from limit or theory keys to custom legend labels.
         Keys not present in the mapping will be excluded from the legend.
-    leg_cols : int (default: ``3``)
+    legend_ncols : int (default: ``3``)
         Number of columns to use in the legend.
+    fontsize : int (default: ``15``)
+        Font size to use in the legend and axis labels.
     fig_width : float (default: ``25.0``)
         Width of the figure in inches.
     fig_ratio : float | None (default: ``None``)
-        Height to width ratio of the figure. If not specified, ``height= 1*width``
-        if theories are plotted, and ``height= 0.5*width`` if no theories are plotted.
+        Height to width ratio of the figure. If not specified, ``height = 0.8 * width``
+        if theories are plotted, and ``height = 0.6 * width`` if no theories are
+        plotted.
     fig : matplotlib.figure.Figure | None
         If specified, the figure to plot on. If not specified, a new figure
         will be created.
@@ -455,7 +459,7 @@ def plot_vs_z(
 
     limit_lines, limit_labels = _filter_legend_entries(limit_lines, limit_labels)
     theory_lines, theory_labels = _filter_legend_entries(theory_lines, theory_labels)
-    leg_rows = int(np.ceil(len(limit_labels) / leg_cols))
+    leg_rows = int(np.ceil(len(limit_labels) / legend_ncols))
 
     point_size = 1 / 72.0  # typography standard (points/inch)
     font_inch = fontsize * point_size
@@ -473,7 +477,7 @@ def plot_vs_z(
         bbox_to_anchor=(0.48, legend_height_norm / 2.0),
         loc="center",
         bbox_transform=fig.transFigure,
-        ncol=leg_cols,
+        ncol=legend_ncols,
         frameon=False,
     )
 
@@ -512,13 +516,13 @@ def plot_vs_k(
     sensitivities: dict | None = None,
     sensitivity_style: dict | None = None,
     # General plotting options
-    colormap: str = "Spectral_r",
     colorbar: bool = True,
+    colormap: str = "Spectral_r",
+    legend_labeler: JsonDict = None,
+    legend_ncols: int = 3,
     fontsize: int = 15,
     fig_width: float = 25.0,
     fig_ratio: float | None = None,
-    legend_labeler: JsonDict = None,
-    leg_cols: int = 3,
     # Output options
     fig: Annotated[plt.Figure | None, Parameter(show=False)] = None,
     ax: Annotated[plt.Axes | None, Parameter(show=False)] = None,
@@ -543,7 +547,7 @@ def plot_vs_k(
         parameters for plotting, e.g. ``{'color': 'C0', 's': 100}`` for points or
         ``{'color': 'C0', 'linewidth': 3}`` for lines.
     bold_limits : list[str] | None (default: ``None``)
-        List of limits to bold in the legend. If no specified, no limits are bolded.
+        List of limits to bold in the legend. If not specified, no limits are bolded.
     shade_limits : bool (default: ``True``)
         Whether to shade the area above each limit line (or points, if plotted as
         points). If ``True``, the area above each limit will be shaded with the color
@@ -582,7 +586,7 @@ def plot_vs_k(
         If not specified, plots the line closest to the center of the ``z_range``.
     base_theory_style : dict[str, Any] | None (default: ``None``)
         Base style parameters for plotting theories, applied to all theories before any
-        individualoverrides. For example, ``{'alpha': 0.7}`` to make all theories
+        individual overrides. For example, ``{'alpha': 0.7}`` to make all theories
         slightly transparent.
     theory_styles : dict[str, dict[str, Any]] | None (default: ``None``)
         Dictionary of style parameters for plotting theories. The keys are the theory
@@ -608,17 +612,23 @@ def plot_vs_k(
         e.g. ``{'color': 'k', 'linestyle': '--', 'linewidth': 3}``.
         An additional key 'sensitivity_kind' can be used to specify which kind of
         sensitivity to plot, e.g. ``'sample+thermal'``, ``'sample'`` or ``'thermal'``.
-    colormap : str (default: ``'Spectral_r'``)
-        Matplotlib colormap to use for coloring limits by redshift.
     colorbar : bool (default: ``True``)
         Whether to display a colorbar showing the redshift values.
+    colormap : str (default: ``'Spectral_r'``)
+        Matplotlib colormap to use for coloring limits by redshift.
+    legend_labeler : dict[str, str] | None
+        Optional mapping from limit or theory keys to custom legend labels.
+        Keys not present in the mapping will be excluded from the legend.
+    legend_ncols : int (default: ``3``)
+        Number of columns to use in the legend.
     fontsize : int (default: ``15``)
         Font size to use in the legend and axis labels.
     fig_width : float (default: ``25.0``)
         Width of the figure in inches.
     fig_ratio : float | None (default: ``None``)
-        Height to width ratio of the figure. If not specified, ``height= 1*width``
-        if theories are plotted, and ``height= 0.5*width`` if no theories are plotted.
+        Height to width ratio of the figure. If not specified, ``height = 1 * width``
+        if theories are plotted, and ``height = 0.5 * width`` if no theories are
+        plotted.
     fig : matplotlib.figure.Figure | None
         If specified, the figure to plot on. If not specified, a new figure
         will be created.
@@ -627,11 +637,6 @@ def plot_vs_k(
         will be created.
     out : str | Path | None
         If specified, the file name to save the figure to.
-    legend_labeler : dict[str, str] | None
-        Optional mapping from limit or theory keys to custom legend labels.
-        Keys not present in the mapping will be excluded from the legend.
-    leg_cols : int (default: ``3``)
-        Number of columns to use in the legend.
 
     Returns
     -------
@@ -822,7 +827,7 @@ def plot_vs_k(
 
     limit_lines, limit_labels = _filter_legend_entries(limit_lines, limit_labels)
     theory_lines, theory_labels = _filter_legend_entries(theory_lines, theory_labels)
-    leg_rows = int(np.ceil(len(limit_labels) / leg_cols))
+    leg_rows = int(np.ceil(len(limit_labels) / legend_ncols))
 
     point_size = 1 / 72.0  # typography standard (points/inch)
     font_inch = fontsize * point_size
@@ -840,7 +845,7 @@ def plot_vs_k(
         bbox_to_anchor=(0.48, legend_height_norm / 2.0),
         loc="center",
         bbox_transform=fig.transFigure,
-        ncol=leg_cols,
+        ncol=legend_ncols,
         frameon=False,
     )
 

@@ -22,7 +22,7 @@ def test_lib_plot_vs_k_with_fig_styling():
         colormap="viridis",
         fig_width=20.0,
         fig_ratio=2.0,
-        leg_cols=2,
+        legend_ncols=2,
         out=OUTPUT_DIR / "test_lib_plot_vs_k_with_fig_styling.png",
     )
     assert fig is not None
