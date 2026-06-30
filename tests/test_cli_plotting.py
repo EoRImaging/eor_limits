@@ -223,6 +223,23 @@ def test_cli_plot_vs_k_with_limit_and_theory_styling():
     )
 
 
+def test_cli_plot_vs_k_with_legend_labeler():
+    """Test making a plot_vs_k with custom legend labels through the CLI."""
+    out = OUTPUT_DIR / "test_cli_plot_vs_k_with_legend_labeler.png"
+    _run_plot_vs_k(
+        "--limits",
+        "HERA2022",
+        "HERA2023",
+        "Paciga2013",
+        "--legend-labeler",
+        '{"HERA2023": "HERA 2023"}',
+        "--out",
+        str(out),
+        expect_success=True,
+    )
+    _assert_images_match("plot_vs_k", "with_legend_labeler", out)
+
+
 def test_cli_plot_vs_z_basic():
     """Test making a plot_vs_z with default parameters through the CLI."""
     out = OUTPUT_DIR / "test_cli_plot_vs_z_basic.png"
@@ -345,3 +362,20 @@ def test_cli_plot_vs_z_with_limit_styling():
         expect_success=True,
     )
     _assert_images_match("plot_vs_z", "with_limit_styling", out)
+
+
+def test_cli_plot_vs_z_with_legend_labeler():
+    """Test making a plot_vs_z with custom legend labels through the CLI."""
+    out = OUTPUT_DIR / "test_cli_plot_vs_z_with_legend_labeler.png"
+    _run_plot_vs_z(
+        "--limits",
+        "HERA2022",
+        "HERA2023",
+        "Paciga2013",
+        "--legend-labeler",
+        '{"HERA2023": "HERA 2023"}',
+        "--out",
+        str(out),
+        expect_success=True,
+    )
+    _assert_images_match("plot_vs_z", "with_legend_labeler", out)
