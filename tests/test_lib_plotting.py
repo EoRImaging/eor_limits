@@ -231,6 +231,18 @@ def test_lib_plot_vs_z_with_bold_limits():
     assert fig is not None
 
 
+def test_lib_plot_vs_z_with_bold_theories():
+    """Test making a plot_vs_z with bolded specific theories."""
+    theories = list(KNOWN_THEORIES.keys())
+    bold_theories = ["Mesinger2016Faint", "Mesinger2016Bright"]
+    fig = plot_vs_z(
+        theories=theories,
+        bold_theories=bold_theories,
+        out=OUTPUT_DIR / "test_lib_plot_vs_z_with_bold_theories.png",
+    )
+    assert fig is not None
+
+
 def test_lib_plot_vs_z_with_limit_styling():
     """Test making a plot_vs_z with custom styling for limits."""
     limits = ["HERA2022", "HERA2023", "Paciga2013"]
@@ -239,6 +251,33 @@ def test_lib_plot_vs_z_with_limit_styling():
         base_limit_style={"linewidth": 3, "alpha": 0.8},
         limit_styles={"HERA2023": {"color": "C3"}},
         out=OUTPUT_DIR / "test_lib_plot_vs_z_with_limit_styling.png",
+    )
+    assert fig is not None
+
+
+def test_lib_plot_vs_z_with_limit_and_theory_styling():
+    """Test making a plot_vs_z with custom styling for limits and theories."""
+    limits = ["HERA2022", "HERA2023", "Paciga2013"]
+    theories = ["Mesinger2016Faint", "Mesinger2016Bright"]
+    fig = plot_vs_z(
+        limits=limits,
+        theories=theories,
+        base_limit_style={"linewidth": 3, "alpha": 0.8},
+        limit_styles={"HERA2023": {"color": "C3"}},
+        base_theory_style={"linestyle": "-."},
+        theory_styles={
+            "Mesinger2016Faint": {
+                "color": "C0",
+                "shade_alpha": 0.5,
+                "shade_color": "C2",
+            },
+            "Mesinger2016Bright": {
+                "color": "C1",
+                "shade_alpha": 0.1,
+                "shade_color": "C2",
+            },
+        },
+        out=OUTPUT_DIR / "test_lib_plot_vs_z_with_limit_and_theory_styling.png",
     )
     assert fig is not None
 

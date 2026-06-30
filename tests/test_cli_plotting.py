@@ -93,7 +93,7 @@ def test_cli_plot_vs_k_with_fig_styling():
 def test_cli_plot_vs_k_without_colorbar():
     """Test making a plot without a redshift colorbar through the CLI."""
     out = OUTPUT_DIR / "test_cli_plot_vs_k_without_colorbar.png"
-    _run_plot_vs_k("--no-colorbar", "--out", str(out), expect_success=True)
+    _run_plot_vs_k("--colorbar=False", "--out", str(out), expect_success=True)
     _assert_images_match("plot_vs_k", "without_colorbar", out)
 
 
@@ -356,6 +356,23 @@ def test_cli_plot_vs_z_with_bold_limits():
     _assert_images_match("plot_vs_z", "with_bold_limits", out)
 
 
+def test_cli_plot_vs_z_with_bold_theories():
+    """Test making a plot_vs_z with bolded specific theories through the CLI."""
+    theories = list(eor_limits.KNOWN_THEORIES.keys())
+    out = OUTPUT_DIR / "test_cli_plot_vs_z_with_bold_theories.png"
+    _run_plot_vs_z(
+        "--theories",
+        *theories,
+        "--bold-theories",
+        "Mesinger2016Faint",
+        "Mesinger2016Bright",
+        "--out",
+        str(out),
+        expect_success=True,
+    )
+    _assert_images_match("plot_vs_z", "with_bold_theories", out)
+
+
 def test_cli_plot_vs_z_with_limit_styling():
     """Test making a plot_vs_z with custom limit styling through the CLI."""
     out = OUTPUT_DIR / "test_cli_plot_vs_z_with_limit_styling.png"
@@ -373,6 +390,35 @@ def test_cli_plot_vs_z_with_limit_styling():
         expect_success=True,
     )
     _assert_images_match("plot_vs_z", "with_limit_styling", out)
+
+
+def test_cli_plot_vs_z_with_limit_and_theory_styling():
+    """Test making a plot_vs_z with custom limit/theory styling through the CLI."""
+    out = OUTPUT_DIR / "test_cli_plot_vs_z_with_limit_and_theory_styling.png"
+    _run_plot_vs_z(
+        "--limits",
+        "HERA2022",
+        "HERA2023",
+        "Paciga2013",
+        "--theories",
+        "Mesinger2016Faint",
+        "Mesinger2016Bright",
+        "--base-limit-style",
+        '{"linewidth": 3, "alpha": 0.8}',
+        "--limit-styles",
+        '{"HERA2023": {"color": "C3"}}',
+        "--base-theory-style",
+        '{"linestyle": "-."}',
+        "--theory-styles",
+        '{"Mesinger2016Faint": {"color": "C0",\
+            "shade_alpha": 0.5, "shade_color": "C2"},\
+        "Mesinger2016Bright": {"color": "C1",\
+            "shade_alpha": 0.1, "shade_color": "C2"}}',
+        "--out",
+        str(out),
+        expect_success=True,
+    )
+    _assert_images_match("plot_vs_z", "with_limit_and_theory_styling", out)
 
 
 def test_cli_plot_vs_z_with_legend_labeler():
