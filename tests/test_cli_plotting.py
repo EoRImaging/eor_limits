@@ -15,9 +15,7 @@ OUTPUT_DIR.mkdir(exist_ok=True)
 IMAGE_TOL = 0.1
 
 
-def _run_plot_command(
-    command: str, *args: str, expect_success: bool = True
-) -> None:
+def _run_plot_command(command: str, *args: str, expect_success: bool = True) -> None:
     """Invoke a CLI plotting command with provided args."""
     with pytest.raises(SystemExit) as exc_info:
         app([command, *args], exit_on_error=True)
