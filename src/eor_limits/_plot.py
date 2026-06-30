@@ -143,7 +143,6 @@ def plot_vs_z(
     # Theory plotting options
     theories: StrList = None,
     theory_k: float = 0.25,
-    theory_redshifts: dict[str, list[float]] | None = None,
     base_theory_style: JsonDict = None,
     theory_styles: JsonNestedDict = None,
     bold_theories: StrList = None,
@@ -154,11 +153,11 @@ def plot_vs_z(
     # General plotting options
     colormap: str = "Spectral_r",
     colorbar: bool = False,
-    fontsize: int = 11,
+    fontsize: int = 15,
+    legend_labeler: JsonDict = None,
+    leg_cols: int = 3,
     fig_width: float = 25.0,
     fig_ratio: float | None = None,
-    legend_labeler: JsonDict = None,
-    leg_cols: int = 2,
     # Output options
     fig: Annotated[plt.Figure | None, Parameter(show=False)] = None,
     ax: Annotated[plt.Axes | None, Parameter(show=False)] = None,
@@ -216,11 +215,6 @@ def plot_vs_z(
         The |k| value at which to evaluate theories when plotting vs redshift.
         All theories will be evaluated at this k value using spline interpolation
         across their k-space data. Only used if theories are specified.
-    theory_redshifts : dict[str, list[float]] | None (default: ``None``)
-        Dictionary specifying which redshifts to plot for each theory. The keys are the
-        theory keys (e.g. ``'Mesinger2016Faint'``), and the values are lists of
-        redshifts to plot for that theory.
-        If not specified, plots all available theory redshifts.
     base_theory_style : dict[str, Any] | None (default: ``None``)
         Base style parameters for plotting theories, applied to all theories before any
         individualoverrides. For example, ``{'alpha': 0.7}`` to make all theories
@@ -252,10 +246,16 @@ def plot_vs_z(
     colormap : str (default: ``'Spectral_r'``)
         Matplotlib colormap to use for coloring limits by year.
     colorbar : bool (default: ``False``)
-        Whether to display a colorbar showing the year values. If ``False``, only the
-        legend will be shown.
+        Whether to display a colorbar showing the year values.
     fontsize : int (default: ``15``)
         Font size to use in the legend and axis labels.
+    legend_labeler : dict[str, str] | None
+        Optional mapping from limit or theory keys to custom legend labels.
+        Keys not present in the mapping will be excluded from the legend.
+    leg_cols : int (default: ``3``)
+        Number of columns to use in the legend.
+    fig_width : float (default: ``25.0``)
+        Width of the figure in inches.
     fig_ratio : float | None (default: ``None``)
         Height to width ratio of the figure. If not specified, ``height= 1*width``
         if theories are plotted, and ``height= 0.5*width`` if no theories are plotted.
@@ -267,9 +267,6 @@ def plot_vs_z(
         will be created.
     out : str | Path | None
         If specified, the file name to save the figure to.
-    legend_labeler : dict[str, str] | None
-        Optional mapping from limit or theory keys to custom legend labels.
-        Keys not present in the mapping will be excluded from the legend.
 
     Returns
     -------
@@ -416,11 +413,6 @@ def plot_vs_z(
         delta_squared_range=delta_squared_range,
     )
 
-    # If no theory lines were plotted (e.g., no theories specified), clear theory labels
-    if not theory_lines:
-        theory_labels = []
-    theory_labels = [label for label in theory_labels if label is not None]
-
     ###################################################################################
     # SENSITIVITIES
 
@@ -521,9 +513,12 @@ def plot_vs_k(
     sensitivity_style: dict | None = None,
     # General plotting options
     colormap: str = "Spectral_r",
+    colorbar: bool = True,
     fontsize: int = 15,
+    fig_width: float = 25.0,
     fig_ratio: float | None = None,
     legend_labeler: JsonDict = None,
+    leg_cols: int = 3,
     # Output options
     fig: Annotated[plt.Figure | None, Parameter(show=False)] = None,
     ax: Annotated[plt.Axes | None, Parameter(show=False)] = None,
@@ -615,8 +610,12 @@ def plot_vs_k(
         sensitivity to plot, e.g. ``'sample+thermal'``, ``'sample'`` or ``'thermal'``.
     colormap : str (default: ``'Spectral_r'``)
         Matplotlib colormap to use for coloring limits by redshift.
+    colorbar : bool (default: ``True``)
+        Whether to display a colorbar showing the redshift values.
     fontsize : int (default: ``15``)
         Font size to use in the legend and axis labels.
+    fig_width : float (default: ``25.0``)
+        Width of the figure in inches.
     fig_ratio : float | None (default: ``None``)
         Height to width ratio of the figure. If not specified, ``height= 1*width``
         if theories are plotted, and ``height= 0.5*width`` if no theories are plotted.
@@ -631,6 +630,8 @@ def plot_vs_k(
     legend_labeler : dict[str, str] | None
         Optional mapping from limit or theory keys to custom legend labels.
         Keys not present in the mapping will be excluded from the legend.
+    leg_cols : int (default: ``3``)
+        Number of columns to use in the legend.
 
     Returns
     -------
@@ -639,7 +640,6 @@ def plot_vs_k(
     """
     ###################################################################################
     # Set up the figure and axis
-    fig_width = 25
     if theories is not None:
         fig_height = fig_width * (fig_ratio or 1)
     else:
@@ -813,22 +813,16 @@ def plot_vs_k(
     ax.set_xlim(*k_range)
 
     ax.tick_params(labelsize=fontsize)
-    cb = fig.colorbar(scalar_map, ax=ax, fraction=0.1, pad=0.08, label="Redshift")
-    cb.ax.yaxis.set_label_position("left")
-    cb.ax.yaxis.set_ticks_position("left")
-    cb.set_label(label="Redshift", fontsize=fontsize)
+    if colorbar:
+        cb = fig.colorbar(scalar_map, ax=ax, fraction=0.1, pad=0.08, label="Redshift")
+        cb.ax.yaxis.set_label_position("left")
+        cb.ax.yaxis.set_ticks_position("left")
+        cb.set_label(label="Redshift", fontsize=fontsize)
     ax.grid(axis="y")
-
-    if fontsize > 25:
-        leg_columns = 1
-    elif fontsize > 20:
-        leg_columns = 2
-    else:
-        leg_columns = 3
 
     limit_lines, limit_labels = _filter_legend_entries(limit_lines, limit_labels)
     theory_lines, theory_labels = _filter_legend_entries(theory_lines, theory_labels)
-    leg_rows = int(np.ceil(len(limit_labels) / leg_columns))
+    leg_rows = int(np.ceil(len(limit_labels) / leg_cols))
 
     point_size = 1 / 72.0  # typography standard (points/inch)
     font_inch = fontsize * point_size
@@ -846,7 +840,7 @@ def plot_vs_k(
         bbox_to_anchor=(0.48, legend_height_norm / 2.0),
         loc="center",
         bbox_transform=fig.transFigure,
-        ncol=leg_columns,
+        ncol=leg_cols,
         frameon=False,
     )
 
@@ -1268,8 +1262,6 @@ def plot_limits(
                     np.asarray(delta_squared),
                 )).T.flatten()
 
-                color_val = scalar_map.to_rgba(redshift)
-
                 # make black outline by plotting thicker black line first
                 ax.plot(
                     k_edges,
@@ -1282,9 +1274,9 @@ def plot_limits(
                 (this_line,) = ax.plot(
                     k_edges,
                     delta_edges,
-                    color=color_val,
                     label=label,
                     zorder=1,
+                    color=scalar_map.to_rgba(redshift),
                     **limit_style,
                 )
                 if shade_limits:
@@ -1479,7 +1471,7 @@ def plot_limits_vs_z(
         z_vals = limit.data.z
         dsq_vals = np.array([dsq[0] for dsq in limit.data.delta_squared])
 
-        # Use user-provided color if available, otherwise use scalar_map
+        # Use user-provided color if available, otherwise use scalar_map.
         if "color" in limit_style:
             color_val = limit_style.pop("color")
         else:

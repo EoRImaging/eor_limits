@@ -20,10 +20,22 @@ def test_lib_plot_vs_k_with_fig_styling():
     fig = plot_vs_k(
         fontsize=12,
         colormap="viridis",
+        fig_width=20.0,
         fig_ratio=2.0,
+        leg_cols=2,
         out=OUTPUT_DIR / "test_lib_plot_vs_k_with_fig_styling.png",
     )
     assert fig is not None
+
+
+def test_lib_plot_vs_k_without_colorbar():
+    """Test making a plot without a redshift colorbar."""
+    fig = plot_vs_k(
+        colorbar=False,
+        out=OUTPUT_DIR / "test_lib_plot_vs_k_without_colorbar.png",
+    )
+    assert fig is not None
+    assert len(fig.axes) == 1
 
 
 def test_lib_plot_vs_k_with_z_range():
