@@ -5,7 +5,7 @@ import logging
 from collections.abc import Sequence
 from itertools import chain
 from pathlib import Path
-from typing import Annotated, Any
+from typing import Annotated, Any, Literal
 
 import h5py
 import matplotlib.cm as cmx
@@ -72,7 +72,7 @@ def _filter_legend_entries(
     if not entries:
         return [], []
 
-    filtered_handles, filtered_labels = zip(*entries)
+    filtered_handles, filtered_labels = zip(*entries, strict=True)
     return list(filtered_handles), list(filtered_labels)
 
 
@@ -136,7 +136,7 @@ def plot_vs_z(
     shade_limits: bool = False,
     aspoints: StrList = None,
     aslines: StrList = None,
-    nk_for_lines: int = 10,  # Note: repurposed as n_z_for_lines
+    nz_for_lines: int = 10,
     # Limits selection options
     z_range: tuple[float, float] | None = None,
     delta_squared_range: tuple[float, float] | None = None,
@@ -167,7 +167,9 @@ def plot_vs_z(
     Plot 21-cm power spectrum limits as a function of redshift |z|.
 
     For each experiment, this plots the lowest (most constraining) limit
-    at each redshift as a point or line on a redshift vs. delta squared plot.
+    at each redshift as a point or line. The color of the points/lines
+    indicates the year of the experiment (see ``colorbar`` and ``colormap``
+    options).
 
     Parameters
     ----------
@@ -194,15 +196,15 @@ def plot_vs_z(
     aspoints : list[str] | None (default: ``None``)
         List of limits to plot as points instead of lines.
         If not specified, the function automatically determines whether to plot as
-        points or lines based on the number of |z| bins (see ``nk_for_lines``).
+        points or lines based on the number of |z| bins (see ``nz_for_lines``).
     aslines : list[str] | None (default: ``None``)
         List of limits to plot as lines instead of points.
         If not specified, the function automatically determines whether to plot as
-        points or lines based on the number of |z| bins (see ``nk_for_lines``).
-    nk_for_lines : int (default: ``10``)
+        points or lines based on the number of |z| bins (see ``nz_for_lines``).
+    nz_for_lines : int (default: ``10``)
         Threshold :math:`n_z` (number of |z| bins) to determine whether to plot a limit
         as points or lines if not specified in ``aspoints`` or ``aslines``.
-        If a limit has :math:`len(z) > n_k`, it will be plotted as a line;
+        If a limit has :math:`len(z) > n_z`, it will be plotted as a line;
         otherwise, it will be plotted as points.
     z_range : tuple[float, float] | None (default: ``None``)
         Tuple specifying the redshift range to include in the plot, in the form
@@ -351,7 +353,8 @@ def plot_vs_z(
         limits=limits_vs_z,
         aspoints=aspoints,
         aslines=aslines,
-        nk_for_lines=nk_for_lines,
+        nbins_for_lines=nz_for_lines,
+        bin_type="z",
         shade_limits=shade_limits,
         base_override=base_limit_style,
         overrides=limit_styles,
@@ -530,6 +533,9 @@ def plot_vs_k(
 ) -> plt.Figure:
     """
     Plot 21-cm power spectrum limits as a function of scale |k|.
+
+    The color of the points/lines indicates the redshift of the limit
+    (see ``colorbar`` and ``colormap`` options).
 
     Parameters
     ----------
@@ -715,7 +721,8 @@ def plot_vs_k(
         limits=limits,
         aspoints=aspoints,
         aslines=aslines,
-        nk_for_lines=nk_for_lines,
+        nbins_for_lines=nk_for_lines,
+        bin_type="k",
         shade_limits=shade_limits,
         base_override=base_limit_style,
         overrides=limit_styles,
@@ -732,7 +739,7 @@ def plot_vs_k(
 
     # Plotting the limits as points or lines, depending on the number of k values
     # or user specifications.
-    limit_lines = plot_limits(
+    limit_lines = plot_limits_vs_k(
         ax=ax,
         limits=limits,
         limit_styles=limit_styles,
@@ -780,7 +787,7 @@ def plot_vs_k(
         theory_labels = [legend_labeler.get(theory.key) for theory in theories]
 
     # Plotting the theory lines.
-    theory_lines = plot_theories(
+    theory_lines = plot_theories_vs_k(
         ax=ax,
         theories=theories,
         theory_styles=theory_styles,
@@ -962,7 +969,8 @@ def _build_limit_styles(
     limits: list[DataSet],
     aspoints: list[str] | None,
     aslines: list[str] | None,
-    nk_for_lines: int,
+    nbins_for_lines: int,
+    bin_type: Literal["k", "z"],
     shade_limits: bool,
     base_override: dict[str, Any] | None = None,
     overrides: dict[str, dict[str, Any]] | None = None,
@@ -979,8 +987,10 @@ def _build_limit_styles(
         The list of limit keys to plot as points.
     aslines : list[str] | None
         The list of limit keys to plot as lines.
-    nk_for_lines : int
-        The number of k values above which to automatically plot as lines.
+    nbins_for_lines : int
+        The number of bins above which to automatically plot as lines.
+    bin_type : {"k", "z"}
+        The bin axis to use for automatic line selection.
     shade_limits : bool
         Whether to shade the limits.
     base_override : dict[str, Any] | None
@@ -1000,6 +1010,11 @@ def _build_limit_styles(
     for limit in limits:
         # Empty
         style = {}
+        nbins = (
+            max(len(k) for k in limit.data.k)
+            if bin_type == "k"
+            else len(limit.data.z)
+        )
         # Determine whether to plot as points or lines
         if limit.key in aspoints and limit.key in aslines:
             raise ValueError(
@@ -1010,7 +1025,7 @@ def _build_limit_styles(
             if limit.key in aspoints
             else True
             if limit.key in aslines
-            else max(len(k) for k in limit.data.k) > nk_for_lines
+            else nbins > nbins_for_lines
         )
         # Set defaults for points
         if not style["as_line"]:
@@ -1149,7 +1164,7 @@ def get_latex_label(paper: DataSet, bold: bool = False, theory: bool = False) ->
     )
 
 
-def plot_limits(
+def plot_limits_vs_k(
     *,
     ax: plt.Axes,
     limits: list[DataSet],
@@ -1159,7 +1174,7 @@ def plot_limits(
     delta_squared_range: tuple[float, float],
     scalar_map: cmx.ScalarMappable,
 ):
-    """Plot limit papers on the given axes.
+    """Plot limit papers on k vs delta_squared axes.
 
     Parameters
     ----------
@@ -1183,13 +1198,20 @@ def plot_limits(
     for limit, label in zip(limits, limit_labels, strict=True):
         logging.getLogger("eor_limits").info(f"Plotting {limit.author} {limit.year}")
 
-        limit_style = limit_styles[limit.key]
+        limit_style = limit_styles[limit.key].copy()
 
         # Pop invalid args for plt.plot or plt.scatter
         as_line = limit_style.pop("as_line")
         if shade_limits:
             shade_alpha = limit_style.pop("shade_alpha")
             shade_color = limit_style.pop("shade_color")
+        # (especially to avoid errors when you have base styling)
+        if as_line:
+            for key in ["s"]:
+                limit_style.pop(key, None)
+        else:
+            for key in ["linewidth", "lw", "linestyle", "ls"]:
+                limit_style.pop(key, None)
 
         # If we are plotting as points, we plot each redshift with specific colors
         # and making sure to meet towards the right edges to avoid overlaps.
@@ -1302,7 +1324,7 @@ def plot_limits(
     return lines
 
 
-def plot_theories(
+def plot_theories_vs_k(
     *,
     ax: plt.Axes,
     theories: list[DataSet],
@@ -1311,7 +1333,7 @@ def plot_theories(
     shade_theories: bool,
     delta_squared_range: tuple[float, float],
 ):
-    """Plot theory lines on the given axes.
+    """Plot theory lines on k vs delta_squared axes.
 
     Parameters
     ----------
@@ -1333,7 +1355,7 @@ def plot_theories(
     for theory, label in zip(theories, theory_labels, strict=True):
         logging.getLogger("eor_limits").info(f"Plotting {theory.author} {theory.year}")
 
-        theory_style = theory_styles[theory.key]
+        theory_style = theory_styles[theory.key].copy()
 
         # Shade first and pop the specific args
         if shade_theories:
@@ -1471,6 +1493,13 @@ def plot_limits_vs_z(
         if shade_limits:
             shade_alpha = limit_style.pop("shade_alpha")
             shade_color = limit_style.pop("shade_color")
+        # (especially to avoid errors when you have base styling)
+        if as_line:
+            for key in ["s"]:
+                limit_style.pop(key, None)
+        else:
+            for key in ["linewidth", "lw", "linestyle", "ls"]:
+                limit_style.pop(key, None)
 
         # Each limit now has one data point per redshift
         z_vals = limit.data.z
