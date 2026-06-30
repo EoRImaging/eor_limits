@@ -81,7 +81,7 @@ def test_cli_plot_vs_k_with_fig_styling():
         "20.0",
         "--fig-ratio",
         "2.0",
-        "--leg-cols",
+        "--legend-ncols",
         "2",
         "--out",
         str(out),
