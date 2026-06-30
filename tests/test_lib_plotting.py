@@ -124,6 +124,20 @@ def test_lib_plot_vs_k_with_limit_and_theory_styling():
     assert fig is not None
 
 
+def test_lib_plot_vs_k_with_legend_labeler():
+    """Test making a plot_vs_k with custom legend labels."""
+    fig = plot_vs_k(
+        limits=["HERA2022", "HERA2023", "Paciga2013"],
+        legend_labeler={"HERA2023": "HERA 2023"},
+        out=OUTPUT_DIR / "test_lib_plot_vs_k_with_legend_labeler.png",
+    )
+
+    legend = fig.axes[0].get_legend()
+    assert fig is not None
+    assert legend is not None
+    assert [text.get_text() for text in legend.get_texts()] == ["HERA 2023"]
+
+
 # Tests for plot_vs_z function
 
 
@@ -215,3 +229,17 @@ def test_lib_plot_vs_z_with_limit_styling():
         out=OUTPUT_DIR / "test_lib_plot_vs_z_with_limit_styling.png",
     )
     assert fig is not None
+
+
+def test_lib_plot_vs_z_with_legend_labeler():
+    """Test making a plot_vs_z with custom legend labels."""
+    fig = plot_vs_z(
+        limits=["HERA2022", "HERA2023", "Paciga2013"],
+        legend_labeler={"HERA2023": "HERA 2023"},
+        out=OUTPUT_DIR / "test_lib_plot_vs_z_with_legend_labeler.png",
+    )
+
+    legend = fig.axes[0].get_legend()
+    assert fig is not None
+    assert legend is not None
+    assert [text.get_text() for text in legend.get_texts()] == ["HERA 2023"]
