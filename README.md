@@ -6,7 +6,7 @@ The published limits are included in human-readable yaml files in the data folde
 
 To use the code, check out the _Usage and examples_. For users who want to quickly explore the limits and make plots without needing to install anything, check out the new online interface: [eorlimits.streamlit.app](https://eorlimits.streamlit.app/)!
 
-![Example EoR Limit plot](docs/source/_static/eor_limits.png)
+![Example EoR Limit plot](docs/source/_static/test_lib_plot_vs_k_basic.png)
 
 ## Installation and dependencies
 
@@ -32,25 +32,25 @@ To use the code, check out the _Usage and examples_. For users who want to quick
 
 ## Usage and examples
 
-There are three main ways to use the code: through the online interface, as a library within a notebook or python script, or through the command line interface (CLI).
+There are three main ways to use `eor-limits`: through the online graphical user interface (GUI), through the Python API in a notebook or script, or through the command line interface (CLI).
 
-### Using the online interface
+### Using the online GUI
 
-We recommend using the online interface for users who just want to explore the limits and make plots without needing to install anything. The interface is built using [Streamlit](https://streamlit.io/) and provides an easy-to-use interface for selecting which limits to include in the plot, filtering them in various ways, and downloading the data and the plot. You can access the online interface at [eorlimits.streamlit.app](https://eorlimits.streamlit.app/).
+The online GUI is the quickest way to explore published limits and generate plots without installing anything locally. It is built with [Streamlit](https://streamlit.io/) and lets you select data sets, apply filters, customize the display, and download both the data and resulting figures. You can access it at [eorlimits.streamlit.app](https://eorlimits.streamlit.app/).
 
-### Using the library
+### Using the Python API
 
-The library also allows you to load, slice and dice the data in various ways, and also includes plotting functionality. For a detailed tutorial on how to use the library, see the _Tutorial notebook_. Here we just give a brief overview of how to make plots. To make the default plot of all the limits as a function of scale $k$, run:
+The Python API provides tools for loading, filtering, and plotting the included data sets. For a more complete walkthrough, see the _Tutorial notebook_. Here we just give a brief overview of how to make plots. The two main plotting functions are `plot_vs_k` and `plot_vs_z`, which show limits as a function of scale $k$ and redshift $z$, respectively. To make the default plot versus $k$, run:
 
 ```python
-from eor_limits import plot_vs_k
+from eor_limits import plot_vs_k, plot_vs_z
 plot_vs_k()
 ```
 
-A more customized plot can be also be made. For example, we can plot the HERA limits, shading the 2023 ones and bolding the legend item, and Mesinger2016Faint and Mesinger2016Bright simulations with different colors and shaded regions:
+The plotting functions accept keyword arguments to choose which limits and simulations to include, customize their styles, and save the output. For example, the following code plots the HERA limits, shades the 2023 result, bolds the HERA 2026 legend item, and adds the `Mesinger2016Faint` and `Mesinger2016Bright` simulations with custom colors and shaded regions:
 
 ```python
-from eor_limits import plot_vs_k
+from eor_limits import plot_vs_k, plot_vs_z
 plot_vs_k(
     limits=["HERA2022", "HERA2023", "HERA2026"],
     bold_limits=["HERA2026"],
@@ -72,13 +72,15 @@ plot_vs_k(
 
 ### Using the CLI
 
-After installation, you can also use the `eor-limits` command from the terminal to make plots. In the terminal, you can run ```eor-limits -h``` or ```eor-limits plot-vs-k -h``` to see the various options for customizing the plot. The CLI provides the same functionality as the library, but allows you to make plots without needing to write any code. For the default plot of all the limits as a function of scale $k$, you can simply run:
+After installation, you can use the `eor-limits` command to make plots from the terminal. Run `eor-limits -h`, `eor-limits plot-vs-k -h`, or `eor-limits plot-vs-z -h` to see the available options.
+
+For the default plot of all limits as a function of scale $k$, run:
 
 ```bash
 eor-limits plot-vs-k --out=MyPlot.pdf
 ```
 
-To make the same customized plot as in the library example, the command allows for JSON dictionaries as arguments for the various `-style` options, so you can run:
+The CLI exposes the same plotting options as the Python API. Dictionary-style options, such as custom limit or theory styles, can be passed as JSON strings:
 
 ```bash
 eor-limits plot-vs-k \
