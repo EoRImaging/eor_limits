@@ -5,6 +5,16 @@ ensuring that plotting tests run before CLI plotting tests for comparison
 of generated plots.
 """
 
+import matplotlib.pyplot as plt
+import pytest
+
+
+@pytest.fixture(autouse=True)
+def close_matplotlib_figures():
+    """Close figures opened by each test."""
+    yield
+    plt.close("all")
+
 
 def pytest_collection_modifyitems(items):
     """Ensure test_plotting runs before test_cli_plotting."""

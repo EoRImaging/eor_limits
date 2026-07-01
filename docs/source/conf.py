@@ -53,6 +53,8 @@ extensions = [
 
 # Autosummary
 autosummary_generate = True  # Automatically generate summary files for documented items
+# nbsphinx
+nbsphinx_kernel_name = "python3"  # Use the standard Python kernel for notebook builds
 # Autodoc
 autodoc_typehints = "none"  # No type hints, let numpydoc handle them in the docstrings
 # Numpydoc
