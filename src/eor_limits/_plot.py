@@ -9,10 +9,10 @@ from typing import Annotated, Any
 
 import h5py
 import matplotlib.cm as cmx
-import matplotlib.colors as colors
 import matplotlib.pyplot as plt
 import numpy as np
 from cyclopts import Parameter, Token
+from matplotlib import colors
 
 from ._data_loading import load_limit_data, load_theory_model
 from ._datatypes import DataSet
