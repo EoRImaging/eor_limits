@@ -363,10 +363,24 @@ def plot_vs_z(
     # Whether to bold each limit in the legend
     bold_limits = bold_limits or []
     if legend_labeler is None:
-        limit_labels = [
-            get_latex_label(limit, bold=(limit.key in bold_limits))
-            for limit in limits_vs_z
-        ]
+        limit_labels = []
+        delta_k_threshold = 0.05  # Threshold for considering k values as "similar"
+        for limit in limits_vs_z:
+            k_range = np.concatenate(limit.data.k)
+            k_min = np.min(k_range)
+            k_max = np.max(k_range)
+            k_mean = np.mean(k_range)
+            if np.abs(k_min - k_max) < delta_k_threshold:
+                k_label_suffix = rf"\ (k \approx {k_mean:.2f}\ h/Mpc)"
+            else:
+                k_label_suffix = rf"\ (k\sim{k_min:.2f}-{k_max:.2f}\ h/Mpc)"
+            limit_labels.append(
+                get_latex_label(
+                    limit,
+                    bold=(limit.key in bold_limits),
+                    label_suffix=k_label_suffix,
+                )
+            )
     else:
         limit_labels = [legend_labeler.get(limit.key) for limit in limits_vs_z]
 
@@ -1128,7 +1142,12 @@ def _build_sensitivity_styles(
     return styles
 
 
-def get_latex_label(paper: DataSet, bold: bool = False, theory: bool = False) -> str:
+def get_latex_label(
+    paper: DataSet,
+    bold: bool = False,
+    theory: bool = False,
+    label_suffix: str = "",
+) -> str:
     """Get a LaTeX label for a limit or theory paper.
 
     Parameters
@@ -1139,6 +1158,8 @@ def get_latex_label(paper: DataSet, bold: bool = False, theory: bool = False) ->
         Whether to make the label bold, by default False.
     theory : bool, optional
         Whether this is a theory (True) or limit (False) paper.
+    label_suffix : str, optional
+        Optional LaTeX suffix.
 
     Returns
     -------
@@ -1158,6 +1179,7 @@ def get_latex_label(paper: DataSet, bold: bool = False, theory: bool = False) ->
         + r",\ "
         + str(paper.year)
         + ")"
+        + label_suffix
         + label_end
     )
 
