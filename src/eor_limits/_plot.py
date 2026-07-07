@@ -76,56 +76,6 @@ def _filter_legend_entries(
     return list(filtered_handles), list(filtered_labels)
 
 
-def _apply_z_and_delta_squared_filtering(
-    limits: list[DataSet],
-    z_range: tuple[float, float] | None,
-    delta_squared_range: tuple[float, float] | None,
-) -> list[DataSet]:
-    """Apply z and delta_squared range filtering to limits.
-
-    Parameters
-    ----------
-    limits : list[DataSet]
-        The list of limits to filter.
-    z_range : tuple[float, float] | None
-        The redshift range to select.
-    delta_squared_range : tuple[float, float] | None
-        The delta squared range to select.
-
-    Returns
-    -------
-    list[DataSet]
-        The filtered list of limits.
-    """
-    new_limits = []
-    for limit in limits:
-        try:
-            if z_range is not None:
-                if z_range[0] > z_range[1]:
-                    raise ValueError(
-                        "redshift range must have the second element "
-                        "greater than the first element."
-                    )
-                limit = limit.select_z_range(*z_range)
-            if delta_squared_range is not None:
-                if delta_squared_range[0] > delta_squared_range[1]:
-                    raise ValueError(
-                        "delta squared range must have the second element "
-                        "greater than the first element."
-                    )
-                limit = limit.select_delta_squared_range(*delta_squared_range)
-            new_limits.append(limit)
-        except ValueError:
-            logging.getLogger("eor_limits").info(
-                f"{limit.key} skipped since it's outside the specified ranges"
-            )
-
-    if not new_limits:
-        raise ValueError("No limits in specified redshift and/or delta squared range.")
-
-    return new_limits
-
-
 def plot_vs_z(
     # Limit plotting options
     limits: StrList = None,
@@ -335,9 +285,12 @@ def plot_vs_z(
         limit.select_lowest_delta_squared(per_z=True, per_tag=False) for limit in limits
     ]
 
-    # Filter by z and delta_squared ranges
-    limits_vs_z = _apply_z_and_delta_squared_filtering(
-        limits_vs_z, z_range, delta_squared_range
+    # Filter by z and delta_squared ranges without applying any k-range selection.
+    limits_vs_z = select_k_and_z_ranges(
+        limits_vs_z,
+        z_range=z_range,
+        k_range=None,
+        delta_squared_range=delta_squared_range,
     )
 
     # Update z_range after filtering
