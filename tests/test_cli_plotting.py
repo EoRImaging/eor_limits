@@ -93,7 +93,7 @@ def test_cli_plot_vs_k_with_fig_styling():
 def test_cli_plot_vs_k_without_colorbar():
     """Test making a plot without a redshift colorbar through the CLI."""
     out = OUTPUT_DIR / "test_cli_plot_vs_k_without_colorbar.png"
-    _run_plot_vs_k("--colorbar=False", "--out", str(out), expect_success=True)
+    _run_plot_vs_k("--show-colorbar=False", "--out", str(out), expect_success=True)
     _assert_images_match("plot_vs_k", "without_colorbar", out)
 
 
@@ -273,6 +273,20 @@ def test_cli_plot_vs_z_with_fig_styling():
         expect_success=True,
     )
     _assert_images_match("plot_vs_z", "with_fig_styling", out)
+
+
+def test_cli_plot_vs_z_with_color_by_k():
+    """Test making a plot_vs_z colored by k through the CLI."""
+    out = OUTPUT_DIR / "test_cli_plot_vs_z_with_color_by_k.png"
+    _run_plot_vs_z(
+        "--color-by",
+        "k",
+        "--show-colorbar=True",
+        "--out",
+        str(out),
+        expect_success=True,
+    )
+    _assert_images_match("plot_vs_z", "with_color_by_k", out)
 
 
 def test_cli_plot_vs_z_with_z_range():

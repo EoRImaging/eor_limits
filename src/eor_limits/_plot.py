@@ -101,9 +101,11 @@ def plot_vs_z(
     sensitivities: dict | None = None,
     sensitivity_style: dict | None = None,
     # General plotting options
-    colorbar: bool = False,
+    show_colorbar: bool = False,
+    color_by: Literal["year", "k"] = "year",
     colormap: str = "Spectral_r",
     legend_labeler: JsonDict = None,
+    k_labels: Literal["legend", "title"] | None = "legend",
     legend_ncols: int = 3,
     fontsize: int = 15,
     fig_width: float = 25.0,
@@ -118,8 +120,8 @@ def plot_vs_z(
 
     For each experiment, this plots the lowest (most constraining) limit
     at each redshift as a point or line. The color of the points/lines
-    indicates the year of the experiment (see ``colorbar`` and ``colormap``
-    options).
+    indicates the year of the experiment by default (see ``color_by``,
+    ``show_colorbar`` and ``colormap`` options).
 
     Parameters
     ----------
@@ -162,7 +164,8 @@ def plot_vs_z(
     delta_squared_range : tuple[float, float] | None (default: ``None``)
         Tuple specifying the delta squared range to include in the plot, in the form
         ``(delta_squared_min, delta_squared_max)``. If not specified, set to
-        ``[1e0, 1e6]`` if theories are plotted and ``[1e3, 1e6]`` otherwise.
+        ``[1e0, 1e6]`` if theories are plotted, otherwise derived from the
+        observational limits.
     theories : list[str] | None (default: ``None``)
         List of theories to include in the plot (see ``KNOWN_THEORIES`` for available
         models). If not specified, **no** theories are plotted.
@@ -198,13 +201,20 @@ def plot_vs_z(
         e.g. ``{'color': 'k', 'linestyle': '--', 'linewidth': 3}``.
         An additional key 'sensitivity_kind' can be used to specify which kind of
         sensitivity to plot, e.g. ``'sample+thermal'``, ``'sample'`` or ``'thermal'``.
-    colorbar : bool (default: ``False``)
-        Whether to display a colorbar showing the year values.
+    show_colorbar : bool (default: ``False``)
+        Whether to display a colorbar showing the selected ``color_by`` values.
+    color_by : {"year", "k"} (default: ``"year"``)
+        Quantity to use for coloring limits. If ``"year"``, each paper is colored by
+        experiment year. If ``"k"``, plotted points are colored by their |k| values.
     colormap : str (default: ``'Spectral_r'``)
-        Matplotlib colormap to use for coloring limits by year.
+        Matplotlib colormap to use for coloring limits.
     legend_labeler : dict[str, str] | None
         Optional mapping from limit or theory keys to custom legend labels.
         Keys not present in the mapping will be excluded from the legend.
+    k_labels : {"legend", "title"} | None (default: ``"legend"``)
+        Where to show the plotted |k| values. If ``"legend"``, add each paper's
+        plotted |k| range to its legend label. If ``"title"``, add the plotted |k|
+        range across all papers to the title. If ``None``, do not show |k| labels.
     legend_ncols : int (default: ``3``)
         Number of columns to use in the legend.
     fontsize : int (default: ``15``)
@@ -243,7 +253,6 @@ def plot_vs_z(
 
     ###################################################################################
     # OBSERVATIONAL LIMITS
-
     # Load data for limits and sort by year.
     if limits is None:
         limits = [load_limit_data(limit).drop_nan() for limit in KNOWN_LIMITS]
@@ -296,9 +305,27 @@ def plot_vs_z(
     # Update z_range after filtering
     z_range = _get_z_range_from_limits(limits_vs_z)
 
-    # Set up colormap for experiment years.
-    years = [limit.year for limit in limits_vs_z]
-    norm = colors.Normalize(vmin=min(years), vmax=max(years))
+    # Get plotted k ranges for optional labels and k-based coloring.
+    delta_k_threshold = 0.05  # Threshold for considering k values as "similar"
+    limit_k_ranges = {}
+    all_k_values = []
+    for limit in limits_vs_z:
+        k_range = np.array([k for k_values in limit.data.k for k in k_values])
+        limit_k_ranges[limit.key] = (
+            np.min(k_range),
+            np.max(k_range),
+            np.mean(k_range),
+        )
+        all_k_values.extend(k_range)
+
+    # Set up colormap for the selected observational quantity.
+    if color_by == "year":
+        color_values = [limit.year for limit in limits_vs_z]
+        colorbar_label = "Year"
+    else:
+        color_values = all_k_values
+        colorbar_label = r"k ($h Mpc^{-1}$)"
+    norm = colors.Normalize(vmin=min(color_values), vmax=max(color_values))
     scalar_map = cmx.ScalarMappable(norm=norm, cmap=colormap)
 
     # Building plotting styles for each limit.
@@ -317,16 +344,14 @@ def plot_vs_z(
     bold_limits = bold_limits or []
     if legend_labeler is None:
         limit_labels = []
-        delta_k_threshold = 0.05  # Threshold for considering k values as "similar"
         for limit in limits_vs_z:
-            k_range = np.concatenate(limit.data.k)
-            k_min = np.min(k_range)
-            k_max = np.max(k_range)
-            k_mean = np.mean(k_range)
-            if np.abs(k_min - k_max) < delta_k_threshold:
-                k_label_suffix = rf"\ (k \approx {k_mean:.2f}\ h/Mpc)"
-            else:
-                k_label_suffix = rf"\ (k\sim{k_min:.2f}-{k_max:.2f}\ h/Mpc)"
+            k_label_suffix = ""
+            if k_labels == "legend":
+                k_min, k_max, k_mean = limit_k_ranges[limit.key]
+                if np.abs(k_min - k_max) < delta_k_threshold:
+                    k_label_suffix = rf"\ (k \approx {k_mean:.2f}\ h/Mpc)"
+                else:
+                    k_label_suffix = rf"\ (k\sim{k_min:.2f}-{k_max:.2f}\ h/Mpc)"
             limit_labels.append(
                 get_latex_label(
                     limit,
@@ -346,6 +371,7 @@ def plot_vs_z(
         shade_limits=shade_limits,
         delta_squared_range=delta_squared_range,
         scalar_map=scalar_map,
+        color_by=color_by,
     )
 
     ###################################################################################
@@ -418,13 +444,23 @@ def plot_vs_z(
     ax.set_xlim(z_range[0] * 0.9, z_range[1] * 1.1)  # Add some padding
 
     ax.tick_params(labelsize=fontsize)
+    if k_labels == "title":
+        k_min = min(all_k_values)
+        k_max = max(all_k_values)
+        k_mean = np.mean(all_k_values)
+        if np.abs(k_min - k_max) < delta_k_threshold:
+            ax.set_title(rf"$k \approx {k_mean:.2f}\ h/Mpc$", fontsize=fontsize)
+        else:
+            ax.set_title(rf"$k\sim{k_min:.2f}-{k_max:.2f}\ h/Mpc$", fontsize=fontsize)
 
-    # Create colorbar for experiment years (if requested)
-    if colorbar:
-        cb = fig.colorbar(scalar_map, ax=ax, fraction=0.1, pad=0.08, label="Year")
+    # Create colorbar for selected color quantity (if requested)
+    if show_colorbar:
+        cb = fig.colorbar(
+            scalar_map, ax=ax, fraction=0.1, pad=0.08, label=colorbar_label
+        )
         cb.ax.yaxis.set_label_position("left")
         cb.ax.yaxis.set_ticks_position("left")
-        cb.set_label(label="Year", fontsize=fontsize)
+        cb.set_label(label=colorbar_label, fontsize=fontsize)
     ax.grid(axis="y")
 
     limit_lines, limit_labels = _filter_legend_entries(limit_lines, limit_labels)
@@ -486,7 +522,7 @@ def plot_vs_k(
     sensitivities: dict | None = None,
     sensitivity_style: dict | None = None,
     # General plotting options
-    colorbar: bool = True,
+    show_colorbar: bool = True,
     colormap: str = "Spectral_r",
     legend_labeler: JsonDict = None,
     legend_ncols: int = 3,
@@ -502,7 +538,7 @@ def plot_vs_k(
     Plot 21-cm power spectrum limits as a function of scale |k|.
 
     The color of the points/lines indicates the redshift of the limit
-    (see ``colorbar`` and ``colormap`` options).
+    (see ``show_colorbar`` and ``colormap`` options).
 
     Parameters
     ----------
@@ -585,7 +621,7 @@ def plot_vs_k(
         e.g. ``{'color': 'k', 'linestyle': '--', 'linewidth': 3}``.
         An additional key 'sensitivity_kind' can be used to specify which kind of
         sensitivity to plot, e.g. ``'sample+thermal'``, ``'sample'`` or ``'thermal'``.
-    colorbar : bool (default: ``True``)
+    show_colorbar : bool (default: ``True``)
         Whether to display a colorbar showing the redshift values.
     colormap : str (default: ``'Spectral_r'``)
         Matplotlib colormap to use for coloring limits by redshift.
@@ -792,7 +828,7 @@ def plot_vs_k(
     ax.set_xlim(*k_range)
 
     ax.tick_params(labelsize=fontsize)
-    if colorbar:
+    if show_colorbar:
         cb = fig.colorbar(scalar_map, ax=ax, fraction=0.1, pad=0.08, label="Redshift")
         cb.ax.yaxis.set_label_position("left")
         cb.ax.yaxis.set_ticks_position("left")
@@ -1434,6 +1470,7 @@ def plot_limits_vs_z(
     shade_limits: bool,
     delta_squared_range: tuple[float, float],
     scalar_map: cmx.ScalarMappable,
+    color_by: Literal["year", "k"],
 ):
     """Plot limit papers on z vs delta_squared axes.
 
@@ -1452,7 +1489,9 @@ def plot_limits_vs_z(
     delta_squared_range : tuple[float, float]
         The range of delta squared values to display.
     scalar_map : cmx.ScalarMappable
-        A scalar mappable for coloring the points by experiment year.
+        A scalar mappable for coloring the limits.
+    color_by : {"year", "k"}
+        Quantity to use for coloring limits.
     """
     lines = []
 
@@ -1477,10 +1516,14 @@ def plot_limits_vs_z(
         # Each limit now has one data point per redshift
         z_vals = limit.data.z
         dsq_vals = np.array([dsq[0] for dsq in limit.data.delta_squared])
+        k_vals = np.array([k[0] for k in limit.data.k])
 
         # Use user-provided color if available, otherwise use scalar_map.
-        if "color" in limit_style:
+        has_color_override = "color" in limit_style
+        if has_color_override:
             color_val = limit_style.pop("color")
+        elif color_by == "k":
+            color_val = scalar_map.to_rgba(k_vals)
         else:
             color_val = scalar_map.to_rgba(limit.year)
 
@@ -1519,7 +1562,11 @@ def plot_limits_vs_z(
             (line,) = ax.plot(
                 z_vals,
                 dsq_vals,
-                color=color_val,
+                color=(
+                    np.mean(color_val, axis=0)
+                    if color_by == "k" and not has_color_override
+                    else color_val
+                ),
                 label=label,
                 zorder=1,
                 **limit_style,

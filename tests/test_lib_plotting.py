@@ -31,7 +31,7 @@ def test_lib_plot_vs_k_with_fig_styling():
 def test_lib_plot_vs_k_without_colorbar():
     """Test making a plot without a redshift colorbar."""
     fig = plot_vs_k(
-        colorbar=False,
+        show_colorbar=False,
         out=OUTPUT_DIR / "test_lib_plot_vs_k_without_colorbar.png",
     )
     assert fig is not None
@@ -170,6 +170,19 @@ def test_lib_plot_vs_z_with_fig_styling():
     assert fig is not None
 
 
+def test_lib_plot_vs_z_with_color_by_k():
+    """Test making a plot_vs_z colored by k."""
+    fig = plot_vs_z(
+        color_by="k",
+        show_colorbar=True,
+        out=OUTPUT_DIR / "test_lib_plot_vs_z_with_color_by_k.png",
+    )
+
+    assert fig is not None
+    assert len(fig.axes) == 2
+    assert fig.axes[1].get_ylabel() == r"k ($h Mpc^{-1}$)"
+
+
 def test_lib_plot_vs_z_with_z_range():
     """Test making a plot_vs_z with redshift range filtering."""
     fig = plot_vs_z(
@@ -294,3 +307,17 @@ def test_lib_plot_vs_z_with_legend_labeler():
     assert fig is not None
     assert legend is not None
     assert [text.get_text() for text in legend.get_texts()] == ["HERA 2023"]
+
+
+def test_lib_plot_vs_z_with_k_labels_in_title():
+    """Test making a plot_vs_z with the k range in the title."""
+    fig = plot_vs_z(
+        k_labels="title",
+        out=OUTPUT_DIR / "test_lib_plot_vs_z_with_k_labels_in_title.png",
+    )
+
+    legend = fig.axes[0].get_legend()
+    assert fig is not None
+    assert legend is not None
+    assert fig.axes[0].get_title().startswith(r"$k\sim")
+    assert all("h/Mpc" not in text.get_text() for text in legend.get_texts())
