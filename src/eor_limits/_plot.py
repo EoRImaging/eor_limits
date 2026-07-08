@@ -44,38 +44,6 @@ JsonNestedDict = Annotated[
 ]
 
 
-def _filter_legend_entries(
-    handles: Sequence[Any], labels: Sequence[str | None]
-) -> tuple[list[Any], list[str]]:
-    """Remove legend entries with no label while keeping handles aligned.
-
-    Parameters
-    ----------
-    handles
-        Matplotlib artists to include in the legend.
-    labels
-        Legend labels corresponding to ``handles``. Entries with ``None`` labels are
-        omitted from the returned handles and labels.
-
-    Returns
-    -------
-    list
-        The legend handles whose corresponding label is not ``None``.
-    list
-        The non-``None`` legend labels.
-    """
-    entries = [
-        (handle, label)
-        for handle, label in zip(handles, labels, strict=True)
-        if label is not None
-    ]
-    if not entries:
-        return [], []
-
-    filtered_handles, filtered_labels = zip(*entries, strict=True)
-    return list(filtered_handles), list(filtered_labels)
-
-
 def plot_vs_z(
     # Limit plotting options
     limits: StrList = None,
@@ -423,7 +391,7 @@ def plot_vs_z(
     sensitivity_style = _build_sensitivity_styles(sensitivities, sensitivity_style)
 
     # Plot the sensitivity curves.
-    plot_sensitivities(
+    plot_sensitivities_vs_k(
         ax=ax,
         sensitivities=sensitivities,
         sensitivity_style=sensitivity_style,
@@ -809,7 +777,7 @@ def plot_vs_k(
     sensitivity_style = _build_sensitivity_styles(sensitivities, sensitivity_style)
 
     # Plot the sensitivity curves.
-    plot_sensitivities(
+    plot_sensitivities_vs_k(
         ax=ax,
         sensitivities=sensitivities,
         sensitivity_style=sensitivity_style,
@@ -1131,6 +1099,38 @@ def _build_sensitivity_styles(
     return styles
 
 
+def _filter_legend_entries(
+    handles: Sequence[Any], labels: Sequence[str | None]
+) -> tuple[list[Any], list[str]]:
+    """Remove legend entries with no label while keeping handles aligned.
+
+    Parameters
+    ----------
+    handles
+        Matplotlib artists to include in the legend.
+    labels
+        Legend labels corresponding to ``handles``. Entries with ``None`` labels are
+        omitted from the returned handles and labels.
+
+    Returns
+    -------
+    list
+        The legend handles whose corresponding label is not ``None``.
+    list
+        The non-``None`` legend labels.
+    """
+    entries = [
+        (handle, label)
+        for handle, label in zip(handles, labels, strict=True)
+        if label is not None
+    ]
+    if not entries:
+        return [], []
+
+    filtered_handles, filtered_labels = zip(*entries, strict=True)
+    return list(filtered_handles), list(filtered_labels)
+
+
 def get_latex_label(
     paper: DataSet,
     bold: bool = False,
@@ -1393,7 +1393,7 @@ def plot_theories_vs_k(
     return lines
 
 
-def plot_sensitivities(
+def plot_sensitivities_vs_k(
     *,
     ax: plt.Axes,
     sensitivities: dict[str, str] | None,
