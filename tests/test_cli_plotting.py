@@ -8,6 +8,7 @@ from matplotlib.testing.compare import compare_images
 import eor_limits
 from eor_limits._cli import app
 
+# Output directory for test PDFs
 OUTPUT_DIR = Path(__file__).parent / "figures"
 OUTPUT_DIR.mkdir(exist_ok=True)
 
@@ -27,6 +28,9 @@ def _run_plot_command(command: str, *args: str, expect_success: bool = True) -> 
             assert out_path.exists(), f"Expected output file not found: {out_path}"
     else:
         assert exc_info.value.code != 0  # negative test case
+
+
+# Tests for plot_vs_k function
 
 
 def _run_plot_vs_k(*args: str, expect_success: bool = True) -> None:
@@ -88,27 +92,6 @@ def test_cli_plot_vs_k_with_fig_styling():
         expect_success=True,
     )
     _assert_images_match("plot_vs_k", "with_fig_styling", out)
-
-
-def test_cli_plot_vs_k_with_color_by_year():
-    """Test making a plot_vs_k colored by year through the CLI."""
-    out = OUTPUT_DIR / "test_cli_plot_vs_k_with_color_by_year.png"
-    _run_plot_vs_k(
-        "--color-by",
-        "year",
-        "--show-colorbar=True",
-        "--out",
-        str(out),
-        expect_success=True,
-    )
-    _assert_images_match("plot_vs_k", "with_color_by_year", out)
-
-
-def test_cli_plot_vs_k_without_colorbar():
-    """Test making a plot without a redshift colorbar through the CLI."""
-    out = OUTPUT_DIR / "test_cli_plot_vs_k_without_colorbar.png"
-    _run_plot_vs_k("--show-colorbar=False", "--out", str(out), expect_success=True)
-    _assert_images_match("plot_vs_k", "without_colorbar", out)
 
 
 def test_cli_plot_vs_k_with_z_range():
@@ -248,6 +231,42 @@ def test_cli_plot_vs_k_with_limit_and_theory_styling():
     )
 
 
+def test_cli_plot_vs_k_without_colorbar():
+    """Test making a plot without a redshift colorbar through the CLI."""
+    out = OUTPUT_DIR / "test_cli_plot_vs_k_without_colorbar.png"
+    _run_plot_vs_k("--show-colorbar=False", "--out", str(out), expect_success=True)
+    _assert_images_match("plot_vs_k", "without_colorbar", out)
+
+
+def test_cli_plot_vs_k_with_color_by_year():
+    """Test making a plot_vs_k colored by year through the CLI."""
+    out = OUTPUT_DIR / "test_cli_plot_vs_k_with_color_by_year.png"
+    _run_plot_vs_k(
+        "--color-by",
+        "year",
+        "--show-colorbar=True",
+        "--out",
+        str(out),
+        expect_success=True,
+    )
+    _assert_images_match("plot_vs_k", "with_color_by_year", out)
+
+
+def test_cli_plot_vs_k_with_z_labels_in_legend():
+    """Test making a plot_vs_k with z labels shown in the legend through the CLI."""
+    out = OUTPUT_DIR / "test_cli_plot_vs_k_with_z_labels_in_legend.png"
+    _run_plot_vs_k(
+        "--color-by",
+        "year",
+        "--z-labels",
+        "legend",
+        "--out",
+        str(out),
+        expect_success=True,
+    )
+    _assert_images_match("plot_vs_k", "with_z_labels_in_legend", out)
+
+
 def test_cli_plot_vs_k_with_legend_labeler():
     """Test making a plot_vs_k with custom legend labels through the CLI."""
     out = OUTPUT_DIR / "test_cli_plot_vs_k_with_legend_labeler.png"
@@ -263,6 +282,9 @@ def test_cli_plot_vs_k_with_legend_labeler():
         expect_success=True,
     )
     _assert_images_match("plot_vs_k", "with_legend_labeler", out)
+
+
+# Tests for plot_vs_z function
 
 
 def test_cli_plot_vs_z_basic():
@@ -287,27 +309,6 @@ def test_cli_plot_vs_z_with_fig_styling():
         expect_success=True,
     )
     _assert_images_match("plot_vs_z", "with_fig_styling", out)
-
-
-def test_cli_plot_vs_z_without_colorbar():
-    """Test making a plot_vs_z without a colorbar through the CLI."""
-    out = OUTPUT_DIR / "test_cli_plot_vs_z_without_colorbar.png"
-    _run_plot_vs_z("--show-colorbar=False", "--out", str(out), expect_success=True)
-    _assert_images_match("plot_vs_z", "without_colorbar", out)
-
-
-def test_cli_plot_vs_z_with_color_by_year():
-    """Test making a plot_vs_z colored by year through the CLI."""
-    out = OUTPUT_DIR / "test_cli_plot_vs_z_with_color_by_year.png"
-    _run_plot_vs_z(
-        "--color-by",
-        "year",
-        "--show-colorbar=True",
-        "--out",
-        str(out),
-        expect_success=True,
-    )
-    _assert_images_match("plot_vs_z", "with_color_by_year", out)
 
 
 def test_cli_plot_vs_z_with_z_range():
@@ -437,6 +438,42 @@ def test_cli_plot_vs_z_with_limit_and_theory_styling():
     _assert_images_match("plot_vs_z", "with_limit_and_theory_styling", out)
 
 
+def test_cli_plot_vs_z_without_colorbar():
+    """Test making a plot_vs_z without a colorbar through the CLI."""
+    out = OUTPUT_DIR / "test_cli_plot_vs_z_without_colorbar.png"
+    _run_plot_vs_z("--show-colorbar=False", "--out", str(out), expect_success=True)
+    _assert_images_match("plot_vs_z", "without_colorbar", out)
+
+
+def test_cli_plot_vs_z_with_color_by_year():
+    """Test making a plot_vs_z colored by year through the CLI."""
+    out = OUTPUT_DIR / "test_cli_plot_vs_z_with_color_by_year.png"
+    _run_plot_vs_z(
+        "--color-by",
+        "year",
+        "--show-colorbar=True",
+        "--out",
+        str(out),
+        expect_success=True,
+    )
+    _assert_images_match("plot_vs_z", "with_color_by_year", out)
+
+
+def test_cli_plot_vs_z_with_k_labels_in_legend():
+    """Test making a plot_vs_z with k labels shown in the legend through the CLI."""
+    out = OUTPUT_DIR / "test_cli_plot_vs_z_with_k_labels_in_legend.png"
+    _run_plot_vs_z(
+        "--color-by",
+        "year",
+        "--k-labels",
+        "legend",
+        "--out",
+        str(out),
+        expect_success=True,
+    )
+    _assert_images_match("plot_vs_z", "with_k_labels_in_legend", out)
+
+
 def test_cli_plot_vs_z_with_legend_labeler():
     """Test making a plot_vs_z with custom legend labels through the CLI."""
     out = OUTPUT_DIR / "test_cli_plot_vs_z_with_legend_labeler.png"
@@ -452,18 +489,3 @@ def test_cli_plot_vs_z_with_legend_labeler():
         expect_success=True,
     )
     _assert_images_match("plot_vs_z", "with_legend_labeler", out)
-
-
-def test_cli_plot_vs_z_with_k_labels_in_title():
-    """Test making a plot_vs_z with k labels shown in the title through the CLI."""
-    out = OUTPUT_DIR / "test_cli_plot_vs_z_with_k_labels_in_title.png"
-    _run_plot_vs_z(
-        "--color-by",
-        "year",
-        "--k-labels",
-        "title",
-        "--out",
-        str(out),
-        expect_success=True,
-    )
-    _assert_images_match("plot_vs_z", "with_k_labels_in_title", out)
