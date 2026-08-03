@@ -238,48 +238,47 @@ def plot_vs_z(
             delta_squared_range = [_get_delta_squared_range_from_limits(limits)[0], 1e6]
 
     # Select the lowest delta_squared for each z in each limit
-    limits_vs_z = [
+    limits = [
         limit.select_lowest_delta_squared(per_z=True, per_tag=False) for limit in limits
     ]
 
     # Filter by z and delta_squared ranges without applying any k-range selection.
     # This is because we want to plot the lowest delta_squared for each z.
-    limits_vs_z = select_k_and_z_ranges(
-        limits_vs_z,
+    limits = select_k_and_z_ranges(
+        limits,
         z_range=z_range,
         k_range=None,
         delta_squared_range=delta_squared_range,
     )
 
     # Update z_range after filtering
-    z_range = _get_z_range_from_limits(limits_vs_z)
-
-    # Get plotted k ranges for optional labels and k-based coloring.
+    z_range = _get_z_range_from_limits(limits)
+    # Get k_range's for each limit (for labels/coloring)
     delta_k_threshold = 0.05  # Threshold for considering k values as "similar"
-    limit_k_ranges = {}
-    all_k_values = []
-    for limit in limits_vs_z:
+    k_ranges_for_lbl = {}
+    k_values_for_lbl = []
+    for limit in limits:
         k_range = np.array([k for k_values in limit.data.k for k in k_values])
-        limit_k_ranges[limit.key] = (
+        k_ranges_for_lbl[limit.key] = (
             np.min(k_range),
             np.max(k_range),
             np.mean(k_range),
         )
-        all_k_values.extend(k_range)
+        k_values_for_lbl.extend(k_range)
 
     # Set up colormap for the selected observational quantity.
     if color_by == "year":
-        color_values = [limit.year for limit in limits_vs_z]
+        color_values = [limit.year for limit in limits]
         colorbar_label = "Year"
     else:
-        color_values = all_k_values
+        color_values = k_values_for_lbl
         colorbar_label = r"k ($h Mpc^{-1}$)"
     norm = colors.Normalize(vmin=min(color_values), vmax=max(color_values))
     scalar_map = cmx.ScalarMappable(norm=norm, cmap=colormap)
 
     # Building plotting styles for each limit.
     limit_styles = _build_limit_styles(
-        limits=limits_vs_z,
+        limits=limits,
         aspoints=aspoints,
         aslines=aslines,
         nbins_for_lines=nz_for_lines,
@@ -293,10 +292,10 @@ def plot_vs_z(
     bold_limits = bold_limits or []
     if legend_labeler is None:
         limit_labels = []
-        for limit in limits_vs_z:
+        for limit in limits:
             k_label_suffix = ""
             if k_labels == "legend":
-                k_min, k_max, k_mean = limit_k_ranges[limit.key]
+                k_min, k_max, k_mean = k_ranges_for_lbl[limit.key]
                 if np.abs(k_min - k_max) < delta_k_threshold:
                     k_label_suffix = rf"\ (k \approx {k_mean:.2f}\ h/Mpc)"
                 else:
@@ -309,12 +308,12 @@ def plot_vs_z(
                 )
             )
     else:
-        limit_labels = [legend_labeler.get(limit.key) for limit in limits_vs_z]
+        limit_labels = [legend_labeler.get(limit.key) for limit in limits]
 
     # Plotting the limits as points or lines
     limit_lines = plot_limits_vs_z(
         ax=ax,
-        limits=limits_vs_z,
+        limits=limits,
         limit_styles=limit_styles,
         limit_labels=limit_labels,
         shade_limits=shade_limits,
@@ -386,17 +385,14 @@ def plot_vs_z(
     ax.set_xlabel(r"Redshift $z$", fontsize=fontsize)
     ax.set_ylabel(r"$\Delta^2$ ($mK^2$)", fontsize=fontsize)
     ax.set_yscale("log")
-    # Use log scale for z only if the z range spans multiple orders of magnitude
-    if z_range[1] / z_range[0] > 100:
-        ax.set_xscale("log")
     ax.set_ylim(*delta_squared_range)
-    ax.set_xlim(z_range[0] * 0.9, z_range[1] * 1.1)  # Add some padding
+    ax.set_xlim(*z_range)
 
     ax.tick_params(labelsize=fontsize)
     if k_labels == "title":
-        k_min = min(all_k_values)
-        k_max = max(all_k_values)
-        k_mean = np.mean(all_k_values)
+        k_min = min(k_values_for_lbl)
+        k_max = max(k_values_for_lbl)
+        k_mean = np.mean(k_values_for_lbl)
         if np.abs(k_min - k_max) < delta_k_threshold:
             ax.set_title(rf"$k \approx {k_mean:.2f}\ h/Mpc$", fontsize=fontsize)
         else:
@@ -649,8 +645,8 @@ def plot_vs_k(
     )
 
     # Update z_range and k_range after filtering
-    z_range = _get_z_range_from_limits(limits)  # again, since we removed some limits
-    k_range = _get_k_range_from_limits(limits)  # again, since we removed some limits
+    z_range = _get_z_range_from_limits(limits)
+    k_range = _get_k_range_from_limits(limits)
 
     # Set up colormap for the selected observational quantity.
     if color_by == "year":
@@ -917,25 +913,31 @@ def select_k_and_z_ranges(
     return new_limits
 
 
-def _get_z_range_from_limits(limits):
+def _get_z_range_from_limits(limits, round_nums: bool = True) -> tuple[float, float]:
     """Get min/max z range across a list of datasets."""
     z_min = min(min(limit.data.z) for limit in limits)
     z_max = max(max(limit.data.z) for limit in limits)
+    if round_nums:
+        step = 10 ** np.floor(np.log10(z_max - z_min))
+        z_min = np.floor(z_min / step) * step
+        z_max = np.ceil(z_max / step) * step
     return (z_min, z_max)
 
 
-def _get_k_range_from_limits(limits):
+def _get_k_range_from_limits(limits, round_nums: bool = True) -> tuple[float, float]:
+    """Get min/max k range across a list of datasets."""
     k_min = min(min(k) for limit in limits for k in limit.data.k)
     k_max = max(max(k) for limit in limits for k in limit.data.k)
-    min_factor = 10 ** np.ceil(np.log10(k_min) * -1)
-    max_factor = 10 ** np.ceil(np.log10(k_max) * -1)
-    return (
-        np.floor(k_min * min_factor) / min_factor,
-        np.ceil(k_max * max_factor) / max_factor,
-    )
+    if round_nums:
+        min_factor = 10 ** np.ceil(np.log10(k_min) * -1)
+        max_factor = 10 ** np.ceil(np.log10(k_max) * -1)
+        k_min = np.floor(k_min * min_factor) / min_factor
+        k_max = np.ceil(k_max * max_factor) / max_factor
+    return (k_min, k_max)
 
 
-def _get_delta_squared_range_from_limits(limits: list[DataSet]) -> tuple[float, float]:
+def _get_delta_squared_range_from_limits(limits: list[DataSet],
+                                         round_nums: bool = True) -> tuple[float, float]:
     """Get rounded min/max delta-squared range across a list of datasets."""
     delta_squared_min = min(
         min(dsq) for limit in limits for dsq in limit.data.delta_squared
@@ -943,12 +945,12 @@ def _get_delta_squared_range_from_limits(limits: list[DataSet]) -> tuple[float, 
     delta_squared_max = max(
         max(dsq) for limit in limits for dsq in limit.data.delta_squared
     )
-    min_factor = 10 ** np.ceil(np.log10(delta_squared_min) * -1)
-    max_factor = 10 ** np.ceil(np.log10(delta_squared_max) * -1)
-    return (
-        np.floor(delta_squared_min * min_factor) / min_factor,
-        np.ceil(delta_squared_max * max_factor) / max_factor,
-    )
+    if round_nums:
+        min_factor = 10 ** np.ceil(np.log10(delta_squared_min) * -1)
+        max_factor = 10 ** np.ceil(np.log10(delta_squared_max) * -1)
+        delta_squared_min = np.floor(delta_squared_min * min_factor) / min_factor
+        delta_squared_max = np.ceil(delta_squared_max * max_factor) / max_factor
+    return (delta_squared_min, delta_squared_max)
 
 
 def _build_limit_styles(
