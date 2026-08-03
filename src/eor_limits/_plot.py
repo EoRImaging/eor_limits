@@ -69,11 +69,11 @@ def plot_vs_z(
     sensitivities: dict | None = None,
     sensitivity_style: dict | None = None,
     # General plotting options
-    show_colorbar: bool = False,
-    color_by: Literal["year", "k"] = "year",
+    color_by: Literal["year", "k"] = "k",
+    show_colorbar: bool = True,
     colormap: str = "Spectral_r",
     legend_labeler: JsonDict = None,
-    k_labels: Literal["legend", "title"] | None = "legend",
+    k_labels: Literal["legend", "title"] | None = "None",
     legend_ncols: int = 3,
     fontsize: int = 15,
     fig_width: float = 25.0,
@@ -88,7 +88,7 @@ def plot_vs_z(
 
     For each experiment, this plots the lowest (most constraining) limit
     at each redshift as a point or line. The color of the points/lines
-    indicates the year of the experiment by default (see ``color_by``,
+    indicates the plotted |k| value by default (see ``color_by``,
     ``show_colorbar`` and ``colormap`` options).
 
     Parameters
@@ -132,8 +132,8 @@ def plot_vs_z(
     delta_squared_range : tuple[float, float] | None (default: ``None``)
         Tuple specifying the delta squared range to include in the plot, in the form
         ``(delta_squared_min, delta_squared_max)``. If not specified, set to
-        ``[1e0, 1e6]`` if theories are plotted, otherwise derived from the
-        observational limits.
+        ``[1e0, 1e6]`` if theories are plotted, otherwise
+        ``[min(limit delta_squared), 1e6]``.
     theories : list[str] | None (default: ``None``)
         List of theories to include in the plot (see ``KNOWN_THEORIES`` for available
         models). If not specified, **no** theories are plotted.
@@ -169,17 +169,17 @@ def plot_vs_z(
         e.g. ``{'color': 'k', 'linestyle': '--', 'linewidth': 3}``.
         An additional key 'sensitivity_kind' can be used to specify which kind of
         sensitivity to plot, e.g. ``'sample+thermal'``, ``'sample'`` or ``'thermal'``.
-    show_colorbar : bool (default: ``False``)
-        Whether to display a colorbar showing the selected ``color_by`` values.
-    color_by : {"year", "k"} (default: ``"year"``)
+    color_by : {"year", "k"} (default: ``"k"``)
         Quantity to use for coloring limits. If ``"year"``, each paper is colored by
         experiment year. If ``"k"``, plotted points are colored by their |k| values.
+    show_colorbar : bool (default: ``True``)
+        Whether to display a colorbar showing the selected ``color_by`` values.
     colormap : str (default: ``'Spectral_r'``)
         Matplotlib colormap to use for coloring limits.
     legend_labeler : dict[str, str] | None
         Optional mapping from limit or theory keys to custom legend labels.
         Keys not present in the mapping will be excluded from the legend.
-    k_labels : {"legend", "title"} | None (default: ``"legend"``)
+    k_labels : {"legend", "title"} | None (default: ``None``)
         Where to show the plotted |k| values. If ``"legend"``, add each paper's
         plotted |k| range to its legend label. If ``"title"``, add the plotted |k|
         range across all papers to the title. If ``None``, do not show |k| labels.
@@ -229,33 +229,13 @@ def plot_vs_z(
         # DataSet.load() instead of load_limit_data() to allow loading from a YAML file.
         limits = [DataSet.load(limit).drop_nan() for limit in limits]
 
-    # Select the specified z and delta_squared ranges from the limits
-    def _get_z_range_from_limits(limits):
-        z_min = min(min(limit.data.z) for limit in limits)
-        z_max = max(max(limit.data.z) for limit in limits)
-        return (z_min, z_max)
-
-    def _get_delta_squared_range_from_limits(limits):
-        delta_squared_min = min(
-            min(dsq) for limit in limits for dsq in limit.data.delta_squared
-        )
-        delta_squared_max = max(
-            max(dsq) for limit in limits for dsq in limit.data.delta_squared
-        )
-        min_factor = 10 ** np.ceil(np.log10(delta_squared_min) * -1)
-        max_factor = 10 ** np.ceil(np.log10(delta_squared_max) * -1)
-        return (
-            np.floor(delta_squared_min * min_factor) / min_factor,
-            np.ceil(delta_squared_max * max_factor) / max_factor,
-        )
-
+    # Get the z and delta_squared ranges across all limits.
     z_range = z_range or _get_z_range_from_limits(limits)
-
     if delta_squared_range is None:
         if theories is not None:
-            delta_squared_range = (1e0, 1e6)
+            delta_squared_range = [1e0, 1e6]
         else:
-            delta_squared_range = _get_delta_squared_range_from_limits(limits)
+            delta_squared_range = [_get_delta_squared_range_from_limits(limits)[0], 1e6]
 
     # Select the lowest delta_squared for each z in each limit
     limits_vs_z = [
@@ -263,6 +243,7 @@ def plot_vs_z(
     ]
 
     # Filter by z and delta_squared ranges without applying any k-range selection.
+    # This is because we want to plot the lowest delta_squared for each z.
     limits_vs_z = select_k_and_z_ranges(
         limits_vs_z,
         z_range=z_range,
@@ -490,6 +471,7 @@ def plot_vs_k(
     sensitivities: dict | None = None,
     sensitivity_style: dict | None = None,
     # General plotting options
+    color_by: Literal["z", "year"] = "z",
     show_colorbar: bool = True,
     colormap: str = "Spectral_r",
     legend_labeler: JsonDict = None,
@@ -505,8 +487,8 @@ def plot_vs_k(
     """
     Plot 21-cm power spectrum limits as a function of scale |k|.
 
-    The color of the points/lines indicates the redshift of the limit
-    (see ``show_colorbar`` and ``colormap`` options).
+    The color of the points/lines indicates redshift by default
+    (see ``color_by``, ``show_colorbar`` and ``colormap`` options).
 
     Parameters
     ----------
@@ -552,7 +534,8 @@ def plot_vs_k(
     delta_squared_range : tuple[float, float] | None (default: ``None``)
         Tuple specifying the delta squared range to include in the plot, in the form
         ``(delta_squared_min, delta_squared_max)``. If not specified, set to
-        ``[1e0, 1e6]`` if theories are plotted and ``[1e3, 1e6]`` otherwise.
+        ``[1e0, 1e6]`` if theories are plotted, otherwise
+        ``[min(limit delta_squared), 1e6]``.
     theories : list[str] | None (default: ``None``)
         List of theories to include in the plot (see ``KNOWN_THEORIES`` for available
         models). If not specified, **no** theories are plotted.
@@ -589,10 +572,13 @@ def plot_vs_k(
         e.g. ``{'color': 'k', 'linestyle': '--', 'linewidth': 3}``.
         An additional key 'sensitivity_kind' can be used to specify which kind of
         sensitivity to plot, e.g. ``'sample+thermal'``, ``'sample'`` or ``'thermal'``.
-    show_colorbar : bool (default: ``True``)
-        Whether to display a colorbar showing the redshift values.
+    color_by : {"z", "year"} (default: ``"z"``)
+        Quantity to use for coloring limits. If ``"z"``, limits are colored by
+        redshift. If ``"year"``, each paper is colored by experiment year.
     colormap : str (default: ``'Spectral_r'``)
-        Matplotlib colormap to use for coloring limits by redshift.
+    show_colorbar : bool (default: ``True``)
+        Whether to display a colorbar showing the selected ``color_by`` values.
+        Matplotlib colormap to use for coloring limits.
     legend_labeler : dict[str, str] | None
         Optional mapping from limit or theory keys to custom legend labels.
         Keys not present in the mapping will be excluded from the legend.
@@ -644,31 +630,17 @@ def plot_vs_k(
         # DataSet.load() instead of load_limit_data() to allow loading from a YAML file.
         limits = [DataSet.load(limit).drop_nan() for limit in limits]
 
-    # Select the specified k and z ranges from the limits
-    def _get_z_range_from_limits(limits):
-        z_min = min(min(limit.data.z) for limit in limits)
-        z_max = max(max(limit.data.z) for limit in limits)
-        return (z_min, z_max)
-
-    def _get_k_range_from_limits(limits):
-        k_min = min(min(k) for limit in limits for k in limit.data.k)
-        k_max = max(max(k) for limit in limits for k in limit.data.k)
-        min_factor = 10 ** np.ceil(np.log10(k_min) * -1)
-        max_factor = 10 ** np.ceil(np.log10(k_max) * -1)
-        return (
-            np.floor(k_min * min_factor) / min_factor,
-            np.ceil(k_max * max_factor) / max_factor,
-        )
-
+    # Get the z and k ranges across all limits.
     z_range = z_range or _get_z_range_from_limits(limits)
     k_range = k_range or _get_k_range_from_limits(limits)
-
     if delta_squared_range is None:
         if theories is not None:
             delta_squared_range = (1e0, 1e6)
         else:
-            delta_squared_range = (1e3, 1e6)
+            delta_squared_range = (_get_delta_squared_range_from_limits(limits)[0], 1e6)
 
+    # Filter by z, k, and delta_squared ranges. This will remove any limits that do not
+    # have any data points within the specified ranges.
     limits = select_k_and_z_ranges(
         limits,
         z_range=z_range,
@@ -676,15 +648,22 @@ def plot_vs_k(
         delta_squared_range=delta_squared_range,
     )
 
+    # Update z_range and k_range after filtering
     z_range = _get_z_range_from_limits(limits)  # again, since we removed some limits
     k_range = _get_k_range_from_limits(limits)  # again, since we removed some limits
 
-    # Set up colormap for redshift.
-    if z_range[0] == z_range[1]:
-        z_range_use = [z_range[0] - 1, z_range[0] + 1]
+    # Set up colormap for the selected observational quantity.
+    if color_by == "year":
+        color_values = [limit.year for limit in limits]
+        colorbar_label = "Year"
+        norm = colors.Normalize(vmin=min(color_values), vmax=max(color_values))
     else:
-        z_range_use = z_range
-    norm = colors.Normalize(vmin=z_range_use[0], vmax=z_range_use[1])
+        if z_range[0] == z_range[1]:
+            z_range_use = [z_range[0] - 1, z_range[0] + 1]
+        else:
+            z_range_use = z_range
+        colorbar_label = "Redshift"
+        norm = colors.Normalize(vmin=z_range_use[0], vmax=z_range_use[1])
     scalar_map = cmx.ScalarMappable(norm=norm, cmap=colormap)
 
     # Building plotting styles for each limit.
@@ -718,6 +697,7 @@ def plot_vs_k(
         shade_limits=shade_limits,
         delta_squared_range=delta_squared_range,
         scalar_map=scalar_map,
+        color_by=color_by,
     )
 
     ###################################################################################
@@ -797,10 +777,12 @@ def plot_vs_k(
 
     ax.tick_params(labelsize=fontsize)
     if show_colorbar:
-        cb = fig.colorbar(scalar_map, ax=ax, fraction=0.1, pad=0.08, label="Redshift")
+        cb = fig.colorbar(
+            scalar_map, ax=ax, fraction=0.1, pad=0.08, label=colorbar_label
+        )
         cb.ax.yaxis.set_label_position("left")
         cb.ax.yaxis.set_ticks_position("left")
-        cb.set_label(label="Redshift", fontsize=fontsize)
+        cb.set_label(label=colorbar_label, fontsize=fontsize)
     ax.grid(axis="y")
 
     limit_lines, limit_labels = _filter_legend_entries(limit_lines, limit_labels)
@@ -933,6 +915,40 @@ def select_k_and_z_ranges(
         )
 
     return new_limits
+
+
+def _get_z_range_from_limits(limits):
+    """Get min/max z range across a list of datasets."""
+    z_min = min(min(limit.data.z) for limit in limits)
+    z_max = max(max(limit.data.z) for limit in limits)
+    return (z_min, z_max)
+
+
+def _get_k_range_from_limits(limits):
+    k_min = min(min(k) for limit in limits for k in limit.data.k)
+    k_max = max(max(k) for limit in limits for k in limit.data.k)
+    min_factor = 10 ** np.ceil(np.log10(k_min) * -1)
+    max_factor = 10 ** np.ceil(np.log10(k_max) * -1)
+    return (
+        np.floor(k_min * min_factor) / min_factor,
+        np.ceil(k_max * max_factor) / max_factor,
+    )
+
+
+def _get_delta_squared_range_from_limits(limits: list[DataSet]) -> tuple[float, float]:
+    """Get rounded min/max delta-squared range across a list of datasets."""
+    delta_squared_min = min(
+        min(dsq) for limit in limits for dsq in limit.data.delta_squared
+    )
+    delta_squared_max = max(
+        max(dsq) for limit in limits for dsq in limit.data.delta_squared
+    )
+    min_factor = 10 ** np.ceil(np.log10(delta_squared_min) * -1)
+    max_factor = 10 ** np.ceil(np.log10(delta_squared_max) * -1)
+    return (
+        np.floor(delta_squared_min * min_factor) / min_factor,
+        np.ceil(delta_squared_max * max_factor) / max_factor,
+    )
 
 
 def _build_limit_styles(
@@ -1182,6 +1198,7 @@ def plot_limits_vs_k(
     shade_limits: bool,
     delta_squared_range: tuple[float, float],
     scalar_map: cmx.ScalarMappable,
+    color_by: Literal["z", "year"],
 ):
     """Plot limit papers on k vs delta_squared axes.
 
@@ -1201,6 +1218,8 @@ def plot_limits_vs_k(
         The range of delta squared values to display.
     scalar_map : cmx.ScalarMappable
         A scalar mappable for coloring the points.
+    color_by : {"z", "year"}
+        Quantity to use for coloring limits.
     """
     lines = []
 
@@ -1222,6 +1241,13 @@ def plot_limits_vs_k(
             for key in ["linewidth", "lw", "linestyle", "ls"]:
                 limit_style.pop(key, None)
 
+        # Use user-provided color if available, otherwise use scalar_map.
+        has_color_override = "color" in limit_style
+        if has_color_override:
+            color_val = limit_style.pop("color")
+        elif color_by == "year":
+            color_val = scalar_map.to_rgba(limit.year)
+
         # If we are plotting as points, we plot each redshift with specific colors
         # and making sure to meet towards the right edges to avoid overlaps.
         if not as_line:
@@ -1239,7 +1265,7 @@ def plot_limits_vs_k(
             line = ax.scatter(
                 k,
                 dsq,
-                color=scalar_map.to_rgba(z),
+                color=color_val if color_by == "year" else scalar_map.to_rgba(z),
                 label=label,
                 zorder=2,
                 **limit_style,
@@ -1312,7 +1338,11 @@ def plot_limits_vs_k(
                     delta_edges,
                     label=label,
                     zorder=1,
-                    color=scalar_map.to_rgba(redshift),
+                    color=(
+                        color_val
+                        if color_by == "year"
+                        else scalar_map.to_rgba(redshift)
+                    ),
                     **limit_style,
                 )
                 if shade_limits:

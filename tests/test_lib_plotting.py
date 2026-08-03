@@ -2,7 +2,10 @@
 
 from pathlib import Path
 
+import numpy as np
+
 from eor_limits import KNOWN_LIMITS, KNOWN_THEORIES, plot_vs_k, plot_vs_z
+from eor_limits._data_loading import load_limit_data
 
 # Output directory for test PDFs
 OUTPUT_DIR = Path(__file__).parent / "figures"
@@ -157,6 +160,21 @@ def test_lib_plot_vs_z_basic():
     """Test making a plot_vs_z with default parameters."""
     fig = plot_vs_z(out=OUTPUT_DIR / "test_lib_plot_vs_z_basic.png")
     assert fig is not None
+    assert len(fig.axes) == 2
+    assert fig.axes[1].get_ylabel() == r"k ($h Mpc^{-1}$)"
+
+
+def test_lib_plot_vs_k_with_color_by_year():
+    """Test making a plot_vs_k colored by year."""
+    fig = plot_vs_k(
+        color_by="year",
+        show_colorbar=True,
+        out=OUTPUT_DIR / "test_lib_plot_vs_k_with_color_by_year.png",
+    )
+
+    assert fig is not None
+    assert len(fig.axes) == 2
+    assert fig.axes[1].get_ylabel() == "Year"
 
 
 def test_lib_plot_vs_z_with_fig_styling():
@@ -170,17 +188,27 @@ def test_lib_plot_vs_z_with_fig_styling():
     assert fig is not None
 
 
-def test_lib_plot_vs_z_with_color_by_k():
-    """Test making a plot_vs_z colored by k."""
+def test_lib_plot_vs_z_without_colorbar():
+    """Test making a plot_vs_z without a colorbar."""
     fig = plot_vs_z(
-        color_by="k",
+        show_colorbar=False,
+        out=OUTPUT_DIR / "test_lib_plot_vs_z_without_colorbar.png",
+    )
+    assert fig is not None
+    assert len(fig.axes) == 1
+
+
+def test_lib_plot_vs_z_with_color_by_year():
+    """Test making a plot_vs_z colored by year."""
+    fig = plot_vs_z(
+        color_by="year",
         show_colorbar=True,
-        out=OUTPUT_DIR / "test_lib_plot_vs_z_with_color_by_k.png",
+        out=OUTPUT_DIR / "test_lib_plot_vs_z_with_color_by_year.png",
     )
 
     assert fig is not None
     assert len(fig.axes) == 2
-    assert fig.axes[1].get_ylabel() == r"k ($h Mpc^{-1}$)"
+    assert fig.axes[1].get_ylabel() == "Year"
 
 
 def test_lib_plot_vs_z_with_z_range():
@@ -256,18 +284,6 @@ def test_lib_plot_vs_z_with_bold_theories():
     assert fig is not None
 
 
-def test_lib_plot_vs_z_with_limit_styling():
-    """Test making a plot_vs_z with custom styling for limits."""
-    limits = ["HERA2022", "HERA2023", "Paciga2013"]
-    fig = plot_vs_z(
-        limits=limits,
-        base_limit_style={"linewidth": 3, "alpha": 0.8},
-        limit_styles={"HERA2023": {"color": "C3"}},
-        out=OUTPUT_DIR / "test_lib_plot_vs_z_with_limit_styling.png",
-    )
-    assert fig is not None
-
-
 def test_lib_plot_vs_z_with_limit_and_theory_styling():
     """Test making a plot_vs_z with custom styling for limits and theories."""
     limits = ["HERA2022", "HERA2023", "Paciga2013"]
@@ -312,6 +328,7 @@ def test_lib_plot_vs_z_with_legend_labeler():
 def test_lib_plot_vs_z_with_k_labels_in_title():
     """Test making a plot_vs_z with the k range in the title."""
     fig = plot_vs_z(
+        color_by="year",
         k_labels="title",
         out=OUTPUT_DIR / "test_lib_plot_vs_z_with_k_labels_in_title.png",
     )
