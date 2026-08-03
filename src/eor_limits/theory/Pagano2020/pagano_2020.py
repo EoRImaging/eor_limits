@@ -1,4 +1,3 @@
-#! /usr/bin/env python
 # Copyright (c) 2019 Nichole Barry, Bryna Hazelton
 # Licensed under the 2-clause BSD License
 """Process Pagano and Liu 2020 spectra for plotting."""
