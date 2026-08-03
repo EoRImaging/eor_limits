@@ -978,8 +978,7 @@ def _get_k_range_from_limits(limits, round_nums: bool = True) -> tuple[float, fl
 
 
 def _get_delta_squared_range_from_limits(
-        limits: list[DataSet],
-        round_nums: bool = True
+    limits: list[DataSet], round_nums: bool = True
 ) -> tuple[float, float]:
     """Get rounded min/max delta-squared range across a list of datasets."""
     delta_squared_min = min(
