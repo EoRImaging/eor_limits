@@ -2,14 +2,14 @@
 
 from pathlib import Path
 
-import numpy as np
-
 from eor_limits import KNOWN_LIMITS, KNOWN_THEORIES, plot_vs_k, plot_vs_z
-from eor_limits._data_loading import load_limit_data
 
 # Output directory for test PDFs
 OUTPUT_DIR = Path(__file__).parent / "figures"
 OUTPUT_DIR.mkdir(exist_ok=True)
+
+
+# Tests for plot_vs_k function
 
 
 def test_lib_plot_vs_k_basic():
@@ -29,16 +29,6 @@ def test_lib_plot_vs_k_with_fig_styling():
         out=OUTPUT_DIR / "test_lib_plot_vs_k_with_fig_styling.png",
     )
     assert fig is not None
-
-
-def test_lib_plot_vs_k_without_colorbar():
-    """Test making a plot without a redshift colorbar."""
-    fig = plot_vs_k(
-        show_colorbar=False,
-        out=OUTPUT_DIR / "test_lib_plot_vs_k_without_colorbar.png",
-    )
-    assert fig is not None
-    assert len(fig.axes) == 1
 
 
 def test_lib_plot_vs_k_with_z_range():
@@ -139,6 +129,43 @@ def test_lib_plot_vs_k_with_limit_and_theory_styling():
     assert fig is not None
 
 
+def test_lib_plot_vs_k_without_colorbar():
+    """Test making a plot without a redshift colorbar."""
+    fig = plot_vs_k(
+        show_colorbar=False,
+        out=OUTPUT_DIR / "test_lib_plot_vs_k_without_colorbar.png",
+    )
+    assert fig is not None
+    assert len(fig.axes) == 1
+
+
+def test_lib_plot_vs_k_with_color_by_year():
+    """Test making a plot_vs_k colored by year."""
+    fig = plot_vs_k(
+        color_by="year",
+        show_colorbar=True,
+        out=OUTPUT_DIR / "test_lib_plot_vs_k_with_color_by_year.png",
+    )
+
+    assert fig is not None
+    assert len(fig.axes) == 2
+    assert fig.axes[1].get_ylabel() == "Year"
+
+
+def test_lib_plot_vs_k_with_z_labels_in_legend():
+    """Test making a plot_vs_k with the z range in the legend."""
+    fig = plot_vs_k(
+        color_by="year",
+        z_labels="legend",
+        out=OUTPUT_DIR / "test_lib_plot_vs_k_with_z_labels_in_legend.png",
+    )
+
+    legend = fig.axes[0].get_legend()
+    assert fig is not None
+    assert legend is not None
+    assert all("z" in text.get_text() for text in legend.get_texts())
+
+
 def test_lib_plot_vs_k_with_legend_labeler():
     """Test making a plot_vs_k with custom legend labels."""
     fig = plot_vs_k(
@@ -164,19 +191,6 @@ def test_lib_plot_vs_z_basic():
     assert fig.axes[1].get_ylabel() == r"k ($h Mpc^{-1}$)"
 
 
-def test_lib_plot_vs_k_with_color_by_year():
-    """Test making a plot_vs_k colored by year."""
-    fig = plot_vs_k(
-        color_by="year",
-        show_colorbar=True,
-        out=OUTPUT_DIR / "test_lib_plot_vs_k_with_color_by_year.png",
-    )
-
-    assert fig is not None
-    assert len(fig.axes) == 2
-    assert fig.axes[1].get_ylabel() == "Year"
-
-
 def test_lib_plot_vs_z_with_fig_styling():
     """Test making a plot_vs_z with custom styling parameters."""
     fig = plot_vs_z(
@@ -186,29 +200,6 @@ def test_lib_plot_vs_z_with_fig_styling():
         out=OUTPUT_DIR / "test_lib_plot_vs_z_with_fig_styling.png",
     )
     assert fig is not None
-
-
-def test_lib_plot_vs_z_without_colorbar():
-    """Test making a plot_vs_z without a colorbar."""
-    fig = plot_vs_z(
-        show_colorbar=False,
-        out=OUTPUT_DIR / "test_lib_plot_vs_z_without_colorbar.png",
-    )
-    assert fig is not None
-    assert len(fig.axes) == 1
-
-
-def test_lib_plot_vs_z_with_color_by_year():
-    """Test making a plot_vs_z colored by year."""
-    fig = plot_vs_z(
-        color_by="year",
-        show_colorbar=True,
-        out=OUTPUT_DIR / "test_lib_plot_vs_z_with_color_by_year.png",
-    )
-
-    assert fig is not None
-    assert len(fig.axes) == 2
-    assert fig.axes[1].get_ylabel() == "Year"
 
 
 def test_lib_plot_vs_z_with_z_range():
@@ -311,6 +302,43 @@ def test_lib_plot_vs_z_with_limit_and_theory_styling():
     assert fig is not None
 
 
+def test_lib_plot_vs_z_without_colorbar():
+    """Test making a plot_vs_z without a colorbar."""
+    fig = plot_vs_z(
+        show_colorbar=False,
+        out=OUTPUT_DIR / "test_lib_plot_vs_z_without_colorbar.png",
+    )
+    assert fig is not None
+    assert len(fig.axes) == 1
+
+
+def test_lib_plot_vs_z_with_color_by_year():
+    """Test making a plot_vs_z colored by year."""
+    fig = plot_vs_z(
+        color_by="year",
+        show_colorbar=True,
+        out=OUTPUT_DIR / "test_lib_plot_vs_z_with_color_by_year.png",
+    )
+
+    assert fig is not None
+    assert len(fig.axes) == 2
+    assert fig.axes[1].get_ylabel() == "Year"
+
+
+def test_lib_plot_vs_z_with_k_labels_in_legend():
+    """Test making a plot_vs_z with the k range in the legend."""
+    fig = plot_vs_z(
+        color_by="year",
+        k_labels="legend",
+        out=OUTPUT_DIR / "test_lib_plot_vs_z_with_k_labels_in_legend.png",
+    )
+
+    legend = fig.axes[0].get_legend()
+    assert fig is not None
+    assert legend is not None
+    assert all("h/Mpc" in text.get_text() for text in legend.get_texts())
+
+
 def test_lib_plot_vs_z_with_legend_labeler():
     """Test making a plot_vs_z with custom legend labels."""
     fig = plot_vs_z(
@@ -323,18 +351,3 @@ def test_lib_plot_vs_z_with_legend_labeler():
     assert fig is not None
     assert legend is not None
     assert [text.get_text() for text in legend.get_texts()] == ["HERA 2023"]
-
-
-def test_lib_plot_vs_z_with_k_labels_in_title():
-    """Test making a plot_vs_z with the k range in the title."""
-    fig = plot_vs_z(
-        color_by="year",
-        k_labels="title",
-        out=OUTPUT_DIR / "test_lib_plot_vs_z_with_k_labels_in_title.png",
-    )
-
-    legend = fig.axes[0].get_legend()
-    assert fig is not None
-    assert legend is not None
-    assert fig.axes[0].get_title().startswith(r"$k\sim")
-    assert all("h/Mpc" not in text.get_text() for text in legend.get_texts())

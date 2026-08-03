@@ -253,25 +253,25 @@ def plot_vs_z(
 
     # Update z_range after filtering
     z_range = _get_z_range_from_limits(limits)
-    # Get k_range's for each limit (for labels/coloring)
+    k_range = _get_k_range_from_limits(limits)
+
+    # Get k_range's for each limit (exact for labels/coloring)
     delta_k_threshold = 0.05  # Threshold for considering k values as "similar"
     k_ranges_for_lbl = {}
-    k_values_for_lbl = []
     for limit in limits:
-        k_range = np.array([k for k_values in limit.data.k for k in k_values])
+        k_range_for_lbl = np.array([k for k_values in limit.data.k for k in k_values])
         k_ranges_for_lbl[limit.key] = (
-            np.min(k_range),
-            np.max(k_range),
-            np.mean(k_range),
+            np.min(k_range_for_lbl),
+            np.max(k_range_for_lbl),
+            np.mean(k_range_for_lbl),
         )
-        k_values_for_lbl.extend(k_range)
 
     # Set up colormap for the selected observational quantity.
     if color_by == "year":
         color_values = [limit.year for limit in limits]
         colorbar_label = "Year"
     else:
-        color_values = k_values_for_lbl
+        color_values = k_range  # Rounded k_range
         colorbar_label = r"k ($h Mpc^{-1}$)"
     norm = colors.Normalize(vmin=min(color_values), vmax=max(color_values))
     scalar_map = cmx.ScalarMappable(norm=norm, cmap=colormap)
@@ -290,6 +290,8 @@ def plot_vs_z(
 
     # Whether to bold each limit in the legend
     bold_limits = bold_limits or []
+
+    # Generate legend labels (custom if legend_labeler is provided, otherwise default)
     if legend_labeler is None:
         limit_labels = []
         for limit in limits:
@@ -390,9 +392,10 @@ def plot_vs_z(
 
     ax.tick_params(labelsize=fontsize)
     if k_labels == "title":
-        k_min = min(k_values_for_lbl)
-        k_max = max(k_values_for_lbl)
-        k_mean = np.mean(k_values_for_lbl)
+        all_k_values_for_lbl = np.array(list(k_ranges_for_lbl.values())).flatten()
+        k_min = min(all_k_values_for_lbl)
+        k_max = max(all_k_values_for_lbl)
+        k_mean = np.mean(all_k_values_for_lbl)
         if np.abs(k_min - k_max) < delta_k_threshold:
             ax.set_title(rf"$k \approx {k_mean:.2f}\ h/Mpc$", fontsize=fontsize)
         else:
@@ -471,6 +474,7 @@ def plot_vs_k(
     show_colorbar: bool = True,
     colormap: str = "Spectral_r",
     legend_labeler: JsonDict = None,
+    z_labels: Literal["legend", "title"] | None = "None",
     legend_ncols: int = 3,
     fontsize: int = 15,
     fig_width: float = 25.0,
@@ -571,13 +575,18 @@ def plot_vs_k(
     color_by : {"z", "year"} (default: ``"z"``)
         Quantity to use for coloring limits. If ``"z"``, limits are colored by
         redshift. If ``"year"``, each paper is colored by experiment year.
-    colormap : str (default: ``'Spectral_r'``)
     show_colorbar : bool (default: ``True``)
         Whether to display a colorbar showing the selected ``color_by`` values.
+    colormap : str (default: ``'Spectral_r'``)
         Matplotlib colormap to use for coloring limits.
     legend_labeler : dict[str, str] | None
         Optional mapping from limit or theory keys to custom legend labels.
         Keys not present in the mapping will be excluded from the legend.
+    z_labels : {"legend", "title"} | None (default: ``None``)
+        Where to show the plotted redshift values. If ``"legend"``, add each paper's
+        plotted redshift range to its legend label. If ``"title"``, add the plotted
+        redshift range across all papers to the title. If ``None``, do not show
+        redshift labels.
     legend_ncols : int (default: ``3``)
         Number of columns to use in the legend.
     fontsize : int (default: ``15``)
@@ -648,18 +657,25 @@ def plot_vs_k(
     z_range = _get_z_range_from_limits(limits)
     k_range = _get_k_range_from_limits(limits)
 
+    # Get z_range's for each limit (exact for labels/coloring)
+    delta_z_threshold = 0.5  # Threshold for considering z values as "similar"
+    z_ranges_for_lbl = {}
+    for limit in limits:
+        z_range_for_lbl = limit.data.z
+        z_ranges_for_lbl[limit.key] = (
+            np.min(z_range_for_lbl),
+            np.max(z_range_for_lbl),
+            np.mean(z_range_for_lbl),
+        )
+
     # Set up colormap for the selected observational quantity.
     if color_by == "year":
         color_values = [limit.year for limit in limits]
         colorbar_label = "Year"
-        norm = colors.Normalize(vmin=min(color_values), vmax=max(color_values))
     else:
-        if z_range[0] == z_range[1]:
-            z_range_use = [z_range[0] - 1, z_range[0] + 1]
-        else:
-            z_range_use = z_range
+        color_values = z_range  # Rounded z_range
         colorbar_label = "Redshift"
-        norm = colors.Normalize(vmin=z_range_use[0], vmax=z_range_use[1])
+    norm = colors.Normalize(vmin=min(color_values), vmax=max(color_values))
     scalar_map = cmx.ScalarMappable(norm=norm, cmap=colormap)
 
     # Building plotting styles for each limit.
@@ -676,10 +692,25 @@ def plot_vs_k(
 
     # Whether to bold each limit in the legend
     bold_limits = bold_limits or []
+
+    # Generate legend labels (custom if legend_labeler is provided, otherwise default)
     if legend_labeler is None:
-        limit_labels = [
-            get_latex_label(limit, bold=(limit.key in bold_limits)) for limit in limits
-        ]
+        limit_labels = []
+        for limit in limits:
+            z_label_suffix = ""
+            if z_labels == "legend":
+                z_min, z_max, z_mean = z_ranges_for_lbl[limit.key]
+                if np.abs(z_min - z_max) < delta_z_threshold:
+                    z_label_suffix = rf"\ (z \approx {z_mean:.1f})"
+                else:
+                    z_label_suffix = rf"\ (z\sim{z_min:.1f}-{z_max:.1f})"
+            limit_labels.append(
+                get_latex_label(
+                    limit,
+                    bold=(limit.key in bold_limits),
+                    label_suffix=z_label_suffix,
+                )
+            )
     else:
         limit_labels = [legend_labeler.get(limit.key) for limit in limits]
 
@@ -772,6 +803,17 @@ def plot_vs_k(
     ax.set_xlim(*k_range)
 
     ax.tick_params(labelsize=fontsize)
+    if z_labels == "title":
+        all_z_values_for_lbl = np.array(list(z_ranges_for_lbl.values())).flatten()
+        z_min = min(all_z_values_for_lbl)
+        z_max = max(all_z_values_for_lbl)
+        z_mean = np.mean(all_z_values_for_lbl)
+        if np.abs(z_min - z_max) < delta_z_threshold:
+            ax.set_title(rf"$z \approx {z_mean:.2f}$", fontsize=fontsize)
+        else:
+            ax.set_title(rf"$z\sim{z_min:.2f}-{z_max:.2f}$", fontsize=fontsize)
+
+    # Create colorbar for selected color quantity (if requested)
     if show_colorbar:
         cb = fig.colorbar(
             scalar_map, ax=ax, fraction=0.1, pad=0.08, label=colorbar_label
@@ -918,9 +960,8 @@ def _get_z_range_from_limits(limits, round_nums: bool = True) -> tuple[float, fl
     z_min = min(min(limit.data.z) for limit in limits)
     z_max = max(max(limit.data.z) for limit in limits)
     if round_nums:
-        step = 10 ** np.floor(np.log10(z_max - z_min))
-        z_min = np.floor(z_min / step) * step
-        z_max = np.ceil(z_max / step) * step
+        z_min = np.floor(z_min)
+        z_max = np.ceil(z_max)
     return (z_min, z_max)
 
 
@@ -936,8 +977,10 @@ def _get_k_range_from_limits(limits, round_nums: bool = True) -> tuple[float, fl
     return (k_min, k_max)
 
 
-def _get_delta_squared_range_from_limits(limits: list[DataSet],
-                                         round_nums: bool = True) -> tuple[float, float]:
+def _get_delta_squared_range_from_limits(
+        limits: list[DataSet],
+        round_nums: bool = True
+) -> tuple[float, float]:
     """Get rounded min/max delta-squared range across a list of datasets."""
     delta_squared_min = min(
         min(dsq) for limit in limits for dsq in limit.data.delta_squared
