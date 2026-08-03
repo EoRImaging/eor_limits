@@ -9,9 +9,9 @@ from .Munoz2022 import munoz_2022
 from .Pagano2020 import pagano_2020
 
 __all__ = [
-    "THEORY_PATH",
     "KNOWN_THEORIES",
-    __all_theories__,
+    "THEORY_PATH",
+    "__all_theories__",
     "mesinger_2016",
     "munoz_2018",
     "munoz_2022",

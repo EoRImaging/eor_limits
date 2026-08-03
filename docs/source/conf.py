@@ -17,7 +17,7 @@ import sys
 
 project = "eor-limits"  # The name of the project.
 master_doc = "index"  # The master toctree document.
-copyright = (  # noqa: A001
+copyright = (  # ruff: ignore[builtin-variable-shadowing]
     "2019 (Nichole Barry & Bryna Hazelton), "
     "2026 (Jiten Dhandha, Steven Murray & all contributors)"
 )
