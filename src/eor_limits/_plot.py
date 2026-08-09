@@ -314,7 +314,7 @@ def plot_vs_z(
         else:
             limit_label = legend_labeler.get(limit.key)
             if limit_label is not None and k_label_suffix:
-                limit_label = limit_label + fr"${k_label_suffix}$"
+                limit_label = limit_label + rf"${k_label_suffix}$"
         limit_labels.append(limit_label)
 
     # Plotting the limits as points or lines
@@ -721,7 +721,7 @@ def plot_vs_k(
         else:
             limit_label = legend_labeler.get(limit.key)
             if limit_label is not None and z_label_suffix:
-                limit_label = limit_label + fr"${z_label_suffix}$"
+                limit_label = limit_label + rf"${z_label_suffix}$"
         limit_labels.append(limit_label)
 
     # Plotting the limits as points or lines, depending on the number of k values
