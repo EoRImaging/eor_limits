@@ -36,11 +36,21 @@ There are three main ways to use `eor-limits`: through the online graphical user
 
 ### Using the online GUI
 
-The online GUI is the quickest way to explore published limits and generate plots without installing anything locally. It is built with [Streamlit](https://streamlit.io/) and lets you select data sets, apply filters, customize the display, and download both the data and resulting figures. You can access it at [eorlimits.streamlit.app](https://eorlimits.streamlit.app/).
+The online GUI is the quickest way to explore published limits and generate plots without installing anything locally. It is built with [Streamlit](https://streamlit.io/) and lets you select data sets, apply filters, customize the display, and download both the data and resulting figures. You can access it at [eorlimits.streamlit.app](https://eorlimits.streamlit.app/). Note that the GUI may differ in its plotting style and customization options, as it sits on a different Github repository (although using this codebase as a dependency) and is maintained separately.
 
 ### Using the Python API
 
-The Python API provides tools for loading, filtering, and plotting the included data sets. For a more complete walkthrough, see the _Tutorial notebook_. Here we just give a brief overview of how to make plots. The two main plotting functions are `plot_vs_k` and `plot_vs_z`, which show limits as a function of scale $k$ and redshift $z$, respectively. To make the default plot versus $k$, run:
+The Python API provides tools for loading, filtering, and plotting the included data sets. For a more complete walkthrough, see the _Tutorial notebook_. Here we just give a brief overview. A simple example of loading the data and slicing it:
+
+```python
+from eor_limits import load_limit_data
+hera2026 = load_limit_data("HERA2026") # or eor_limits.DataSet.load("HERA2026")
+print(hera2026.data.as_pandas_df())
+hera2026_trunc = hera2026.select_z_range(7, 10).select_k_range(0.1, 1)
+hera2026_lowest = hera2026.select_lowest_delta_squared(per_z=True, per_tag=False)
+```
+
+The two main plotting functions are `plot_vs_k` and `plot_vs_z`, which show limits as a function of scale $k$ and redshift $z$, respectively. To make the default plot versus $k$, run:
 
 ```python
 from eor_limits import plot_vs_k, plot_vs_z
@@ -55,18 +65,16 @@ plot_vs_k(
     limits=["HERA2022", "HERA2023", "HERA2026"],
     bold_limits=["HERA2026"],
     shade_limits=True,
-    base_limit_style={"linewidth": 5, "shade_alpha": 0.1},
-    limit_styles={
-        "HERA2023": {"shade_alpha": 0.25, "shade_color": "C1"}
-    },
+    base_limit_style={"linewidth": 4, "shade_alpha": 0.08},
+    limit_styles={"HERA2023": {"shade_alpha": 0.16}},
     theories=["Mesinger2016Faint", "Mesinger2016Bright"],
     shade_theories=True,
-    base_theory_style={"linestyle": "-."},
+    base_theory_style={"color": "black", "linewidth": 2.5},
     theory_styles={
-        "Mesinger2016Faint": {"color": "C3", "shade_alpha": 0.5, "shade_color": "C3"},
-        "Mesinger2016Bright": {"color": "C4", "shade_alpha": 0.1, "shade_color": "C4"}
+        "Mesinger2016Faint": {"linestyle": "--"},
+        "Mesinger2016Bright": {"linestyle": ":"},
     },
-    out="MyPlot.pdf"
+    out="MyPlot.pdf",
 )
 ```
 
@@ -87,13 +95,12 @@ eor-limits plot-vs-k \
     --limits HERA2022 HERA2023 HERA2026 \
     --bold-limits HERA2026 \
     --shade-limits \
-    --base-limit-style '{"linewidth": 5, "shade_alpha": 0.1}' \
-    --limit-styles '{"HERA2023": {"shade_alpha": 0.25, "shade_color": "C1"}}' \
+    --base-limit-style '{"linewidth": 4, "shade_alpha": 0.08}' \
+    --limit-styles '{"HERA2023": {"shade_alpha": 0.16}}' \
     --theories Mesinger2016Faint Mesinger2016Bright \
     --shade-theories \
-    --base-theory-style '{"linestyle": "-."}' \
-    --theory-styles '{"Mesinger2016Faint": {"color": "C3", "shade_alpha": 0.5, "shade_color": "C3"},
-                     "Mesinger2016Bright": {"color": "C4", "shade_alpha": 0.1, "shade_color": "C4"}}' \
+    --base-theory-style '{"color": "black", "linewidth": 2.5}' \
+    --theory-styles '{"Mesinger2016Faint": {"linestyle": "--"}, "Mesinger2016Bright": {"linestyle": ":"}}' \
     --out MyPlot.pdf
 ```
 
