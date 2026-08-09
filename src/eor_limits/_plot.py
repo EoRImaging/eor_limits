@@ -71,7 +71,7 @@ def plot_vs_z(
     # General plotting options
     color_by: Literal["year", "k"] = "k",
     show_colorbar: bool = True,
-    colormap: str = "Spectral_r",
+    colormap: str = "viridis",
     legend_labeler: JsonDict = None,
     k_labels: Literal["legend", "title"] | None = "None",
     legend_ncols: int = 3,
@@ -105,7 +105,8 @@ def plot_vs_z(
         Dictionary of style parameters for plotting limits. The keys are the limit
         keys (e.g. ``'Paciga2013'``), and the values are dictionaries with style
         parameters for plotting, e.g. ``{'color': 'C0', 's': 100}`` for points or
-        ``{'color': 'C0', 'linewidth': 3}`` for lines.
+        ``{'color': 'C0', 'linewidth': 3}`` for lines. Note that this setting enables
+        color customization that may be confusing if a colorbar is also present.
     bold_limits : list[str] | None (default: ``None``)
         List of limits to bold in the legend. If not specified, no limits are bolded.
     shade_limits : bool (default: ``False``)
@@ -149,6 +150,8 @@ def plot_vs_z(
         Dictionary of style parameters for plotting theories. The keys are the theory
         keys (e.g. ``'Mesinger2016Faint'``), and the values are dictionaries with
         style parameters for plotting, e.g. ``{'color': 'C1', 'linestyle': '--'}``.
+        Note that this setting enables color customization that may be confusing if
+        a colorbar is also present.
     bold_theories : list[str] | None (default: ``None``)
         List of theories to bold in the legend.
         If not specified, no theories are bolded.
@@ -174,7 +177,7 @@ def plot_vs_z(
         experiment year. If ``"k"``, plotted points are colored by their |k| values.
     show_colorbar : bool (default: ``True``)
         Whether to display a colorbar showing the selected ``color_by`` values.
-    colormap : str (default: ``'Spectral_r'``)
+    colormap : str (default: ``'viridis'``)
         Matplotlib colormap to use for coloring limits.
     legend_labeler : dict[str, str] | None
         Optional mapping from limit or theory keys to custom legend labels.
@@ -506,7 +509,8 @@ def plot_vs_k(
         Dictionary of style parameters for plotting limits. The keys are the limit
         keys (e.g. ``'Paciga2013'``), and the values are dictionaries with style
         parameters for plotting, e.g. ``{'color': 'C0', 's': 100}`` for points or
-        ``{'color': 'C0', 'linewidth': 3}`` for lines.
+        ``{'color': 'C0', 'linewidth': 3}`` for lines. Note that this setting enables
+        color customization that may be confusing if a colorbar is also present.
     bold_limits : list[str] | None (default: ``None``)
         List of limits to bold in the legend. If not specified, no limits are bolded.
     shade_limits : bool (default: ``True``)
@@ -554,6 +558,8 @@ def plot_vs_k(
         Dictionary of style parameters for plotting theories. The keys are the theory
         keys (e.g. ``'Mesinger2016Faint'``), and the values are dictionaries with
         style parameters for plotting, e.g. ``{'color': 'C1', 'linestyle': '--'}``.
+        Note that this setting enables color customization that may be confusing if
+        a colorbar is also present.
     bold_theories : list[str] | None (default: ``None``)
         List of theories to bold in the legend.
         If not specified, no theories are bolded.
