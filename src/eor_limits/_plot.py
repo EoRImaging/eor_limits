@@ -291,26 +291,28 @@ def plot_vs_z(
     # Whether to bold each limit in the legend
     bold_limits = bold_limits or []
 
-    # Generate legend labels (custom if legend_labeler is provided, otherwise default)
-    if legend_labeler is None:
-        limit_labels = []
-        for limit in limits:
-            k_label_suffix = ""
-            if k_labels == "legend":
-                k_min, k_max, k_mean = k_ranges_for_lbl[limit.key]
-                if np.abs(k_min - k_max) < delta_k_threshold:
-                    k_label_suffix = rf"\ (k \approx {k_mean:.2f}\ h/Mpc)"
-                else:
-                    k_label_suffix = rf"\ (k\sim{k_min:.2f}-{k_max:.2f}\ h/Mpc)"
-            limit_labels.append(
-                get_latex_label(
-                    limit,
-                    bold=(limit.key in bold_limits),
-                    label_suffix=k_label_suffix,
-                )
+    # If z_labels is "legend", we add the z range to the legend labels.
+    # The rest of the label is either default or custom from legend_labeler.
+    limit_labels = []
+    for limit in limits:
+        k_label_suffix = ""
+        if k_labels == "legend":
+            k_min, k_max, k_mean = k_ranges_for_lbl[limit.key]
+            if np.abs(k_min - k_max) < delta_k_threshold:
+                k_label_suffix = rf"\ (k \approx {k_mean:.2f}\ h/Mpc)"
+            else:
+                k_label_suffix = rf"\ (k \sim {k_min:.2f}-{k_max:.2f}\ h/Mpc)"
+        if legend_labeler is None:
+            limit_label = get_latex_label(
+                limit,
+                bold=(limit.key in bold_limits),
+                label_suffix=k_label_suffix,
             )
-    else:
-        limit_labels = [legend_labeler.get(limit.key) for limit in limits]
+        else:
+            limit_label = legend_labeler.get(limit.key)
+            if limit_label is not None and k_label_suffix:
+                limit_label = limit_label + fr"${k_label_suffix}$"
+        limit_labels.append(limit_label)
 
     # Plotting the limits as points or lines
     limit_lines = plot_limits_vs_z(
@@ -399,7 +401,7 @@ def plot_vs_z(
         if np.abs(k_min - k_max) < delta_k_threshold:
             ax.set_title(rf"$k \approx {k_mean:.2f}\ h/Mpc$", fontsize=fontsize)
         else:
-            ax.set_title(rf"$k\sim{k_min:.2f}-{k_max:.2f}\ h/Mpc$", fontsize=fontsize)
+            ax.set_title(rf"$k \sim {k_min:.2f}-{k_max:.2f}\ h/Mpc$", fontsize=fontsize)
 
     # Create colorbar for selected color quantity (if requested)
     if show_colorbar:
@@ -693,26 +695,28 @@ def plot_vs_k(
     # Whether to bold each limit in the legend
     bold_limits = bold_limits or []
 
-    # Generate legend labels (custom if legend_labeler is provided, otherwise default)
-    if legend_labeler is None:
-        limit_labels = []
-        for limit in limits:
-            z_label_suffix = ""
-            if z_labels == "legend":
-                z_min, z_max, z_mean = z_ranges_for_lbl[limit.key]
-                if np.abs(z_min - z_max) < delta_z_threshold:
-                    z_label_suffix = rf"\ (z \approx {z_mean:.1f})"
-                else:
-                    z_label_suffix = rf"\ (z\sim{z_min:.1f}-{z_max:.1f})"
-            limit_labels.append(
-                get_latex_label(
-                    limit,
-                    bold=(limit.key in bold_limits),
-                    label_suffix=z_label_suffix,
-                )
+    # If z_labels is "legend", we add the z range to the legend labels.
+    # The rest of the label is either default or custom from legend_labeler.
+    limit_labels = []
+    for limit in limits:
+        z_label_suffix = ""
+        if z_labels == "legend":
+            z_min, z_max, z_mean = z_ranges_for_lbl[limit.key]
+            if np.abs(z_min - z_max) < delta_z_threshold:
+                z_label_suffix = rf"\ (z \approx {z_mean:.1f})"
+            else:
+                z_label_suffix = rf"\ (z \sim {z_min:.1f}-{z_max:.1f})"
+        if legend_labeler is None:
+            limit_label = get_latex_label(
+                limit,
+                bold=(limit.key in bold_limits),
+                label_suffix=z_label_suffix,
             )
-    else:
-        limit_labels = [legend_labeler.get(limit.key) for limit in limits]
+        else:
+            limit_label = legend_labeler.get(limit.key)
+            if limit_label is not None and z_label_suffix:
+                limit_label = limit_label + fr"${z_label_suffix}$"
+        limit_labels.append(limit_label)
 
     # Plotting the limits as points or lines, depending on the number of k values
     # or user specifications.
@@ -811,7 +815,7 @@ def plot_vs_k(
         if np.abs(z_min - z_max) < delta_z_threshold:
             ax.set_title(rf"$z \approx {z_mean:.2f}$", fontsize=fontsize)
         else:
-            ax.set_title(rf"$z\sim{z_min:.2f}-{z_max:.2f}$", fontsize=fontsize)
+            ax.set_title(rf"$z \sim {z_min:.2f}-{z_max:.2f}$", fontsize=fontsize)
 
     # Create colorbar for selected color quantity (if requested)
     if show_colorbar:
