@@ -37,6 +37,7 @@ def _json_str_to_dict(type_, tokens: Sequence[Token]) -> dict:
     except json.JSONDecodeError as e:
         raise ValueError(f"Invalid JSON string: {json_str}") from e
 
+
 StrList = Annotated[list[str] | None, Parameter(consume_multiple=True)]
 JsonDict = Annotated[dict[str, Any] | None, Parameter(converter=_json_str_to_dict)]
 JsonNestedDict = Annotated[
@@ -226,17 +227,12 @@ def plot_vs_z(
         x="z",
     )
 
-    fig_width = (
-        fig_width if fig_width is not None
-        else sizes["fig_width"]
-    )
-    fontsize = (
-        fontsize if fontsize is not None
-        else sizes["fontsize"]
-    )
+    fig_width = fig_width if fig_width is not None else sizes["fig_width"]
+    fontsize = fontsize if fontsize is not None else sizes["fontsize"]
     sizes["colorbar_pad"] = np.clip(
         sizes["colorbar_pad"] * (fontsize / sizes["fontsize"]) ** 1.2,
-        0.05, 0.15,
+        0.05,
+        0.15,
     )
 
     if theories is not None:
@@ -428,7 +424,9 @@ def plot_vs_z(
     # PLOT ADJUSTMENTS
 
     ax.set_xlabel(r"Redshift $z$", fontproperties=font, labelpad=sizes["label_pad"])
-    ax.set_ylabel(r"$\Delta^2$ ($mK^2$)", fontproperties=font, labelpad=sizes["label_pad"])
+    ax.set_ylabel(
+        r"$\Delta^2$ ($mK^2$)", fontproperties=font, labelpad=sizes["label_pad"]
+    )
     ax.set_yscale("log")
     ax.set_ylim(*delta_squared_range)
     ax.set_xlim(*z_range)
@@ -445,12 +443,17 @@ def plot_vs_z(
         if np.abs(k_min - k_max) < delta_k_threshold:
             ax.set_title(rf"$k \approx {k_mean:.2f}\ h/Mpc$", fontproperties=font)
         else:
-            ax.set_title(rf"$k \sim {k_min:.2f}-{k_max:.2f}\ h/Mpc$", fontproperties=font)
+            ax.set_title(
+                rf"$k \sim {k_min:.2f}-{k_max:.2f}\ h/Mpc$", fontproperties=font
+            )
 
     # Create colorbar for selected color quantity (if requested)
     if show_colorbar:
         cb = fig.colorbar(
-            scalar_map, ax=ax, fraction=sizes["colorbar_fraction"], pad=sizes["colorbar_pad"]
+            scalar_map,
+            ax=ax,
+            fraction=sizes["colorbar_fraction"],
+            pad=sizes["colorbar_pad"],
         )
         cb.ax.yaxis.set_label_position("left")
         cb.ax.yaxis.set_ticks_position("left")
@@ -459,7 +462,9 @@ def plot_vs_z(
         for label in cb.ax.get_yticklabels():
             label.set_fontproperties(font)
 
-        cb.set_label(label=colorbar_label, fontproperties=font, labelpad=sizes["label_pad"])
+        cb.set_label(
+            label=colorbar_label, fontproperties=font, labelpad=sizes["label_pad"]
+        )
     ax.grid(axis="y")
 
     limit_lines, limit_labels = _filter_legend_entries(limit_lines, limit_labels)
@@ -688,17 +693,12 @@ def plot_vs_k(
     # Set up the sizing defaults, the figure environment, and the axis environment
     sizes = _get_size_defaults(publication=publication, x="k")
 
-    fig_width = (
-        fig_width if fig_width is not None
-        else sizes["fig_width"]
-    )
-    fontsize = (
-        fontsize if fontsize is not None
-        else sizes["fontsize"]
-    )
+    fig_width = fig_width if fig_width is not None else sizes["fig_width"]
+    fontsize = fontsize if fontsize is not None else sizes["fontsize"]
     sizes["colorbar_pad"] = np.clip(
         sizes["colorbar_pad"] * (fontsize / sizes["fontsize"]) ** 1.2,
-        0.05, 0.15,
+        0.05,
+        0.15,
     )
 
     if theories is not None:
@@ -897,7 +897,9 @@ def plot_vs_k(
     # PLOT ADJUSTMENTS
 
     ax.set_xlabel(r"k ($h Mpc^{-1}$)", fontproperties=font, labelpad=sizes["label_pad"])
-    ax.set_ylabel(r"$\Delta^2$ ($mK^2$)", fontproperties=font, labelpad=sizes["label_pad"])
+    ax.set_ylabel(
+        r"$\Delta^2$ ($mK^2$)", fontproperties=font, labelpad=sizes["label_pad"]
+    )
     ax.set_yscale("log")
     ax.set_xscale("log")
     ax.set_ylim(*delta_squared_range)
@@ -920,19 +922,23 @@ def plot_vs_k(
     # Create colorbar for selected color quantity (if requested)
     if show_colorbar:
         cb = fig.colorbar(
-            scalar_map, ax=ax, 
+            scalar_map,
+            ax=ax,
             fraction=sizes["colorbar_fraction"],
             pad=sizes["colorbar_pad"],
         )
         cb.ax.yaxis.set_label_position("left")
         cb.ax.yaxis.set_ticks_position("left")
 
-        cb.ax.tick_params(length=sizes["tick_length"],
+        cb.ax.tick_params(
+            length=sizes["tick_length"],
             pad=sizes["tick_pad"],
         )
         for label in cb.ax.get_yticklabels():
             label.set_fontproperties(font)
-        cb.set_label(label=colorbar_label, fontproperties=font, labelpad=sizes["label_pad"])
+        cb.set_label(
+            label=colorbar_label, fontproperties=font, labelpad=sizes["label_pad"]
+        )
     ax.grid(axis="y")
 
     limit_lines, limit_labels = _filter_legend_entries(limit_lines, limit_labels)
@@ -1324,7 +1330,7 @@ def _get_size_defaults(
     x: Literal["z", "k"] | None,
 ) -> dict[str, Any]:
     """Return sizing defaults appropriate for screen or publication.
-    
+
     Parameters
     ----------
     publication : bool
@@ -1358,7 +1364,7 @@ def _get_size_defaults(
             "label_pad": 2.0,
             "legend_row_height": 1.2,
             "colorbar_fraction": 0.04,
-            "colorbar_pad":  0.10 if x is None or x.lower() == "z" else 0.08,
+            "colorbar_pad": 0.10 if x is None or x.lower() == "z" else 0.08,
             "legend_kwargs": {
                 "borderpad": 0.0,
                 "labelspacing": 0.2,
@@ -1382,8 +1388,9 @@ def _get_size_defaults(
         "legend_row_height": 2.0,
         "colorbar_fraction": 0.1,
         "colorbar_pad": 0.08,
-        "legend_kwargs": {}
+        "legend_kwargs": {},
     }
+
 
 def _get_font_properties(
     publication: bool,
@@ -1392,7 +1399,7 @@ def _get_font_properties(
     legend_fontscale: float,
 ):
     """Returns font properties and math fontset for a specified font.
-        
+
     Parameters
     ----------
     publication : bool
@@ -1411,7 +1418,6 @@ def _get_font_properties(
     matplotlib.font_manager.FontProperties
         Font properties for legend plot text.
     """
-
     # Use Times by default for publication plots.
     if publication_font is None and publication:
         publication_font = "times"
@@ -1447,9 +1453,7 @@ def _get_font_properties(
             "mathtext.fontset": "dejavusans",
         })
     else:
-        raise ValueError(
-            "publication_font must be 'times', 'dejavu', or None."
-        )
+        raise ValueError("publication_font must be 'times', 'dejavu', or None.")
 
     legend_font = font.copy()
     legend_font.set_size(fontsize * legend_fontscale)
