@@ -74,7 +74,7 @@ def plot_vs_z(
     colormap: str = "viridis",
     legend_labeler: JsonDict = None,
     k_labels: Literal["legend", "title"] | None = "None",
-    legend_ncols: int = 3,
+    legend_ncols: int | None = None,
     fontsize: float | None = None,
     fig_width: float | None = None,
     fig_ratio: float | None = None,
@@ -189,7 +189,7 @@ def plot_vs_z(
         Where to show the plotted |k| values. If ``"legend"``, add each paper's
         plotted |k| range to its legend label. If ``"title"``, add the plotted |k|
         range across all papers to the title. If ``None``, do not show |k| labels.
-    legend_ncols : int (default: ``3``)
+    legend_ncols : int | None (default: ``None``)
         Number of columns to use in the legend.
     fontsize : float | None (default: ``None``)
         Font size to use in the legend and axis labels. If not specified, will default
@@ -457,13 +457,20 @@ def plot_vs_z(
 
     limit_lines, limit_labels = _filter_legend_entries(limit_lines, limit_labels)
     theory_lines, theory_labels = _filter_legend_entries(theory_lines, theory_labels)
-    leg_rows = int(np.ceil((len(limit_labels) + len(theory_labels)) / legend_ncols))
+    n_entries = len(limit_labels) + len(theory_labels)
 
     point_size = 1 / 72.0  # typography standard (points/inch)
     font_inch = fontsize * point_size
-    legend_height = (2 * leg_rows) * font_inch
+    row_height = 2 * font_inch
 
-    legend_height_norm = legend_height / fig_height  # 0.25
+    # Automatically choose enough columns to keep the legend below ~30%
+    # of the figure height, unless the user explicitly specifies ncols.
+    if legend_ncols is None:
+        max_rows = max(1, int(0.3 * fig_height / row_height))
+        legend_ncols = int(np.ceil(n_entries / max_rows))
+
+    leg_rows = int(np.ceil(n_entries / legend_ncols))
+    legend_height_norm = leg_rows * row_height / fig_height
 
     axis_height = 3 * fontsize * point_size
     axis_height_norm = axis_height / fig_height
