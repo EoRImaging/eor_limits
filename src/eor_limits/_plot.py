@@ -1081,7 +1081,7 @@ def _build_limit_styles(
             style.setdefault("shade_alpha", 0.5)
             style.setdefault("shade_color", "grey")
         # Apply user overrides
-        style |= base_override if base_override else {}
+        style |= base_override or {}
         style |= overrides.get(f"{limit.key}", {}) if overrides else {}
         # Add to styles dictionary
         styles[f"{limit.key}"] = style
@@ -1129,7 +1129,7 @@ def _build_theory_styles(
             style.setdefault("shade_alpha", 1 / len(theories))
             style.setdefault("shade_color", "lightsteelblue")
         # Set base and overrides
-        style |= base_override if base_override else {}
+        style |= base_override or {}
         style |= overrides.get(f"{theory.key}", {}) if overrides else {}
         # Add to styles dictionary
         styles[f"{theory.key}"] = style

@@ -44,7 +44,8 @@ The Python API provides tools for loading, filtering, and plotting the included 
 
 ```python
 from eor_limits import load_limit_data
-hera2026 = load_limit_data("HERA2026") # or eor_limits.DataSet.load("HERA2026")
+
+hera2026 = load_limit_data("HERA2026")  # or eor_limits.DataSet.load("HERA2026")
 print(hera2026.data.as_pandas_df())
 hera2026_trunc = hera2026.select_z_range(7, 10).select_k_range(0.1, 1)
 hera2026_lowest = hera2026.select_lowest_delta_squared(per_z=True, per_tag=False)
@@ -54,6 +55,7 @@ The two main plotting functions are `plot_vs_k` and `plot_vs_z`, which show limi
 
 ```python
 from eor_limits import plot_vs_k, plot_vs_z
+
 plot_vs_k()
 ```
 
@@ -61,6 +63,7 @@ The plotting functions accept keyword arguments to choose which limits and simul
 
 ```python
 from eor_limits import plot_vs_k, plot_vs_z
+
 plot_vs_k(
     limits=["HERA2022", "HERA2023", "HERA2026"],
     bold_limits=["HERA2026"],
