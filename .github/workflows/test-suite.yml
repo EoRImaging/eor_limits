@@ -40,13 +40,21 @@ jobs:
         run: uv sync ${{ matrix.uv-options }} --all-extras --dev
 
       - name: Install LaTeX
-        if: runner.os == 'Linux'
+        shell: bash
         run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            dvipng \
-            texlive-latex-base \
-            texlive-fonts-extra
+          if [[ "$RUNNER_OS" == "Linux" ]]; then
+            sudo apt-get update
+            sudo apt-get install -y \
+              dvipng \
+              texlive-latex-base \
+              texlive-fonts-extra
+          elif [[ "$RUNNER_OS" == "macOS" ]]; then
+            brew install --cask basictex
+            export PATH="/Library/TeX/texbin:$PATH"
+            echo "/Library/TeX/texbin" >> "$GITHUB_PATH"
+            sudo tlmgr update --self
+            sudo tlmgr install newtx dvipng
+          fi
 
       - name: Run Tests
         run: |
