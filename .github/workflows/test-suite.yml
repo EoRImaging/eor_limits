@@ -39,6 +39,15 @@ jobs:
       - name: Install the project
         run: uv sync ${{ matrix.uv-options }} --all-extras --dev
 
+      - name: Install LaTeX
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            dvipng \
+            texlive-latex-base \
+            texlive-fonts-extra
+
       - name: Run Tests
         run: |
           uv run --no-sync pytest --cov eor_limits --cov-report xml:coverage.xml

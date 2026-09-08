@@ -483,9 +483,6 @@ def plot_vs_z(
 
     # Automatically choose enough columns to keep the legend below ~25%
     # of the figure height, unless the user explicitly specifies ncols.
-    # if legend_ncols is None:
-    #     max_rows = max(1, int(0.25 * fig_height / row_height))
-    #     legend_ncols = int(np.ceil(n_entries / max_rows))
     if legend_ncols is None:
         max_rows = max(1, int(0.25 * fig_height / row_height))
         candidates = (
@@ -978,9 +975,6 @@ def plot_vs_k(
 
     # Automatically choose enough columns to keep the legend below ~25%
     # of the figure height, unless the user explicitly specifies ncols.
-    # if legend_ncols is None:
-    #     max_rows = max(1, int(0.25 * fig_height / row_height))
-    #     legend_ncols = int(np.ceil(n_entries / max_rows))
     if legend_ncols is None:
         max_rows = max(1, int(0.25 * fig_height / row_height))
         candidates = (
@@ -1436,7 +1430,7 @@ def _get_font_properties(
     fontsize: float,
     legend_fontscale: float,
 ):
-    """Returns font properties and math fontset for a specified font.
+    """Return font properties and math fontset for a specified font.
 
     Parameters
     ----------
