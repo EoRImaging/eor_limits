@@ -44,23 +44,10 @@ jobs:
         run: |
           if [[ "$RUNNER_OS" == "Linux" ]]; then
             sudo apt-get update
-            sudo apt-get install -y \
-              dvipng \
-              cm-super \
-              texlive-latex-base \
-              texlive-latex-recommended \
-              texlive-fonts-recommended \
-              texlive-fonts-extra
+            sudo apt-get install -y texlive-full
           elif [[ "$RUNNER_OS" == "macOS" ]]; then
-            brew install --cask basictex
-            export PATH="/Library/TeX/texbin:$PATH"
+            brew install --cask mactex-no-gui
             echo "/Library/TeX/texbin" >> "$GITHUB_PATH"
-            sudo tlmgr update --self
-            sudo tlmgr install \
-              cm-super \
-              type1cm \
-              newtx \
-              dvipng
           fi
 
       - name: Run Tests
