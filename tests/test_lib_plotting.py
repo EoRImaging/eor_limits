@@ -31,6 +31,16 @@ def test_lib_plot_vs_k_with_fig_styling():
     assert fig is not None
 
 
+def test_lib_plot_vs_k_with_publication():
+    """Test making a publication-style plot."""
+    fig = plot_vs_k(
+        publication=True,
+        dpi=300,
+        out=OUTPUT_DIR / "test_lib_plot_vs_k_with_publication.png",
+    )
+    assert fig is not None
+
+
 def test_lib_plot_vs_k_with_z_range():
     """Test making a plot with redshift range filtering."""
     fig = plot_vs_k(
@@ -188,7 +198,7 @@ def test_lib_plot_vs_z_basic():
     fig = plot_vs_z(out=OUTPUT_DIR / "test_lib_plot_vs_z_basic.png")
     assert fig is not None
     assert len(fig.axes) == 2
-    assert fig.axes[1].get_ylabel() == r"k ($h Mpc^{-1}$)"
+    assert fig.axes[1].get_ylabel() == r"$k$ ($h\,\mathrm{Mpc}^{-1}$)"
 
 
 def test_lib_plot_vs_z_with_fig_styling():
@@ -198,6 +208,16 @@ def test_lib_plot_vs_z_with_fig_styling():
         colormap="viridis",
         fig_ratio=1.0,
         out=OUTPUT_DIR / "test_lib_plot_vs_z_with_fig_styling.png",
+    )
+    assert fig is not None
+
+
+def test_lib_plot_vs_z_with_publication():
+    """Test making a publication-style plot."""
+    fig = plot_vs_z(
+        publication=True,
+        dpi=300,
+        out=OUTPUT_DIR / "test_lib_plot_vs_z_with_publication.png",
     )
     assert fig is not None
 

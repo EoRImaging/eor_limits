@@ -84,6 +84,7 @@ def plot_vs_z(
     # Output options
     fig: Annotated[plt.Figure | None, Parameter(show=False)] = None,
     ax: Annotated[plt.Axes | None, Parameter(show=False)] = None,
+    dpi: float | None = None,
     out: str | Path | None = None,
 ) -> plt.Figure:
     """
@@ -212,6 +213,9 @@ def plot_vs_z(
     ax : matplotlib.axes.Axes| None
         If specified, the axis to plot on. If not specified, a new axis
         will be created.
+    dpi : float | None (default: ``None``)
+        Resolution in dots per inch for raster output such as PNG.
+        If ``None``, Matplotlib's default save DPI is used.
     out : str | Path | None
         If specified, the file name to save the figure to.
 
@@ -308,7 +312,7 @@ def plot_vs_z(
         colorbar_label = "Year"
     else:
         color_values = k_range  # Rounded k_range
-        colorbar_label = r"k ($h Mpc^{-1}$)"
+        colorbar_label = r"$k$ ($h\,\mathrm{Mpc}^{-1}$)"
     norm = colors.Normalize(vmin=min(color_values), vmax=max(color_values))
     scalar_map = cmx.ScalarMappable(norm=norm, cmap=colormap)
 
@@ -425,7 +429,7 @@ def plot_vs_z(
 
     ax.set_xlabel(r"Redshift $z$", fontproperties=font, labelpad=sizes["label_pad"])
     ax.set_ylabel(
-        r"$\Delta^2$ ($mK^2$)", fontproperties=font, labelpad=sizes["label_pad"]
+        r"$\Delta^2$ ($\mathrm{mK}^2$)", fontproperties=font, labelpad=sizes["label_pad"]
     )
     ax.set_yscale("log")
     ax.set_ylim(*delta_squared_range)
@@ -477,9 +481,20 @@ def plot_vs_z(
 
     # Automatically choose enough columns to keep the legend below ~25%
     # of the figure height, unless the user explicitly specifies ncols.
+    # if legend_ncols is None:
+    #     max_rows = max(1, int(0.25 * fig_height / row_height))
+    #     legend_ncols = int(np.ceil(n_entries / max_rows))
     if legend_ncols is None:
         max_rows = max(1, int(0.25 * fig_height / row_height))
-        legend_ncols = int(np.ceil(n_entries / max_rows))
+        candidates = (
+            [n_entries]
+            if n_entries <= 3
+            else [n for n in (4, 3, 2) if n_entries % n == 0]
+        )
+        legend_ncols = next(
+            (n for n in candidates if np.ceil(n_entries / n) <= max_rows),
+            int(np.ceil(n_entries / max_rows)),
+        )
 
     leg_rows = int(np.ceil(n_entries / legend_ncols))
     legend_height_norm = leg_rows * row_height / fig_height
@@ -492,7 +507,7 @@ def plot_vs_z(
     ax.legend(
         limit_lines + theory_lines,
         limit_labels + theory_labels,
-        bbox_to_anchor=(0.48, legend_pad_norm + legend_height_norm / 2.0),
+        bbox_to_anchor=(0.48, legend_height_norm / 2.0),
         loc="center",
         bbox_transform=fig.transFigure,
         ncol=legend_ncols,
@@ -505,7 +520,7 @@ def plot_vs_z(
     fig.tight_layout()
 
     if out is not None:
-        fig.savefig(out)
+        fig.savefig(out, dpi=dpi)
 
     return fig
 
@@ -550,6 +565,7 @@ def plot_vs_k(
     # Output options
     fig: Annotated[plt.Figure | None, Parameter(show=False)] = None,
     ax: Annotated[plt.Axes | None, Parameter(show=False)] = None,
+    dpi: float | None = None,
     out: str | Path | None = None,
 ) -> plt.Figure:
     """
@@ -681,6 +697,9 @@ def plot_vs_k(
     ax : matplotlib.axes.Axes| None
         If specified, the axis to plot on. If not specified, a new axis
         will be created.
+    dpi : float | None (default: ``None``)
+        Resolution in dots per inch for raster output such as PNG.
+        If ``None``, Matplotlib's default save DPI is used.
     out : str | Path | None
         If specified, the file name to save the figure to.
 
@@ -896,9 +915,9 @@ def plot_vs_k(
     ###################################################################################
     # PLOT ADJUSTMENTS
 
-    ax.set_xlabel(r"k ($h Mpc^{-1}$)", fontproperties=font, labelpad=sizes["label_pad"])
+    ax.set_xlabel(r"$k$ ($h\,\mathrm{Mpc}^{-1}$)", fontproperties=font, labelpad=sizes["label_pad"])
     ax.set_ylabel(
-        r"$\Delta^2$ ($mK^2$)", fontproperties=font, labelpad=sizes["label_pad"]
+        r"$\Delta^2$ ($\mathrm{mK}^2$)", fontproperties=font, labelpad=sizes["label_pad"]
     )
     ax.set_yscale("log")
     ax.set_xscale("log")
@@ -951,9 +970,20 @@ def plot_vs_k(
 
     # Automatically choose enough columns to keep the legend below ~25%
     # of the figure height, unless the user explicitly specifies ncols.
+    # if legend_ncols is None:
+    #     max_rows = max(1, int(0.25 * fig_height / row_height))
+    #     legend_ncols = int(np.ceil(n_entries / max_rows))
     if legend_ncols is None:
         max_rows = max(1, int(0.25 * fig_height / row_height))
-        legend_ncols = int(np.ceil(n_entries / max_rows))
+        candidates = (
+            [n_entries]
+            if n_entries <= 3
+            else [n for n in (4, 3, 2) if n_entries % n == 0]
+        )
+        legend_ncols = next(
+            (n for n in candidates if np.ceil(n_entries / n) <= max_rows),
+            int(np.ceil(n_entries / max_rows)),
+        )
 
     leg_rows = int(np.ceil(n_entries / legend_ncols))
     legend_height_norm = leg_rows * row_height / fig_height
@@ -966,12 +996,12 @@ def plot_vs_k(
     ax.legend(
         limit_lines + theory_lines,
         limit_labels + theory_labels,
-        bbox_to_anchor=(0.48, legend_pad_norm + legend_height_norm / 2.0),
+        bbox_to_anchor=(0.48, legend_height_norm / 2.0),
         loc="center",
         bbox_transform=fig.transFigure,
         ncol=legend_ncols,
         frameon=False,
-        prop=font,
+        prop=legend_font,
         **sizes["legend_kwargs"],
     )
 
@@ -979,7 +1009,7 @@ def plot_vs_k(
     fig.tight_layout()
 
     if out is not None:
-        fig.savefig(out)
+        fig.savefig(out, dpi=dpi)
 
     return fig
 
@@ -1419,41 +1449,33 @@ def _get_font_properties(
         Font properties for legend plot text.
     """
     # Use Times by default for publication plots.
-    if publication_font is None and publication:
-        publication_font = "times"
-
     if publication_font is None:
-        font = fm.FontProperties(size=fontsize)
-    elif publication_font.lower() == "times":
-        font = fm.FontProperties(
-            family="Times",
-            style="normal",
-            size=fontsize,
-            weight="normal",
-        )
-        plt.rcParams.update({
-            "text.usetex": True,
-            "font.family": "serif",
-            "font.serif": ["Times New Roman", "Times"],
-            "text.latex.preamble": (
-                r"\usepackage{newtxtext}"
-                r"\usepackage{newtxmath}"
-            ),
-        })
-    elif publication_font.lower() == "dejavu":
-        font = fm.FontProperties(
-            family="DejaVu Sans",
-            style="normal",
-            size=fontsize,
-            weight="normal",
-        )
-        plt.rcParams.update({
-            "text.usetex": False,
-            "font.family": "DejaVu Sans",
-            "mathtext.fontset": "dejavusans",
-        })
-    else:
+        publication_font = "times" if publication else "dejavu"
+
+    font_name = publication_font.lower()
+    if font_name not in {"times", "dejavu"}:
         raise ValueError("publication_font must be 'times', 'dejavu', or None.")
+
+    is_times = font_name == "times"
+
+    font = fm.FontProperties(
+        family="Times" if is_times else "DejaVu Sans",
+        style="normal",
+        size=fontsize,
+        weight="normal",
+    )
+
+    plt.rcParams.update({
+        "text.usetex": is_times,
+        "font.family": "serif" if is_times else "DejaVu Sans",
+        "font.serif": ["Times New Roman", "Times"],
+        "mathtext.fontset": "dejavusans",
+        "text.latex.preamble": (
+            r"\usepackage{newtxtext}\usepackage{newtxmath}"
+            if is_times
+            else ""
+        ),
+    })
 
     legend_font = font.copy()
     legend_font.set_size(fontsize * legend_fontscale)
