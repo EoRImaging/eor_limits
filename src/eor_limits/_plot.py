@@ -429,7 +429,9 @@ def plot_vs_z(
 
     ax.set_xlabel(r"Redshift $z$", fontproperties=font, labelpad=sizes["label_pad"])
     ax.set_ylabel(
-        r"$\Delta^2$ ($\mathrm{mK}^2$)", fontproperties=font, labelpad=sizes["label_pad"]
+        r"$\Delta^2$ ($\mathrm{mK}^2$)",
+        fontproperties=font,
+        labelpad=sizes["label_pad"],
     )
     ax.set_yscale("log")
     ax.set_ylim(*delta_squared_range)
@@ -915,9 +917,15 @@ def plot_vs_k(
     ###################################################################################
     # PLOT ADJUSTMENTS
 
-    ax.set_xlabel(r"$k$ ($h\,\mathrm{Mpc}^{-1}$)", fontproperties=font, labelpad=sizes["label_pad"])
+    ax.set_xlabel(
+        r"$k$ ($h\,\mathrm{Mpc}^{-1}$)",
+        fontproperties=font,
+        labelpad=sizes["label_pad"],
+    )
     ax.set_ylabel(
-        r"$\Delta^2$ ($\mathrm{mK}^2$)", fontproperties=font, labelpad=sizes["label_pad"]
+        r"$\Delta^2$ ($\mathrm{mK}^2$)",
+        fontproperties=font,
+        labelpad=sizes["label_pad"],
     )
     ax.set_yscale("log")
     ax.set_xscale("log")
@@ -1471,9 +1479,7 @@ def _get_font_properties(
         "font.serif": ["Times New Roman", "Times"],
         "mathtext.fontset": "dejavusans",
         "text.latex.preamble": (
-            r"\usepackage{newtxtext}\usepackage{newtxmath}"
-            if is_times
-            else ""
+            r"\usepackage{newtxtext}\usepackage{newtxmath}" if is_times else ""
         ),
     })
 
