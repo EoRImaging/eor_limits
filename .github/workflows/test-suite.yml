@@ -48,13 +48,19 @@ jobs:
               dvipng \
               cm-super \
               texlive-latex-base \
+              texlive-latex-recommended \
+              texlive-fonts-recommended \
               texlive-fonts-extra
           elif [[ "$RUNNER_OS" == "macOS" ]]; then
             brew install --cask basictex
             export PATH="/Library/TeX/texbin:$PATH"
             echo "/Library/TeX/texbin" >> "$GITHUB_PATH"
             sudo tlmgr update --self
-            sudo tlmgr install newtx dvipng cm-super
+            sudo tlmgr install \
+              cm-super \
+              type1cm \
+              newtx \
+              dvipng
           fi
 
       - name: Run Tests
