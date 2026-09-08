@@ -46,6 +46,7 @@ jobs:
             sudo apt-get update
             sudo apt-get install -y \
               dvipng \
+              cm-super \
               texlive-latex-base \
               texlive-fonts-extra
           elif [[ "$RUNNER_OS" == "macOS" ]]; then
@@ -53,7 +54,7 @@ jobs:
             export PATH="/Library/TeX/texbin:$PATH"
             echo "/Library/TeX/texbin" >> "$GITHUB_PATH"
             sudo tlmgr update --self
-            sudo tlmgr install newtx dvipng
+            sudo tlmgr install newtx dvipng cm-super
           fi
 
       - name: Run Tests
