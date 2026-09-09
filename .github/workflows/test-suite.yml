@@ -40,15 +40,9 @@ jobs:
         run: uv sync ${{ matrix.uv-options }} --all-extras --dev
 
       - name: Install LaTeX
-        shell: bash
-        run: |
-          if [[ "$RUNNER_OS" == "Linux" ]]; then
-            sudo apt-get update
-            sudo apt-get install -y texlive-full
-          elif [[ "$RUNNER_OS" == "macOS" ]]; then
-            brew install --cask mactex-no-gui
-            echo "/Library/TeX/texbin" >> "$GITHUB_PATH"
-          fi
+        uses: zauguin/install-texlive@v4
+        with:
+          packages: collection-latexrecommended
 
       - name: Run Tests
         run: |

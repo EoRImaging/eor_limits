@@ -483,7 +483,7 @@ def plot_vs_z(
 
     # Automatically calculate columns
     if legend_ncols is None:
-        legend_ncols = 4 if n_entries > 15 else min(3, int(np.ceil(np.cbrt(n_entries))))
+        legend_ncols = 4 if n_entries > 15 else int(np.ceil(np.cbrt(n_entries)))
 
     leg_rows = int(np.ceil(n_entries / legend_ncols))
     legend_height_norm = leg_rows * row_height / fig_height
@@ -965,7 +965,7 @@ def plot_vs_k(
 
     # Automatically calculate columns
     if legend_ncols is None:
-        legend_ncols = 4 if n_entries > 15 else min(3, int(np.ceil(np.cbrt(n_entries))))
+        legend_ncols = 4 if n_entries > 15 else int(np.ceil(np.cbrt(n_entries)))
 
     leg_rows = int(np.ceil(n_entries / legend_ncols))
     legend_height_norm = leg_rows * row_height / fig_height
