@@ -481,19 +481,9 @@ def plot_vs_z(
     legend_font_inch = legend_font.get_size_in_points() * point_size
     row_height = sizes["legend_row_height"] * legend_font_inch
 
-    # Automatically choose enough columns to keep the legend below ~25%
-    # of the figure height, unless the user explicitly specifies ncols.
+    # Automatically calculate columns
     if legend_ncols is None:
-        max_rows = max(1, int(0.25 * fig_height / row_height))
-        candidates = (
-            [n_entries]
-            if n_entries <= 3
-            else [n for n in (4, 3, 2) if n_entries % n == 0]
-        )
-        legend_ncols = next(
-            (n for n in candidates if np.ceil(n_entries / n) <= max_rows),
-            int(np.ceil(n_entries / max_rows)),
-        )
+        legend_ncols = 4 if n_entries > 15 else min(3, int(np.ceil(np.cbrt(n_entries))))
 
     leg_rows = int(np.ceil(n_entries / legend_ncols))
     legend_height_norm = leg_rows * row_height / fig_height
@@ -973,19 +963,9 @@ def plot_vs_k(
     legend_font_inch = legend_font.get_size_in_points() * point_size
     row_height = sizes["legend_row_height"] * legend_font_inch
 
-    # Automatically choose enough columns to keep the legend below ~25%
-    # of the figure height, unless the user explicitly specifies ncols.
+    # Automatically calculate columns
     if legend_ncols is None:
-        max_rows = max(1, int(0.25 * fig_height / row_height))
-        candidates = (
-            [n_entries]
-            if n_entries <= 3
-            else [n for n in (4, 3, 2) if n_entries % n == 0]
-        )
-        legend_ncols = next(
-            (n for n in candidates if np.ceil(n_entries / n) <= max_rows),
-            int(np.ceil(n_entries / max_rows)),
-        )
+        legend_ncols = 4 if n_entries > 15 else min(3, int(np.ceil(np.cbrt(n_entries))))
 
     leg_rows = int(np.ceil(n_entries / legend_ncols))
     legend_height_norm = leg_rows * row_height / fig_height
@@ -1508,9 +1488,9 @@ def get_latex_label(
         The LaTeX label for the limit paper.
     """
     if theory:
-        label_start = " $\\bf{Theory:} \\bf{" if bold else " $\\bf{Theory:} \\rm{"
+        label_start = "$\\bf{Theory:}~\\bf{" if bold else "$\\bf{Theory:}~\\rm{"
     else:
-        label_start = " $\\bf{" if bold else " $\\rm{"
+        label_start = "$\\bf{" if bold else "$\\rm{"
     label_end = "}$"
     return (
         label_start
