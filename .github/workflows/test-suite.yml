@@ -47,11 +47,8 @@ jobs:
             collection-latex
             collection-latexrecommended
             collection-fontsrecommended
-            type1cm
-            cm-super
-            newtx
-            dvipng
-            dvips
+            type1cm cm-super newtx xstring fontaxes
+            dvipng dvips
 
       - name: Run Tests
         run: |
