@@ -42,7 +42,11 @@ jobs:
       - name: Install LaTeX
         uses: zauguin/install-texlive@v4
         with:
-          packages: collection-latexrecommended
+          packages: |
+            collection-basic
+            collection-latex
+            collection-fontsrecommended
+            dvipng
 
       - name: Run Tests
         run: |
