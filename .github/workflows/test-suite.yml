@@ -45,8 +45,12 @@ jobs:
           packages: |
             collection-basic
             collection-latex
+            collection-latexrecommended
             collection-fontsrecommended
+            type1cm
             dvipng
+            dvips
+            cm-super
 
       - name: Run Tests
         run: |
