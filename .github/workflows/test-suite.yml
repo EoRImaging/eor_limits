@@ -48,9 +48,10 @@ jobs:
             collection-latexrecommended
             collection-fontsrecommended
             type1cm
+            cm-super
+            newtx
             dvipng
             dvips
-            cm-super
 
       - name: Run Tests
         run: |
