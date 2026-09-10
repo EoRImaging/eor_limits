@@ -94,6 +94,15 @@ def test_cli_plot_vs_k_with_fig_styling():
     _assert_images_match("plot_vs_k", "with_fig_styling", out)
 
 
+def test_cli_plot_vs_k_with_publication():
+    """Test making a publication-style plot through the CLI."""
+    out = OUTPUT_DIR / "test_cli_plot_vs_k_with_publication.png"
+    _run_plot_vs_k(
+        "--publication", "--dpi", "300", "--out", str(out), expect_success=True
+    )
+    _assert_images_match("plot_vs_k", "with_publication", out)
+
+
 def test_cli_plot_vs_k_with_z_range():
     """Test making a plot with redshift range filtering through the CLI."""
     out = OUTPUT_DIR / "test_cli_plot_vs_k_with_z_range.png"
@@ -309,6 +318,15 @@ def test_cli_plot_vs_z_with_fig_styling():
         expect_success=True,
     )
     _assert_images_match("plot_vs_z", "with_fig_styling", out)
+
+
+def test_cli_plot_vs_z_with_publication():
+    """Test making a publication-style plot through the CLI."""
+    out = OUTPUT_DIR / "test_cli_plot_vs_z_with_publication.png"
+    _run_plot_vs_z(
+        "--publication", "--dpi", "300", "--out", str(out), expect_success=True
+    )
+    _assert_images_match("plot_vs_z", "with_publication", out)
 
 
 def test_cli_plot_vs_z_with_z_range():

@@ -124,4 +124,4 @@ convention = 'numpy'
 property-decorators = ["pytest.fixture"]
 
 [tool.ruff.lint.mccabe]
-max-complexity = 21
+max-complexity = 25

@@ -39,6 +39,17 @@ jobs:
       - name: Install the project
         run: uv sync ${{ matrix.uv-options }} --all-extras --dev
 
+      - name: Install LaTeX
+        uses: zauguin/install-texlive@v4
+        with:
+          packages: |
+            collection-basic
+            collection-latex
+            collection-latexrecommended
+            collection-fontsrecommended
+            type1cm cm-super newtx xstring fontaxes
+            dvipng dvips
+
       - name: Run Tests
         run: |
           uv run --no-sync pytest --cov eor_limits --cov-report xml:coverage.xml

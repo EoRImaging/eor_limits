@@ -9,6 +9,7 @@ from typing import Annotated, Any, Literal
 
 import h5py
 import matplotlib.cm as cmx
+import matplotlib.font_manager as fm
 import matplotlib.pyplot as plt
 import numpy as np
 from cyclopts import Parameter, Token
@@ -74,13 +75,16 @@ def plot_vs_z(
     colormap: str = "viridis",
     legend_labeler: JsonDict = None,
     k_labels: Literal["legend", "title"] | None = "None",
-    legend_ncols: int = 3,
-    fontsize: int = 15,
-    fig_width: float = 25.0,
+    legend_ncols: int | None = None,
+    fontsize: float | None = None,
+    fig_width: float | None = None,
     fig_ratio: float | None = None,
+    publication: bool = False,
+    publication_font: Literal["times", "dejavu"] | None = None,
     # Output options
     fig: Annotated[plt.Figure | None, Parameter(show=False)] = None,
     ax: Annotated[plt.Axes | None, Parameter(show=False)] = None,
+    dpi: float | None = None,
     out: str | Path | None = None,
 ) -> plt.Figure:
     """
@@ -186,22 +190,32 @@ def plot_vs_z(
         Where to show the plotted |k| values. If ``"legend"``, add each paper's
         plotted |k| range to its legend label. If ``"title"``, add the plotted |k|
         range across all papers to the title. If ``None``, do not show |k| labels.
-    legend_ncols : int (default: ``3``)
+    legend_ncols : int | None (default: ``None``)
         Number of columns to use in the legend.
-    fontsize : int (default: ``15``)
-        Font size to use in the legend and axis labels.
-    fig_width : float (default: ``25.0``)
-        Width of the figure in inches.
+    fontsize : float | None (default: ``None``)
+        Font size to use in the legend and axis labels. If not specified, will default
+        to 15 point unless ``publication = True``.
+    fig_width : float | None (default: ``None``)
+        Width of the figure in inches. If not specified, will default to 25 inches
+        unless ``publication = True``.
     fig_ratio : float | None (default: ``None``)
         Height to width ratio of the figure. If not specified, ``height = 0.8 * width``
         if theories are plotted, and ``height = 0.6 * width`` if no theories are
         plotted.
+    publication : bool | None (default: ``False``)
+        Adjust size parameters to make a publication-style plot instead of one
+        designed for the screen.
+    publication_font : {"times", "dejavu"} | None (default: ``None``)
+        Select a publication font style
     fig : matplotlib.figure.Figure | None
         If specified, the figure to plot on. If not specified, a new figure
         will be created.
     ax : matplotlib.axes.Axes| None
         If specified, the axis to plot on. If not specified, a new axis
         will be created.
+    dpi : float | None (default: ``None``)
+        Resolution in dots per inch for raster output such as PNG.
+        If ``None``, Matplotlib's default save DPI is used.
     out : str | Path | None
         If specified, the file name to save the figure to.
 
@@ -211,16 +225,39 @@ def plot_vs_z(
         The figure object containing the plot.
     """
     ###################################################################################
-    # Set up the figure and axis
+    # Set up the sizing defaults, the figure environment, and the axis environment
+    sizes = _get_size_defaults(
+        publication=publication,
+        x="z",
+    )
+
+    fig_width = fig_width if fig_width is not None else sizes["fig_width"]
+    fontsize = fontsize if fontsize is not None else sizes["fontsize"]
+    sizes["colorbar_pad"] = np.clip(
+        sizes["colorbar_pad"] * (fontsize / sizes["fontsize"]) ** 1.2,
+        0.05,
+        0.15,
+    )
+
     if theories is not None:
-        fig_height = fig_width * (fig_ratio or 0.8)
+        fig_height = fig_width * (fig_ratio or (sizes["fig_ratio"] + 0.2))
     else:
-        fig_height = fig_width * (fig_ratio or 0.6)
+        fig_height = fig_width * (fig_ratio or sizes["fig_ratio"])
+
+    font, legend_font = _get_font_properties(
+        publication=publication,
+        publication_font=publication_font,
+        fontsize=fontsize,
+        legend_fontscale=sizes["legend_fontscale"],
+    )
 
     if fig is None or ax is None:
         fig, ax = plt.subplots(figsize=(fig_width, fig_height))
     elif ax is not None:
         fig = ax.get_figure()
+
+    # Resets sizes if fig supplied
+    fig_width, fig_height = fig.get_size_inches()
 
     ###################################################################################
     # OBSERVATIONAL LIMITS
@@ -275,7 +312,7 @@ def plot_vs_z(
         colorbar_label = "Year"
     else:
         color_values = k_range  # Rounded k_range
-        colorbar_label = r"k ($h Mpc^{-1}$)"
+        colorbar_label = r"$k$ ($h\,\mathrm{Mpc}^{-1}$)"
     norm = colors.Normalize(vmin=min(color_values), vmax=max(color_values))
     scalar_map = cmx.ScalarMappable(norm=norm, cmap=colormap)
 
@@ -289,6 +326,7 @@ def plot_vs_z(
         shade_limits=shade_limits,
         base_override=base_limit_style,
         overrides=limit_styles,
+        sizes=sizes,
     )
 
     # Whether to bold each limit in the legend
@@ -345,6 +383,7 @@ def plot_vs_z(
         shade_theories=shade_theories,
         base_override=base_theory_style,
         overrides=theory_styles,
+        sizes=sizes,
     )
 
     # Whether to bold each theory in the legend
@@ -382,53 +421,77 @@ def plot_vs_z(
         ax=ax,
         sensitivities=sensitivities,
         sensitivity_style=sensitivity_style,
-        fontsize=fontsize,
+        font=font,
     )
 
     ###################################################################################
     # PLOT ADJUSTMENTS
 
-    plt.rcParams.update({"font.size": fontsize})
-    ax.set_xlabel(r"Redshift $z$", fontsize=fontsize)
-    ax.set_ylabel(r"$\Delta^2$ ($mK^2$)", fontsize=fontsize)
+    ax.set_xlabel(r"Redshift $z$", fontproperties=font, labelpad=sizes["label_pad"])
+    ax.set_ylabel(
+        r"$\Delta^2$ ($\mathrm{mK}^2$)",
+        fontproperties=font,
+        labelpad=sizes["label_pad"],
+    )
     ax.set_yscale("log")
     ax.set_ylim(*delta_squared_range)
     ax.set_xlim(*z_range)
 
-    ax.tick_params(labelsize=fontsize)
+    ax.tick_params(length=sizes["tick_length"], pad=sizes["tick_pad"])
+    for label in ax.get_xticklabels() + ax.get_yticklabels():
+        label.set_fontproperties(font)
+
     if k_labels == "title":
         all_k_values_for_lbl = np.array(list(k_ranges_for_lbl.values())).flatten()
         k_min = min(all_k_values_for_lbl)
         k_max = max(all_k_values_for_lbl)
         k_mean = np.mean(all_k_values_for_lbl)
         if np.abs(k_min - k_max) < delta_k_threshold:
-            ax.set_title(rf"$k \approx {k_mean:.2f}\ h/Mpc$", fontsize=fontsize)
+            ax.set_title(rf"$k \approx {k_mean:.2f}\ h/Mpc$", fontproperties=font)
         else:
-            ax.set_title(rf"$k \sim {k_min:.2f}-{k_max:.2f}\ h/Mpc$", fontsize=fontsize)
+            ax.set_title(
+                rf"$k \sim {k_min:.2f}-{k_max:.2f}\ h/Mpc$", fontproperties=font
+            )
 
     # Create colorbar for selected color quantity (if requested)
     if show_colorbar:
         cb = fig.colorbar(
-            scalar_map, ax=ax, fraction=0.1, pad=0.08, label=colorbar_label
+            scalar_map,
+            ax=ax,
+            fraction=sizes["colorbar_fraction"],
+            pad=sizes["colorbar_pad"],
         )
         cb.ax.yaxis.set_label_position("left")
         cb.ax.yaxis.set_ticks_position("left")
-        cb.set_label(label=colorbar_label, fontsize=fontsize)
+
+        cb.ax.tick_params(length=sizes["tick_length"], pad=sizes["tick_pad"])
+        for label in cb.ax.get_yticklabels():
+            label.set_fontproperties(font)
+
+        cb.set_label(
+            label=colorbar_label, fontproperties=font, labelpad=sizes["label_pad"]
+        )
     ax.grid(axis="y")
 
     limit_lines, limit_labels = _filter_legend_entries(limit_lines, limit_labels)
     theory_lines, theory_labels = _filter_legend_entries(theory_lines, theory_labels)
-    leg_rows = int(np.ceil(len(limit_labels) / legend_ncols))
+    n_entries = len(limit_labels) + len(theory_labels)
 
     point_size = 1 / 72.0  # typography standard (points/inch)
-    font_inch = fontsize * point_size
-    legend_height = (2 * leg_rows) * font_inch
+    legend_font_inch = legend_font.get_size_in_points() * point_size
+    row_height = sizes["legend_row_height"] * legend_font_inch
 
-    legend_height_norm = legend_height / fig_height  # 0.25
+    # Automatically calculate columns
+    if legend_ncols is None:
+        legend_ncols = 4 if n_entries > 15 else int(np.ceil(np.cbrt(n_entries)))
+
+    leg_rows = int(np.ceil(n_entries / legend_ncols))
+    legend_height_norm = leg_rows * row_height / fig_height
+    legend_pad_norm = 0.5 * point_size * fontsize / fig_height
 
     axis_height = 3 * fontsize * point_size
     axis_height_norm = axis_height / fig_height
-    plot_bottom = legend_height_norm + axis_height_norm
+    plot_bottom = legend_height_norm + axis_height_norm + legend_pad_norm
 
     ax.legend(
         limit_lines + theory_lines,
@@ -438,13 +501,15 @@ def plot_vs_z(
         bbox_transform=fig.transFigure,
         ncol=legend_ncols,
         frameon=False,
+        prop=legend_font,
+        **sizes["legend_kwargs"],
     )
 
     fig.subplots_adjust(bottom=plot_bottom)
     fig.tight_layout()
 
     if out is not None:
-        fig.savefig(out)
+        fig.savefig(out, dpi=dpi)
 
     return fig
 
@@ -480,13 +545,16 @@ def plot_vs_k(
     colormap: str = "Spectral_r",
     legend_labeler: JsonDict = None,
     z_labels: Literal["legend", "title"] | None = "None",
-    legend_ncols: int = 3,
-    fontsize: int = 15,
-    fig_width: float = 25.0,
+    legend_ncols: int | None = None,
+    fontsize: float | None = None,
+    fig_width: float | None = None,
     fig_ratio: float | None = None,
+    publication: bool = False,
+    publication_font: Literal["times", "dejavu"] | None = None,
     # Output options
     fig: Annotated[plt.Figure | None, Parameter(show=False)] = None,
     ax: Annotated[plt.Axes | None, Parameter(show=False)] = None,
+    dpi: float | None = None,
     out: str | Path | None = None,
 ) -> plt.Figure:
     """
@@ -595,22 +663,32 @@ def plot_vs_k(
         plotted redshift range to its legend label. If ``"title"``, add the plotted
         redshift range across all papers to the title. If ``None``, do not show
         redshift labels.
-    legend_ncols : int (default: ``3``)
+    legend_ncols : int | None (default: ``None``)
         Number of columns to use in the legend.
-    fontsize : int (default: ``15``)
-        Font size to use in the legend and axis labels.
-    fig_width : float (default: ``25.0``)
-        Width of the figure in inches.
+    fontsize : float | None (default: ``None``)
+        Font size to use in the legend and axis labels. If not specified, will default
+        to 15 point unless ``publication = True``.
+    fig_width : float | None (default: ``None``)
+        Width of the figure in inches. If not specified, will default to 25 inches
+        unless ``publication = True``.
     fig_ratio : float | None (default: ``None``)
         Height to width ratio of the figure. If not specified, ``height = 1 * width``
         if theories are plotted, and ``height = 0.5 * width`` if no theories are
         plotted.
+    publication : bool | None (default: ``None``)
+        Adjust size parameters to make a publication-style plot instead of one
+        designed for the screen.
+    publication_font : {"times", "dejavu"} | None (default: ``None``)
+        Select a publication font style
     fig : matplotlib.figure.Figure | None
         If specified, the figure to plot on. If not specified, a new figure
         will be created.
     ax : matplotlib.axes.Axes| None
         If specified, the axis to plot on. If not specified, a new axis
         will be created.
+    dpi : float | None (default: ``None``)
+        Resolution in dots per inch for raster output such as PNG.
+        If ``None``, Matplotlib's default save DPI is used.
     out : str | Path | None
         If specified, the file name to save the figure to.
 
@@ -620,16 +698,36 @@ def plot_vs_k(
         The figure object containing the plot.
     """
     ###################################################################################
-    # Set up the figure and axis
+    # Set up the sizing defaults, the figure environment, and the axis environment
+    sizes = _get_size_defaults(publication=publication, x="k")
+
+    fig_width = fig_width if fig_width is not None else sizes["fig_width"]
+    fontsize = fontsize if fontsize is not None else sizes["fontsize"]
+    sizes["colorbar_pad"] = np.clip(
+        sizes["colorbar_pad"] * (fontsize / sizes["fontsize"]) ** 1.2,
+        0.05,
+        0.15,
+    )
+
     if theories is not None:
-        fig_height = fig_width * (fig_ratio or 1)
+        fig_height = fig_width * (fig_ratio or (sizes["fig_ratio"] + 0.5))
     else:
-        fig_height = fig_width * (fig_ratio or 0.5)
+        fig_height = fig_width * (fig_ratio or sizes["fig_ratio"])
+
+    font, legend_font = _get_font_properties(
+        publication=publication,
+        publication_font=publication_font,
+        fontsize=fontsize,
+        legend_fontscale=sizes["legend_fontscale"],
+    )
 
     if fig is None or ax is None:
         fig, ax = plt.subplots(figsize=(fig_width, fig_height))
     elif ax is not None:
         fig = ax.get_figure()
+
+    # Resets sizes if fig supplied
+    fig_width, fig_height = fig.get_size_inches()
 
     ###################################################################################
     # OBSERVATIONAL LIMITS
@@ -696,6 +794,7 @@ def plot_vs_k(
         shade_limits=shade_limits,
         base_override=base_limit_style,
         overrides=limit_styles,
+        sizes=sizes,
     )
 
     # Whether to bold each limit in the legend
@@ -762,6 +861,7 @@ def plot_vs_k(
         shade_theories=shade_theories,
         base_override=base_theory_style,
         overrides=theory_styles,
+        sizes=sizes,
     )
 
     # Whether to bold each theory in the legend
@@ -798,54 +898,82 @@ def plot_vs_k(
         ax=ax,
         sensitivities=sensitivities,
         sensitivity_style=sensitivity_style,
-        fontsize=fontsize,
+        font=font,
     )
 
     ###################################################################################
     # PLOT ADJUSTMENTS
 
-    plt.rcParams.update({"font.size": fontsize})
-    ax.set_xlabel(r"k ($h Mpc^{-1}$)", fontsize=fontsize)
-    ax.set_ylabel(r"$\Delta^2$ ($mK^2$)", fontsize=fontsize)
+    ax.set_xlabel(
+        r"$k$ ($h\,\mathrm{Mpc}^{-1}$)",
+        fontproperties=font,
+        labelpad=sizes["label_pad"],
+    )
+    ax.set_ylabel(
+        r"$\Delta^2$ ($\mathrm{mK}^2$)",
+        fontproperties=font,
+        labelpad=sizes["label_pad"],
+    )
     ax.set_yscale("log")
     ax.set_xscale("log")
     ax.set_ylim(*delta_squared_range)
     ax.set_xlim(*k_range)
 
-    ax.tick_params(labelsize=fontsize)
+    ax.tick_params(length=sizes["tick_length"], pad=sizes["tick_pad"])
+    for label in ax.get_xticklabels() + ax.get_yticklabels():
+        label.set_fontproperties(font)
+
     if z_labels == "title":
         all_z_values_for_lbl = np.array(list(z_ranges_for_lbl.values())).flatten()
         z_min = min(all_z_values_for_lbl)
         z_max = max(all_z_values_for_lbl)
         z_mean = np.mean(all_z_values_for_lbl)
         if np.abs(z_min - z_max) < delta_z_threshold:
-            ax.set_title(rf"$z \approx {z_mean:.2f}$", fontsize=fontsize)
+            ax.set_title(rf"$z \approx {z_mean:.2f}$", fontproperties=font)
         else:
-            ax.set_title(rf"$z \sim {z_min:.2f}-{z_max:.2f}$", fontsize=fontsize)
+            ax.set_title(rf"$z \sim {z_min:.2f}-{z_max:.2f}$", fontproperties=font)
 
     # Create colorbar for selected color quantity (if requested)
     if show_colorbar:
         cb = fig.colorbar(
-            scalar_map, ax=ax, fraction=0.1, pad=0.08, label=colorbar_label
+            scalar_map,
+            ax=ax,
+            fraction=sizes["colorbar_fraction"],
+            pad=sizes["colorbar_pad"],
         )
         cb.ax.yaxis.set_label_position("left")
         cb.ax.yaxis.set_ticks_position("left")
-        cb.set_label(label=colorbar_label, fontsize=fontsize)
+
+        cb.ax.tick_params(
+            length=sizes["tick_length"],
+            pad=sizes["tick_pad"],
+        )
+        for label in cb.ax.get_yticklabels():
+            label.set_fontproperties(font)
+        cb.set_label(
+            label=colorbar_label, fontproperties=font, labelpad=sizes["label_pad"]
+        )
     ax.grid(axis="y")
 
     limit_lines, limit_labels = _filter_legend_entries(limit_lines, limit_labels)
     theory_lines, theory_labels = _filter_legend_entries(theory_lines, theory_labels)
-    leg_rows = int(np.ceil(len(limit_labels) / legend_ncols))
+    n_entries = len(limit_labels) + len(theory_labels)
 
     point_size = 1 / 72.0  # typography standard (points/inch)
-    font_inch = fontsize * point_size
-    legend_height = (2 * leg_rows) * font_inch
+    legend_font_inch = legend_font.get_size_in_points() * point_size
+    row_height = sizes["legend_row_height"] * legend_font_inch
 
-    legend_height_norm = legend_height / fig_height  # 0.25
+    # Automatically calculate columns
+    if legend_ncols is None:
+        legend_ncols = 4 if n_entries > 15 else int(np.ceil(np.cbrt(n_entries)))
+
+    leg_rows = int(np.ceil(n_entries / legend_ncols))
+    legend_height_norm = leg_rows * row_height / fig_height
+    legend_pad_norm = 0.5 * point_size * fontsize / fig_height
 
     axis_height = 3 * fontsize * point_size
     axis_height_norm = axis_height / fig_height
-    plot_bottom = legend_height_norm + axis_height_norm
+    plot_bottom = legend_height_norm + axis_height_norm + legend_pad_norm
 
     ax.legend(
         limit_lines + theory_lines,
@@ -855,13 +983,15 @@ def plot_vs_k(
         bbox_transform=fig.transFigure,
         ncol=legend_ncols,
         frameon=False,
+        prop=legend_font,
+        **sizes["legend_kwargs"],
     )
 
     fig.subplots_adjust(bottom=plot_bottom)
     fig.tight_layout()
 
     if out is not None:
-        fig.savefig(out)
+        fig.savefig(out, dpi=dpi)
 
     return fig
 
@@ -1013,6 +1143,7 @@ def _build_limit_styles(
     nbins_for_lines: int,
     bin_type: Literal["k", "z"],
     shade_limits: bool,
+    sizes: dict[str, Any],
     base_override: dict[str, Any] | None = None,
     overrides: dict[str, dict[str, Any]] | None = None,
 ) -> dict[str, dict[str, Any]]:
@@ -1034,6 +1165,8 @@ def _build_limit_styles(
         The bin axis to use for automatic line selection.
     shade_limits : bool
         Whether to shade the limits.
+    sizes: dict[str, Any]
+        A dictionary of size defaults
     base_override : dict[str, Any] | None
         A dictionary of base style overrides.
     overrides : dict[str, dict[str, Any]] | None
@@ -1068,13 +1201,13 @@ def _build_limit_styles(
         )
         # Set defaults for points
         if not style["as_line"]:
-            style.setdefault("s", 150)
+            style.setdefault("s", sizes["marker_size"])
             style.setdefault(
                 "marker", DEFAULT_TELESCOPE_MARKERS.get(limit.telescope, "o")
             )
         # Set defaults for lines
         else:
-            style.setdefault("linewidth", 2)
+            style.setdefault("linewidth", sizes["linewidth"])
             style.setdefault("linestyle", "-")
         # If we are shading the limits
         if shade_limits:
@@ -1093,6 +1226,7 @@ def _build_theory_styles(
     *,
     theories: list[DataSet],
     shade_theories: bool,
+    sizes: dict[str, Any],
     base_override: dict[str, Any] | None = None,
     overrides: dict[str, dict[str, Any]] | None = None,
 ) -> dict[str, dict[str, Any]]:
@@ -1106,6 +1240,8 @@ def _build_theory_styles(
         The list of theory datasets for which to build styles.
     shade_theories : bool
         Whether to shade the theories.
+    sizes: dict[str, Any]
+        A dictionary of size defaults
     base_override : dict[str, Any] | None
         A dictionary of base style overrides.
     overrides : dict[str, dict[str, Any]] | None
@@ -1122,7 +1258,7 @@ def _build_theory_styles(
         style = {}
         # Set default style parameters for theory lines.
         style.setdefault("linestyle", "--")
-        style.setdefault("linewidth", 2)
+        style.setdefault("linewidth", sizes["linewidth"])
         style.setdefault("color", "lightsteelblue")
         # If we are shading the limits
         if shade_theories:
@@ -1201,6 +1337,132 @@ def _filter_legend_entries(
     return list(filtered_handles), list(filtered_labels)
 
 
+def _get_size_defaults(
+    publication: bool,
+    x: Literal["z", "k"] | None,
+) -> dict[str, Any]:
+    """Return sizing defaults appropriate for screen or publication.
+
+    Parameters
+    ----------
+    publication : bool
+        Whether to default sizes to journal publication styles
+    x : Literal[str, str] | None
+        Specify the x-axis to adjust sizing
+
+    Returns
+    -------
+    dict[str, Any]
+        A dictionary of sizing defaults for screen or publication
+    """
+    if x is None or x.lower() == "k":
+        fig_ratio = 0.5
+    elif x.lower() == "z":
+        fig_ratio = 0.6
+    else:
+        raise ValueError("x must be 'k', 'z', or None.")
+
+    if publication:
+        # Double column is ~7 inches
+        return {
+            "fig_width": 7.0,
+            "fig_ratio": fig_ratio + 0.1,
+            "fontsize": 10.0,
+            "legend_fontscale": 8.0 / 10.0,
+            "marker_size": 25.0,
+            "linewidth": 1.25,
+            "tick_length": 3.0,
+            "tick_pad": 2.0,
+            "label_pad": 2.0,
+            "legend_row_height": 1.2,
+            "colorbar_fraction": 0.04,
+            "colorbar_pad": 0.10 if x is None or x.lower() == "z" else 0.08,
+            "legend_kwargs": {
+                "borderpad": 0.0,
+                "labelspacing": 0.2,
+                "handlelength": 1.3,
+                "handletextpad": 0.35,
+                "columnspacing": 0.7,
+                "borderaxespad": 0.0,
+            },
+        }
+
+    return {
+        "fig_width": 25.0,
+        "fig_ratio": fig_ratio,
+        "fontsize": 15.0,
+        "legend_fontscale": 1.0,
+        "marker_size": 150.0,
+        "linewidth": 2.0,
+        "tick_length": 3.5,
+        "tick_pad": 3.5,
+        "label_pad": 4.0,
+        "legend_row_height": 2.0,
+        "colorbar_fraction": 0.1,
+        "colorbar_pad": 0.08,
+        "legend_kwargs": {},
+    }
+
+
+def _get_font_properties(
+    publication: bool,
+    publication_font: Literal["times", "dejavu"] | None,
+    fontsize: float,
+    legend_fontscale: float,
+):
+    """Return font properties and math fontset for a specified font.
+
+    Parameters
+    ----------
+    publication : bool
+        Whether to default font style to Times
+    publication_font : Literal[str, str] | None
+        Specify a type of font
+    fontsize : float
+        Specify a size of font
+    legend_fontsize : float
+        Specify a size of font for the legend
+
+    Returns
+    -------
+    matplotlib.font_manager.FontProperties
+        Font properties for plot text.
+    matplotlib.font_manager.FontProperties
+        Font properties for legend plot text.
+    """
+    # Use Times by default for publication plots.
+    if publication_font is None:
+        publication_font = "times" if publication else "dejavu"
+
+    font_name = publication_font.lower()
+    if font_name not in {"times", "dejavu"}:
+        raise ValueError("publication_font must be 'times', 'dejavu', or None.")
+
+    is_times = font_name == "times"
+
+    font = fm.FontProperties(
+        family="Times" if is_times else "DejaVu Sans",
+        style="normal",
+        size=fontsize,
+        weight="normal",
+    )
+
+    plt.rcParams.update({
+        "text.usetex": is_times,
+        "font.family": "serif" if is_times else "DejaVu Sans",
+        "font.serif": ["Times New Roman", "Times"],
+        "mathtext.fontset": "dejavusans",
+        "text.latex.preamble": (
+            r"\usepackage{newtxtext}\usepackage{newtxmath}" if is_times else ""
+        ),
+    })
+
+    legend_font = font.copy()
+    legend_font.set_size(fontsize * legend_fontscale)
+
+    return font, legend_font
+
+
 def get_latex_label(
     paper: DataSet,
     bold: bool = False,
@@ -1226,9 +1488,9 @@ def get_latex_label(
         The LaTeX label for the limit paper.
     """
     if theory:
-        label_start = " $\\bf{Theory:} \\bf{" if bold else " $\\bf{Theory:} \\rm{"
+        label_start = "$\\bf{Theory:}~\\bf{" if bold else "$\\bf{Theory:}~\\rm{"
     else:
-        label_start = " $\\bf{" if bold else " $\\rm{"
+        label_start = "$\\bf{" if bold else "$\\rm{"
     label_end = "}$"
     return (
         label_start
@@ -1482,7 +1744,7 @@ def plot_sensitivities_vs_k(
     ax: plt.Axes,
     sensitivities: dict[str, str] | None,
     sensitivity_style: dict[str, dict[str, Any]] | None,
-    fontsize: int,
+    font: fm.FontProperties,
 ):
     """Plot the sensitivity curves on the given axes.
 
@@ -1494,8 +1756,8 @@ def plot_sensitivities_vs_k(
         A dictionary mapping sensitivity names to their file paths.
     sensitivity_style : dict[str, dict[str, Any]] | None
         A dictionary mapping sensitivity names to their styles.
-    fontsize : int
-        The font size for the instrument names.
+    font : matplotlib.font_manager.FontProperties
+        Font properties for the instrument names.
     """
     sensitivity_style = sensitivity_style or {}
     sensitivities = sensitivities or {}
@@ -1541,7 +1803,7 @@ def plot_sensitivities_vs_k(
         # of the way, and align it to top.
         k_ind = int(len(ks) * (0.8 - 0.1 * indx))
         ax.text(
-            ks[k_ind], sense[k_ind], name, fontsize=fontsize, verticalalignment="top"
+            ks[k_ind], sense[k_ind], name, fontproperties=font, verticalalignment="top"
         )
 
 
