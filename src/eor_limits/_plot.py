@@ -162,7 +162,7 @@ def plot_vs_z(
     shade_theories : bool (default: ``True``)
         Whether to shade the area below each theory line. If ``True``, the area below
         each theory will be shaded with the color specified in the theory styles as
-        ``shade_color`` (default lightsteelblue) and an alpha value specified in the
+        ``shade_color`` (default ``lightsteelblue``) and an alpha value specified in the
         theory styles as ``shade_alpha`` (default ``1/len(theories)``).
     sensitivities : dict | None (default: ``None``)
         Dictionary of sensitivities to plot on the figure. The keys are labels for each
@@ -417,7 +417,7 @@ def plot_vs_z(
     sensitivity_style = _build_sensitivity_styles(sensitivities, sensitivity_style)
 
     # Plot the sensitivity curves.
-    plot_sensitivities_vs_k(
+    plot_sensitivities_vs_z(
         ax=ax,
         sensitivities=sensitivities,
         sensitivity_style=sensitivity_style,
@@ -634,7 +634,7 @@ def plot_vs_k(
     shade_theories : bool (default: ``True``)
         Whether to shade the area below each theory line. If ``True``, the area below
         each theory will be shaded with the color specified in the theory styles as
-        ``shade_color`` (default lightsteelblue) and an alpha value specified in the
+        ``shade_color`` (default ``lightsteelblue``) and an alpha value specified in the
         theory styles as ``shade_alpha`` (default ``1/len(theories)``).
     sensitivities : dict | None (default: ``None``)
         Dictionary of sensitivities to plot on the figure. The keys are labels for each
@@ -2047,3 +2047,68 @@ def plot_theories_vs_z(
             lines.append(line)
 
     return lines
+
+def plot_sensitivities_vs_z(
+    *,
+    ax: plt.Axes,
+    sensitivities: dict[str, str] | None,
+    sensitivity_style: dict[str, dict[str, Any]] | None,
+    font: fm.FontProperties,
+):
+    """Plot sensitivity curves as a function of redshift on the given axes.
+
+    Parameters
+    ----------
+    ax : plt.Axes
+        The axes on which to plot the sensitivities.
+    sensitivities : dict[str, str] | None
+        A dictionary mapping sensitivity names to their file paths.
+    sensitivity_style : dict[str, dict[str, Any]] | None
+        A dictionary mapping sensitivity names to their styles.
+    font : matplotlib.font_manager.FontProperties
+        Font properties for the instrument names.
+    """
+    sensitivity_style = sensitivity_style or {}
+    sensitivities = sensitivities or {}
+    for indx, (name, fname) in enumerate(sensitivities.items()):
+        # Set the style.
+        if name in sensitivity_style:
+            style = sensitivity_style[name]
+        else:
+            style = sensitivity_style
+
+        sense_kind = style["sensitivity_kind"]
+
+        if sense_kind not in ["sample+thermal", "sample", "thermal"]:
+            raise ValueError(
+                f"Invalid sensitivity kind '{sense_kind}' for {name}. "
+                "Must be one of 'sample+thermal', 'sample', or 'thermal'."
+            )
+
+        # These must be outputs from 21cmSense v2+
+        with h5py.File(fname, "r") as fl:
+            if "z" not in fl:
+                raise ValueError(
+                    f"{fname} is not a valid 21cmSense output: no key 'z' found"
+                )
+            if sense_kind not in fl:
+                raise OSError(f"{fname} has no key {sense_kind} for sensitivity data. ")
+            zs = fl["z"][:]
+            sense = fl[sense_kind][:]
+
+        zs = zs[~np.isinf(sense)]
+        sense = sense[~np.isinf(sense)]
+
+        ax.plot(
+            zs,
+            sense,
+            color=style["color"],
+            linestyle=style["linestyle"],
+            linewidth=style["linewidth"],
+        )
+
+        # Put the instrument name right on the plot.
+        z_ind = int(len(zs) * (0.8 - 0.1 * indx))
+        ax.text(
+            zs[z_ind], sense[z_ind], name, fontproperties=font, verticalalignment="top"
+        )
