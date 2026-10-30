@@ -7,7 +7,6 @@ from itertools import chain
 from pathlib import Path
 from typing import Annotated, Any, Literal
 
-import h5py
 import matplotlib.cm as cmx
 import matplotlib.font_manager as fm
 import matplotlib.pyplot as plt
@@ -16,7 +15,7 @@ from cyclopts import Parameter, Token
 from matplotlib import colors
 from scipy import interpolate
 
-from ._data_loading import load_limit_data, load_theory_model
+from ._data_loading import load_limit_data, load_sensitivity_data, load_theory_model
 from ._datatypes import DataSet
 from .data import KNOWN_LIMITS
 
@@ -67,7 +66,8 @@ def plot_vs_z(
     bold_theories: StrList = None,
     shade_theories: bool = True,
     # Sensitivity plotting options
-    sensitivities: dict | None = None,
+    sensitivities: dict[str, str | Path] | None = None,
+    sensitivity_k: float | None = None,
     sensitivity_style: dict | None = None,
     # General plotting options
     color_by: Literal["year", "k"] = "k",
@@ -164,18 +164,24 @@ def plot_vs_z(
         each theory will be shaded with the color specified in the theory styles as
         ``shade_color`` (default lightsteelblue) and an alpha value specified in the
         theory styles as ``shade_alpha`` (default ``1/len(theories)``).
-    sensitivities : dict | None (default: ``None``)
+    sensitivities : dict[str, str | Path] | None (default: ``None``)
         Dictionary of sensitivities to plot on the figure. The keys are labels for each
-        sensitivity estimate, and the values are the file names of the
-        sensitivities to plot, which must be outputs from 21cmSense v2+.
+        sensitivity estimate, and the values are paths to YAML files in the same
+        format as the limits files (see :func:`eor_limits.load_sensitivity_data`).
+        The |k| values in these files must be in units of |h/Mpc|, as for the
+        limits, since they are plotted without any conversion.
+        Only the redshifts inside ``z_range`` are plotted.
         If not specified, no sensitivities are plotted.
+    sensitivity_k : float | None (default: ``None``)
+        The |k| value at which to plot sensitivities against redshift. At each
+        redshift, the sensitivity in the finite |k| bin closest to ``sensitivity_k``
+        is plotted. If not specified, the lowest sensitivity at each redshift is
+        plotted, in the same way as for the limits.
     sensitivity_style : dict | None (default: ``None``)
         Dictionary of style parameters for plotting sensitivities. The keys are
         labels for each sensitivity estimate, and the values are dictionaries with
-        style parameters for plotting,
+        style parameters passed to :meth:`matplotlib.axes.Axes.plot`,
         e.g. ``{'color': 'k', 'linestyle': '--', 'linewidth': 3}``.
-        An additional key 'sensitivity_kind' can be used to specify which kind of
-        sensitivity to plot, e.g. ``'sample+thermal'``, ``'sample'`` or ``'thermal'``.
     color_by : {"year", "k"} (default: ``"k"``)
         Quantity to use for coloring limits. If ``"year"``, each paper is colored by
         experiment year. If ``"k"``, plotted points are colored by their |k| values.
@@ -269,6 +275,9 @@ def plot_vs_z(
         # DataSet.load() instead of load_limit_data() to allow loading from a YAML file.
         limits = [DataSet.load(limit).drop_nan() for limit in limits]
 
+    # Load the sensitivity estimates, with non-finite values removed.
+    sensitivities = _load_sensitivities(sensitivities)
+
     # Get the z and delta_squared ranges across all limits.
     z_range = z_range or _get_z_range_from_limits(limits)
     if delta_squared_range is None:
@@ -276,6 +285,15 @@ def plot_vs_z(
             delta_squared_range = [1e0, 1e6]
         else:
             delta_squared_range = [_get_delta_squared_range_from_limits(limits)[0], 1e6]
+        # Lower the bottom of the range if needed, so that sensitivities are visible.
+        if sensitivities:
+            sensitivity_min = _get_delta_squared_range_from_limits(
+                list(sensitivities.values())
+            )[0]
+            delta_squared_range = (
+                min(delta_squared_range[0], sensitivity_min),
+                delta_squared_range[1],
+            )
 
     # Select the lowest delta_squared for each z in each limit
     limits = [
@@ -410,14 +428,28 @@ def plot_vs_z(
     ###################################################################################
     # SENSITIVITIES
 
-    # If sensitivities are specified, build styles and plot them.
-    sensitivities = sensitivities or {}
-
     # Build styles for sensitivity lines, applying any overrides specified by the user.
     sensitivity_style = _build_sensitivity_styles(sensitivities, sensitivity_style)
 
+    # Keep only the redshifts inside the plotted range.
+    sensitivities = _select_sensitivities_z_range(sensitivities, z_range)
+
+    # Reduce each sensitivity to one value per redshift: the value in the k-bin
+    # closest to sensitivity_k, or the lowest value (as for the limits) if
+    # sensitivity_k is not given.
+    if sensitivity_k is None:
+        sensitivities = {
+            name: sensitivity.select_lowest_delta_squared(per_z=True, per_tag=False)
+            for name, sensitivity in sensitivities.items()
+        }
+    else:
+        sensitivities = {
+            name: sensitivity.select_closest_k(sensitivity_k)
+            for name, sensitivity in sensitivities.items()
+        }
+
     # Plot the sensitivity curves.
-    plot_sensitivities_vs_k(
+    plot_sensitivities_vs_z(
         ax=ax,
         sensitivities=sensitivities,
         sensitivity_style=sensitivity_style,
@@ -537,7 +569,7 @@ def plot_vs_k(
     bold_theories: StrList = None,
     shade_theories: bool = True,
     # Sensitivity plotting options
-    sensitivities: dict | None = None,
+    sensitivities: dict[str, str | Path] | None = None,
     sensitivity_style: dict | None = None,
     # General plotting options
     color_by: Literal["z", "year"] = "z",
@@ -636,18 +668,19 @@ def plot_vs_k(
         each theory will be shaded with the color specified in the theory styles as
         ``shade_color`` (default lightsteelblue) and an alpha value specified in the
         theory styles as ``shade_alpha`` (default ``1/len(theories)``).
-    sensitivities : dict | None (default: ``None``)
+    sensitivities : dict[str, str | Path] | None (default: ``None``)
         Dictionary of sensitivities to plot on the figure. The keys are labels for each
-        sensitivity estimate, and the values are the file names of the
-        sensitivities to plot, which must be outputs from 21cmSense v2+.
+        sensitivity estimate, and the values are paths to YAML files in the same
+        format as the limits files (see :func:`eor_limits.load_sensitivity_data`).
+        The |k| values in these files must be in units of |h/Mpc|, as for the
+        limits, since they are plotted without any conversion.
+        Only the redshifts inside ``z_range`` are plotted.
         If not specified, no sensitivities are plotted.
     sensitivity_style : dict | None (default: ``None``)
         Dictionary of style parameters for plotting sensitivities. The keys are
         labels for each sensitivity estimate, and the values are dictionaries with
-        style parameters for plotting,
+        style parameters passed to :meth:`matplotlib.axes.Axes.plot`,
         e.g. ``{'color': 'k', 'linestyle': '--', 'linewidth': 3}``.
-        An additional key 'sensitivity_kind' can be used to specify which kind of
-        sensitivity to plot, e.g. ``'sample+thermal'``, ``'sample'`` or ``'thermal'``.
     color_by : {"z", "year"} (default: ``"z"``)
         Quantity to use for coloring limits. If ``"z"``, limits are colored by
         redshift. If ``"year"``, each paper is colored by experiment year.
@@ -741,6 +774,9 @@ def plot_vs_k(
         # DataSet.load() instead of load_limit_data() to allow loading from a YAML file.
         limits = [DataSet.load(limit).drop_nan() for limit in limits]
 
+    # Load the sensitivity estimates, with non-finite values removed.
+    sensitivities = _load_sensitivities(sensitivities)
+
     # Get the z and k ranges across all limits.
     z_range = z_range or _get_z_range_from_limits(limits)
     k_range = k_range or _get_k_range_from_limits(limits)
@@ -749,6 +785,15 @@ def plot_vs_k(
             delta_squared_range = (1e0, 1e6)
         else:
             delta_squared_range = (_get_delta_squared_range_from_limits(limits)[0], 1e6)
+        # Lower the bottom of the range if needed, so that sensitivities are visible.
+        if sensitivities:
+            sensitivity_min = _get_delta_squared_range_from_limits(
+                list(sensitivities.values())
+            )[0]
+            delta_squared_range = (
+                min(delta_squared_range[0], sensitivity_min),
+                delta_squared_range[1],
+            )
 
     # Filter by z, k, and delta_squared ranges. This will remove any limits that do not
     # have any data points within the specified ranges.
@@ -887,11 +932,11 @@ def plot_vs_k(
     ###################################################################################
     # SENSITIVITIES
 
-    # If sensitivities are specified, build styles and plot them.
-    sensitivities = sensitivities or {}
-
     # Build styles for sensitivity lines, applying any overrides specified by the user.
     sensitivity_style = _build_sensitivity_styles(sensitivities, sensitivity_style)
+
+    # Keep only the redshifts inside the plotted range.
+    sensitivities = _select_sensitivities_z_range(sensitivities, z_range)
 
     # Plot the sensitivity curves.
     plot_sensitivities_vs_k(
@@ -1272,8 +1317,67 @@ def _build_theory_styles(
     return styles
 
 
+def _load_sensitivities(
+    sensitivities: dict[str, str | Path] | None,
+) -> dict[str, DataSet]:
+    """Load sensitivity estimates from YAML files, with non-finite values removed.
+
+    Note that this is an internal function not meant to be used by users.
+
+    Parameters
+    ----------
+    sensitivities : dict[str, str | Path] | None
+        A dictionary mapping sensitivity names to their YAML files.
+
+    Returns
+    -------
+    dict[str, DataSet]
+        A dictionary mapping sensitivity names to their datasets.
+    """
+    return {
+        name: load_sensitivity_data(path).drop_nan()
+        for name, path in (sensitivities or {}).items()
+    }
+
+
+def _select_sensitivities_z_range(
+    sensitivities: dict[str, DataSet],
+    z_range: tuple[float, float],
+) -> dict[str, DataSet]:
+    """Select the redshifts of each sensitivity estimate inside ``z_range``.
+
+    Sensitivity estimates without any redshift inside ``z_range`` are skipped,
+    with a warning.
+
+    Note that this is an internal function not meant to be used by users.
+
+    Parameters
+    ----------
+    sensitivities : dict[str, DataSet]
+        A dictionary mapping sensitivity names to their datasets.
+    z_range : tuple[float, float]
+        The redshift range to select (min, max).
+
+    Returns
+    -------
+    dict[str, DataSet]
+        A dictionary mapping sensitivity names to their datasets, restricted to
+        ``z_range``.
+    """
+    selected = {}
+    for name, sensitivity in sensitivities.items():
+        try:
+            selected[name] = sensitivity.select_z_range(*z_range)
+        except ValueError:
+            logging.getLogger("eor_limits").warning(
+                f"Sensitivity '{name}' skipped since it is outside redshift range "
+                f"[{z_range[0]} < z < {z_range[1]}]"
+            )
+    return selected
+
+
 def _build_sensitivity_styles(
-    sensitivities: dict[str, str],
+    sensitivities: dict[str, DataSet],
     sensitivity_style: dict[str, dict[str, Any]] | None,
 ) -> dict[str, dict[str, Any]]:
     """Build a dictionary of styles to use for each sensitivity curve.
@@ -1282,8 +1386,8 @@ def _build_sensitivity_styles(
 
     Parameters
     ----------
-    sensitivities : dict[str, str]
-        A dictionary mapping sensitivity names to their descriptions.
+    sensitivities : dict[str, DataSet]
+        A dictionary mapping sensitivity names to their datasets.
     sensitivity_style : dict[str, dict[str, Any]] | None
         A dictionary of style overrides for each sensitivity curve.
 
@@ -1295,12 +1399,17 @@ def _build_sensitivity_styles(
     styles = {}
     for name in sensitivities:
         style = {
-            "sensitivity_kind": "sample+thermal",
             "linestyle": "--",
             "linewidth": 3,
             "color": "k",
         }
         style |= sensitivity_style.get(name, {}) if sensitivity_style else {}
+        if "sensitivity_kind" in style:
+            raise ValueError(
+                f"The 'sensitivity_kind' style option (given for '{name}') is no "
+                "longer supported. Each sensitivity YAML file holds one kind of "
+                "sensitivity, so pass one file per kind instead."
+            )
         styles[name] = style
     return styles
 
@@ -1742,69 +1851,135 @@ def plot_theories_vs_k(
 def plot_sensitivities_vs_k(
     *,
     ax: plt.Axes,
-    sensitivities: dict[str, str] | None,
+    sensitivities: dict[str, DataSet] | None,
     sensitivity_style: dict[str, dict[str, Any]] | None,
     font: fm.FontProperties,
 ):
-    """Plot the sensitivity curves on the given axes.
+    """Plot sensitivity curves on k vs delta_squared axes.
+
+    One line is plotted for each redshift of each sensitivity estimate.
 
     Parameters
     ----------
     ax : plt.Axes
         The axes on which to plot the sensitivities.
-    sensitivities : dict[str, str] | None
-        A dictionary mapping sensitivity names to their file paths.
+    sensitivities : dict[str, DataSet] | None
+        A dictionary mapping sensitivity names to their datasets, with |k| in
+        units of |h/Mpc|. The |k| values are plotted as given.
     sensitivity_style : dict[str, dict[str, Any]] | None
         A dictionary mapping sensitivity names to their styles.
     font : matplotlib.font_manager.FontProperties
-        Font properties for the instrument names.
+        Font properties for the sensitivity names.
+
+    Returns
+    -------
+    list[matplotlib.lines.Line2D]
+        The plotted sensitivity lines.
     """
     sensitivity_style = sensitivity_style or {}
     sensitivities = sensitivities or {}
-    for indx, (name, fname) in enumerate(sensitivities.items()):
-        # Set the style.
-        if name in sensitivity_style:
-            style = sensitivity_style[name]
-        else:
-            style = sensitivity_style
+    lines = []
+    for indx, (name, sensitivity) in enumerate(sensitivities.items()):
+        style = sensitivity_style.get(name, {})
+        n_z = len(sensitivity.data.z)
+        for redshift, ks, sense in zip(
+            sensitivity.data.z,
+            sensitivity.data.k,
+            sensitivity.data.delta_squared,
+            strict=True,
+        ):
+            if len(ks) == 0:
+                continue
 
-        sense_kind = style["sensitivity_kind"]
+            (line,) = ax.plot(ks, sense, **style)
+            lines.append(line)
 
-        if sense_kind not in ["sample+thermal", "sample", "thermal"]:
-            raise ValueError(
-                f"Invalid sensitivity kind '{sense_kind}' for {name}. "
-                "Must be one of 'sample+thermal', 'sample', or 'thermal'."
-            )
+            label = name if n_z == 1 else f"{name} (z={redshift:.1f})"
+            _label_sensitivity(ax=ax, x=ks, y=sense, label=label, indx=indx, font=font)
 
-        # These must be outputs from 21cmSense v2+
-        with h5py.File(fname, "r") as fl:
-            if "k" not in fl:
-                raise ValueError(
-                    f"{fname} is not a valid 21cmSense output: no key 'k' found"
-                )
-            if sense_kind not in fl:
-                raise OSError(f"{fname} has no key {sense_kind} for sensitivity data. ")
-            ks = fl["k"][:]
-            sense = fl[sense_kind][:]
+    return lines
 
-        ks = ks[~np.isinf(sense)]
-        sense = sense[~np.isinf(sense)]
 
-        ax.plot(
-            ks,
-            sense,
-            color=style["color"],
-            linestyle=style["linestyle"],
-            linewidth=style["linewidth"],
+def plot_sensitivities_vs_z(
+    *,
+    ax: plt.Axes,
+    sensitivities: dict[str, DataSet] | None,
+    sensitivity_style: dict[str, dict[str, Any]] | None,
+    font: fm.FontProperties,
+):
+    """Plot sensitivity curves on z vs delta_squared axes.
+
+    Parameters
+    ----------
+    ax : plt.Axes
+        The axes on which to plot the sensitivities.
+    sensitivities : dict[str, DataSet] | None
+        A dictionary mapping sensitivity names to their datasets, each reduced to
+        one value per redshift.
+    sensitivity_style : dict[str, dict[str, Any]] | None
+        A dictionary mapping sensitivity names to their styles.
+    font : matplotlib.font_manager.FontProperties
+        Font properties for the sensitivity names.
+
+    Returns
+    -------
+    list[matplotlib.lines.Line2D]
+        The plotted sensitivity lines.
+    """
+    sensitivity_style = sensitivity_style or {}
+    sensitivities = sensitivities or {}
+    lines = []
+    for indx, (name, sensitivity) in enumerate(sensitivities.items()):
+        style = dict(sensitivity_style.get(name, {}))
+
+        z_vals = sensitivity.data.z
+        dsq_vals = np.array([dsq[0] for dsq in sensitivity.data.delta_squared])
+
+        # A single redshift gives a single point, which needs a marker to be seen.
+        if len(z_vals) == 1:
+            style.setdefault("marker", "o")
+
+        (line,) = ax.plot(z_vals, dsq_vals, **style)
+        lines.append(line)
+
+        _label_sensitivity(
+            ax=ax, x=z_vals, y=dsq_vals, label=name, indx=indx, font=font
         )
 
-        # Put the instrument name right on the plot.
-        # We know the sensitivity will go up to the right, so we put it at about 2/3
-        # of the way, and align it to top.
-        k_ind = int(len(ks) * (0.8 - 0.1 * indx))
-        ax.text(
-            ks[k_ind], sense[k_ind], name, fontproperties=font, verticalalignment="top"
-        )
+    return lines
+
+
+def _label_sensitivity(
+    *,
+    ax: plt.Axes,
+    x: np.ndarray,
+    y: np.ndarray,
+    label: str,
+    indx: int,
+    font: fm.FontProperties,
+):
+    """Write the name of a sensitivity estimate next to its curve.
+
+    Note that this is an internal function not meant to be used by users.
+
+    Parameters
+    ----------
+    ax : plt.Axes
+        The axes on which the sensitivity is plotted.
+    x, y : np.ndarray
+        The plotted x and y values of the sensitivity curve.
+    label : str
+        The text to write.
+    indx : int
+        The position of this sensitivity in the list of plotted sensitivities,
+        used to offset labels of different sensitivities.
+    font : matplotlib.font_manager.FontProperties
+        Font properties for the text.
+    """
+    # We know the sensitivity will go up to the right, so we put the name at about
+    # 2/3 of the way, and align it to top.
+    ind = int(len(x) * (0.8 - 0.1 * indx))
+    ax.text(x[ind], y[ind], label, fontproperties=font, verticalalignment="top")
 
 
 def plot_limits_vs_z(

@@ -7,6 +7,7 @@ Licensed under the 2-clause BSD License
 
 from ._data_loading import (
     load_limit_data,
+    load_sensitivity_data,
     load_theory_model,
 )
 from ._datatypes import Data, DataSet
@@ -21,6 +22,7 @@ __all__ = [
     "DataSet",
     "get_latex_label",
     "load_limit_data",
+    "load_sensitivity_data",
     "load_theory_model",
     "plot_vs_k",
     "plot_vs_z",

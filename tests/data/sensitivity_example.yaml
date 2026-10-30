@@ -1,0 +1,18 @@
+telescope: TestArray
+author: Test
+year: 2026
+doi: N/A
+k_unit: h/Mpc
+notes:
+    - Synthetic sensitivity estimate used only by the eor_limits test suite.
+
+data:
+    delta_squared:
+        [[.inf, 20.0, 15.0, 40.0, 300.0],
+         [.nan, 30.0, 25.0, 60.0, 450.0],
+         [.inf, 45.0, 35.0, 90.0, 700.0]]
+    k:
+        [[0.1, 0.2, 0.4, 0.8, 1.6],
+         [0.1, 0.2, 0.4, 0.8, 1.6],
+         [0.1, 0.2, 0.4, 0.8, 1.6]]
+    z: [7.5, 8.5, 9.5]

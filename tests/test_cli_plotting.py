@@ -15,6 +15,9 @@ OUTPUT_DIR.mkdir(exist_ok=True)
 # Tolerance for pixel-level image comparison (in RMS pixel units).
 IMAGE_TOL = 0.1
 
+# Example sensitivity file used by the sensitivity plotting tests
+SENSITIVITY_FILE = Path(__file__).parent / "data" / "sensitivity_example.yaml"
+
 
 def _run_plot_command(command: str, *args: str, expect_success: bool = True) -> None:
     """Invoke a CLI plotting command with provided args."""
@@ -507,3 +510,63 @@ def test_cli_plot_vs_z_with_legend_labeler():
         expect_success=True,
     )
     _assert_images_match("plot_vs_z", "with_legend_labeler", out)
+
+
+# Tests for plotting sensitivities
+
+
+def test_cli_plot_vs_k_with_sensitivities():
+    """Test plotting sensitivities vs k through the CLI."""
+    out = OUTPUT_DIR / "test_cli_plot_vs_k_with_sensitivities.png"
+    _run_plot_vs_k(
+        "--limits",
+        "HERA2022",
+        "HERA2023",
+        "--sensitivities.Test",
+        str(SENSITIVITY_FILE),
+        "--out",
+        str(out),
+        expect_success=True,
+    )
+    _assert_images_match("plot_vs_k", "with_sensitivities", out)
+
+
+def test_cli_plot_vs_z_with_sensitivities():
+    """Test plotting sensitivities vs z through the CLI."""
+    out = OUTPUT_DIR / "test_cli_plot_vs_z_with_sensitivities.png"
+    _run_plot_vs_z(
+        "--limits",
+        "HERA2022",
+        "HERA2023",
+        "--sensitivities.Test",
+        str(SENSITIVITY_FILE),
+        "--out",
+        str(out),
+        expect_success=True,
+    )
+    _assert_images_match("plot_vs_z", "with_sensitivities", out)
+
+
+def test_cli_plot_vs_z_with_sensitivity_k():
+    """Test plotting sensitivities vs z at a chosen k through the CLI."""
+    out = OUTPUT_DIR / "test_cli_plot_vs_z_with_sensitivity_k.png"
+    _run_plot_vs_z(
+        "--limits",
+        "HERA2022",
+        "HERA2023",
+        "--sensitivities.Test",
+        str(SENSITIVITY_FILE),
+        "--sensitivity-k",
+        "0.25",
+        "--out",
+        str(out),
+        expect_success=True,
+    )
+    _assert_images_match("plot_vs_z", "with_sensitivity_k", out)
+
+
+def test_cli_plot_vs_k_with_hdf5_sensitivity_fails(tmp_path):
+    """Test that the CLI reports an error for a non-YAML sensitivity file."""
+    path = tmp_path / "sensitivity.h5"
+    path.write_bytes(b"\x89HDF\r\n\x1a\n")
+    _run_plot_vs_k("--sensitivities.Test", str(path), expect_success=False)
