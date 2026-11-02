@@ -166,8 +166,9 @@ def plot_vs_z(
         theory styles as ``shade_alpha`` (default ``1/len(theories)``).
     sensitivities : dict[str, str | Path] | None (default: ``None``)
         Dictionary of sensitivities to plot on the figure. The keys are labels for each
-        sensitivity estimate, and the values are paths to YAML files in the same
-        format as the limits files (see :func:`eor_limits.load_sensitivity_data`).
+        sensitivity estimate, and the values are names of known sensitivities (see
+        ``KNOWN_SENSITIVITIES``) or paths to YAML files in the same format as the
+        limits files (see :func:`eor_limits.load_sensitivity_data`).
         The |k| values in these files must be in units of |h/Mpc|, as for the
         limits, since they are plotted without any conversion.
         Only the redshifts inside ``z_range`` are plotted.
@@ -285,10 +286,12 @@ def plot_vs_z(
             delta_squared_range = [1e0, 1e6]
         else:
             delta_squared_range = [_get_delta_squared_range_from_limits(limits)[0], 1e6]
-        # Lower the bottom of the range if needed, so that sensitivities are visible.
-        if sensitivities:
+        # Lower the bottom of the range if needed, so that the sensitivities at
+        # redshifts inside z_range are visible.
+        in_range = _select_sensitivities_z_range(sensitivities, z_range, warn=False)
+        if in_range:
             sensitivity_min = _get_delta_squared_range_from_limits(
-                list(sensitivities.values())
+                list(in_range.values())
             )[0]
             delta_squared_range = (
                 min(delta_squared_range[0], sensitivity_min),
@@ -670,8 +673,9 @@ def plot_vs_k(
         theory styles as ``shade_alpha`` (default ``1/len(theories)``).
     sensitivities : dict[str, str | Path] | None (default: ``None``)
         Dictionary of sensitivities to plot on the figure. The keys are labels for each
-        sensitivity estimate, and the values are paths to YAML files in the same
-        format as the limits files (see :func:`eor_limits.load_sensitivity_data`).
+        sensitivity estimate, and the values are names of known sensitivities (see
+        ``KNOWN_SENSITIVITIES``) or paths to YAML files in the same format as the
+        limits files (see :func:`eor_limits.load_sensitivity_data`).
         The |k| values in these files must be in units of |h/Mpc|, as for the
         limits, since they are plotted without any conversion.
         Only the redshifts inside ``z_range`` are plotted.
@@ -785,10 +789,12 @@ def plot_vs_k(
             delta_squared_range = (1e0, 1e6)
         else:
             delta_squared_range = (_get_delta_squared_range_from_limits(limits)[0], 1e6)
-        # Lower the bottom of the range if needed, so that sensitivities are visible.
-        if sensitivities:
+        # Lower the bottom of the range if needed, so that the sensitivities at
+        # redshifts inside z_range are visible.
+        in_range = _select_sensitivities_z_range(sensitivities, z_range, warn=False)
+        if in_range:
             sensitivity_min = _get_delta_squared_range_from_limits(
-                list(sensitivities.values())
+                list(in_range.values())
             )[0]
             delta_squared_range = (
                 min(delta_squared_range[0], sensitivity_min),
@@ -1327,27 +1333,29 @@ def _load_sensitivities(
     Parameters
     ----------
     sensitivities : dict[str, str | Path] | None
-        A dictionary mapping sensitivity names to their YAML files.
+        A dictionary mapping labels to names of known sensitivities or to
+        YAML files.
 
     Returns
     -------
     dict[str, DataSet]
-        A dictionary mapping sensitivity names to their datasets.
+        A dictionary mapping labels to the sensitivity datasets.
     """
     return {
-        name: load_sensitivity_data(path).drop_nan()
-        for name, path in (sensitivities or {}).items()
+        label: load_sensitivity_data(name).drop_nan()
+        for label, name in (sensitivities or {}).items()
     }
 
 
 def _select_sensitivities_z_range(
     sensitivities: dict[str, DataSet],
     z_range: tuple[float, float],
+    warn: bool = True,
 ) -> dict[str, DataSet]:
     """Select the redshifts of each sensitivity estimate inside ``z_range``.
 
     Sensitivity estimates without any redshift inside ``z_range`` are skipped,
-    with a warning.
+    with a warning if ``warn`` is True.
 
     Note that this is an internal function not meant to be used by users.
 
@@ -1357,6 +1365,8 @@ def _select_sensitivities_z_range(
         A dictionary mapping sensitivity names to their datasets.
     z_range : tuple[float, float]
         The redshift range to select (min, max).
+    warn : bool
+        Whether to log a warning for each skipped sensitivity estimate.
 
     Returns
     -------
@@ -1369,6 +1379,8 @@ def _select_sensitivities_z_range(
         try:
             selected[name] = sensitivity.select_z_range(*z_range)
         except ValueError:
+            if not warn:
+                continue
             logging.getLogger("eor_limits").warning(
                 f"Sensitivity '{name}' skipped since it is outside redshift range "
                 f"[{z_range[0]} < z < {z_range[1]}]"

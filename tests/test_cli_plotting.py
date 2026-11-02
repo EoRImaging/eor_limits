@@ -15,8 +15,13 @@ OUTPUT_DIR.mkdir(exist_ok=True)
 # Tolerance for pixel-level image comparison (in RMS pixel units).
 IMAGE_TOL = 0.1
 
-# Example sensitivity file used by the sensitivity plotting tests
-SENSITIVITY_FILE = Path(__file__).parent / "data" / "sensitivity_example.yaml"
+# SKA-Low sensitivities distributed with the package, as CLI options
+SKA_SENSITIVITY_ARGS = (
+    "--sensitivities.SKA-AA4",
+    "Breitman2026_AA4_deep1080h",
+    "--sensitivities.SKA-AA*",
+    "Breitman2026_AAstar_deep1080h",
+)
 
 
 def _run_plot_command(command: str, *args: str, expect_success: bool = True) -> None:
@@ -522,8 +527,10 @@ def test_cli_plot_vs_k_with_sensitivities():
         "--limits",
         "HERA2022",
         "HERA2023",
-        "--sensitivities.Test",
-        str(SENSITIVITY_FILE),
+        "--z-range",
+        "7.5",
+        "8.5",
+        *SKA_SENSITIVITY_ARGS,
         "--out",
         str(out),
         expect_success=True,
@@ -538,8 +545,7 @@ def test_cli_plot_vs_z_with_sensitivities():
         "--limits",
         "HERA2022",
         "HERA2023",
-        "--sensitivities.Test",
-        str(SENSITIVITY_FILE),
+        *SKA_SENSITIVITY_ARGS,
         "--out",
         str(out),
         expect_success=True,
@@ -554,10 +560,9 @@ def test_cli_plot_vs_z_with_sensitivity_k():
         "--limits",
         "HERA2022",
         "HERA2023",
-        "--sensitivities.Test",
-        str(SENSITIVITY_FILE),
+        *SKA_SENSITIVITY_ARGS,
         "--sensitivity-k",
-        "0.25",
+        "0.2",
         "--out",
         str(out),
         expect_success=True,

@@ -81,16 +81,22 @@ plot_vs_k(
 )
 ```
 
-Sensitivity estimates (for example, from 21cmSense) can be added to both plots. Each estimate is a YAML file in the same format as the limits files, with the sensitivity given as `delta_squared` in mK$^2$ for each redshift `z` and scale `k` in $h\,$Mpc$^{-1}$. The file also needs a top-level `k_unit: h/Mpc` entry, which states the unit of `k`; files without it are rejected. Note that 21cmSense v3 writes $k$ in Mpc$^{-1}$ (see the `k_unit` attribute of its output file), so these values must be divided by $h$. The file is read with `load_sensitivity_data`. In `plot_vs_k`, one curve is drawn for each redshift in the file. In `plot_vs_z`, the lowest sensitivity at each redshift is drawn, or the sensitivity in the $k$ bin closest to `sensitivity_k` if it is given.
+Sensitivity estimates (for example, from 21cmSense) can be added to both plots. The package includes the SKA-Low AA4 and AA* sensitivities of a 1080-hour deep survey from Breitman et al. 2026, named `Breitman2026_AA4_deep1080h` and `Breitman2026_AAstar_deep1080h` (see `KNOWN_SENSITIVITIES`). They include thermal noise and the sample variance of the mock signal used in that paper. Other estimates are read from YAML files in the same format as the limits files, with the sensitivity given as `delta_squared` in mK$^2$ for each redshift `z` and scale `k` in $h\,$Mpc$^{-1}$. The file also needs a top-level `k_unit: h/Mpc` entry, which states the unit of `k`; files without it are rejected. Note that 21cmSense v3 writes $k$ in Mpc$^{-1}$ (see the `k_unit` attribute of its output file), so these values must be divided by $h$. Known sensitivities and files are both read with `load_sensitivity_data`, by name or by path. In `plot_vs_k`, one curve is drawn for each redshift in the file. In `plot_vs_z`, the lowest sensitivity at each redshift is drawn, or the sensitivity in the $k$ bin closest to `sensitivity_k` if it is given.
 
 ```python
 from eor_limits import load_sensitivity_data, plot_vs_k, plot_vs_z
 
-sensitivity = load_sensitivity_data("/path/to/my_sensitivity.yaml")
-print(sensitivity.data.as_pandas_df())
+ska_aa4 = load_sensitivity_data("Breitman2026_AA4_deep1080h")
+print(ska_aa4.data.as_pandas_df())
 
-plot_vs_k(sensitivities={"My array": "/path/to/my_sensitivity.yaml"})
-plot_vs_z(sensitivities={"My array": "/path/to/my_sensitivity.yaml"}, sensitivity_k=0.2)
+plot_vs_k(sensitivities={"SKA AA4": "Breitman2026_AA4_deep1080h"})
+plot_vs_z(
+    sensitivities={
+        "SKA AA4": "Breitman2026_AA4_deep1080h",
+        "My array": "/path/to/my_sensitivity.yaml",
+    },
+    sensitivity_k=0.2,
+)
 ```
 
 ### Using the CLI
@@ -119,11 +125,12 @@ eor-limits plot-vs-k \
     --out MyPlot.pdf
 ```
 
-Sensitivity files are passed with one `--sensitivities.<label>` option per file:
+Sensitivities are passed with one `--sensitivities.<label>` option each, given by name or by path:
 
 ```bash
 eor-limits plot-vs-z \
     --limits HERA2022 HERA2023 \
+    --sensitivities.SKA-AA4 Breitman2026_AA4_deep1080h \
     --sensitivities.MyArray /path/to/my_sensitivity.yaml \
     --sensitivity-k 0.2 \
     --out MyPlot.pdf

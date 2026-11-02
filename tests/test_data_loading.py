@@ -8,15 +8,16 @@ import yaml
 from cattrs.errors import ClassValidationError
 
 import eor_limits
-from eor_limits import DataSet, load_sensitivity_data
+from eor_limits import KNOWN_SENSITIVITIES, DataSet, load_sensitivity_data
 
-TEST_DATA_PATH = Path(__file__).parent / "data"
-SENSITIVITY_FILE = TEST_DATA_PATH / "sensitivity_example.yaml"
+# SKA-Low AA4 sensitivity distributed with the package
+SENSITIVITY_NAME = "Breitman2026_AA4_deep1080h"
+SENSITIVITY_FILE = KNOWN_SENSITIVITIES[SENSITIVITY_NAME]
 
 
 @pytest.fixture
 def sensitivity_yaml() -> dict:
-    """Raw content of the example sensitivity file."""
+    """Raw content of the SKA-Low AA4 sensitivity file."""
     with SENSITIVITY_FILE.open("r") as fl:
         return yaml.safe_load(fl)
 
@@ -29,8 +30,48 @@ def _write_yaml(path: Path, content: dict) -> Path:
 
 
 def test_load_sensitivity_data_is_exported():
-    """Test that the loader is part of the public API."""
+    """Test that the loader and the known sensitivities are part of the public API."""
     assert "load_sensitivity_data" in eor_limits.__all__
+    assert "KNOWN_SENSITIVITIES" in eor_limits.__all__
+
+
+@pytest.mark.parametrize("name", list(KNOWN_SENSITIVITIES))
+def test_load_known_sensitivities(name):
+    """Test loading each sensitivity estimate distributed with the package."""
+    sensitivity = load_sensitivity_data(name)
+    assert isinstance(sensitivity, DataSet)
+    assert sensitivity.key == name
+    for dsq in sensitivity.data.delta_squared:
+        finite = dsq[np.isfinite(dsq)]
+        assert len(finite) > 0
+        assert np.all(finite > 0)
+
+
+def test_load_sensitivity_data_name_and_path_agree():
+    """Test that a known name and the path of its file give the same data."""
+    by_name = load_sensitivity_data(SENSITIVITY_NAME)
+    by_path = load_sensitivity_data(SENSITIVITY_FILE)
+    np.testing.assert_array_equal(by_name.data.z, by_path.data.z)
+    for dsq_a, dsq_b in zip(
+        by_name.data.delta_squared, by_path.data.delta_squared, strict=True
+    ):
+        np.testing.assert_array_equal(dsq_a, dsq_b)
+
+
+def test_ska_aa4_at_least_as_sensitive_as_aastar():
+    """Test that AA4 (512 stations) is never less sensitive than AA* (307 stations).
+
+    This guards against the two SKA files being swapped.
+    """
+    aa4 = load_sensitivity_data("Breitman2026_AA4_deep1080h")
+    aastar = load_sensitivity_data("Breitman2026_AAstar_deep1080h")
+    np.testing.assert_array_equal(aa4.data.z, aastar.data.z)
+    for dsq_aa4, dsq_aastar in zip(
+        aa4.data.delta_squared, aastar.data.delta_squared, strict=True
+    ):
+        finite = np.isfinite(dsq_aa4)
+        np.testing.assert_array_equal(finite, np.isfinite(dsq_aastar))
+        assert np.all(dsq_aa4[finite] <= dsq_aastar[finite])
 
 
 @pytest.mark.parametrize("as_type", [str, Path])
@@ -48,11 +89,11 @@ def test_load_sensitivity_data_metadata(sensitivity_yaml):
     assert sensitivity.year == sensitivity_yaml["year"]
     assert sensitivity.doi == sensitivity_yaml["doi"]
     assert sensitivity.notes == tuple(sensitivity_yaml["notes"])
-    assert sensitivity.key == "Test2026"
+    assert sensitivity.key == SENSITIVITY_NAME
 
 
 def test_load_sensitivity_data_values(sensitivity_yaml):
-    """Test that z, k and delta_squared match the file, including inf and NaN."""
+    """Test that z, k and delta_squared match the file, including inf."""
     sensitivity = load_sensitivity_data(SENSITIVITY_FILE)
     raw = sensitivity_yaml["data"]
 

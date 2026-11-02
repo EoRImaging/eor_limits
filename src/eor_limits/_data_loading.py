@@ -7,6 +7,7 @@ import yaml
 
 from eor_limits._datatypes import DataSet
 from eor_limits.data import DATA_PATH, KNOWN_LIMITS
+from eor_limits.sensitivities import KNOWN_SENSITIVITIES
 from eor_limits.theory import KNOWN_THEORIES, __all_theories__
 
 __all__ = [
@@ -66,9 +67,14 @@ def load_limit_data(name: str | Path) -> DataSet:
 SENSITIVITY_K_UNIT: Final = "h/Mpc"
 
 
-def load_sensitivity_data(path: str | Path) -> DataSet:
+def load_sensitivity_data(name: str | Path) -> DataSet:
     """
-    Load a sensitivity estimate from a YAML file.
+    Load a sensitivity estimate from the known sensitivities or from a YAML file.
+
+    ``name`` is either the name of a sensitivity estimate distributed with the
+    package (see ``KNOWN_SENSITIVITIES``, e.g. ``'Breitman2026_AA4_deep1080h'``)
+    or a path to a YAML file. Only names in ``KNOWN_SENSITIVITIES`` are looked
+    up; any other ``name`` is used as a path.
 
     The YAML file uses the same format as the files of observational limits
     (see :func:`eor_limits.DataSet.load`), with the expected sensitivity given as
@@ -100,13 +106,11 @@ def load_sensitivity_data(path: str | Path) -> DataSet:
     bins without sensitivity) are allowed; they can be removed with
     :meth:`eor_limits.DataSet.drop_nan`.
 
-    Unlike :func:`load_limit_data`, ``path`` must point to an existing file,
-    since no sensitivity estimates are distributed with the package.
-
     Parameters
     ----------
-    path : str | Path
-        Path to the YAML file (``.yaml`` or ``.yml``) containing the sensitivity.
+    name : str | Path
+        The name of a known sensitivity estimate (see ``KNOWN_SENSITIVITIES``),
+        or a path to a YAML file (``.yaml`` or ``.yml``) containing the sensitivity.
 
     Returns
     -------
@@ -116,14 +120,20 @@ def load_sensitivity_data(path: str | Path) -> DataSet:
     Raises
     ------
     FileNotFoundError
-        If ``path`` does not point to an existing file.
+        If ``name`` is neither a known sensitivity nor an existing file.
     ValueError
-        If ``path`` is not a YAML file, or if the file does not contain
+        If the file is not a YAML file, or if it does not contain
         ``k_unit: h/Mpc``.
     """
-    path = Path(path)
+    if isinstance(name, str) and name in KNOWN_SENSITIVITIES:
+        path = KNOWN_SENSITIVITIES[name]
+    else:
+        path = Path(name)
     if not path.is_file():
-        raise FileNotFoundError(f"Sensitivity file '{path}' not found.")
+        raise FileNotFoundError(
+            f"Sensitivity file '{path}' not found. "
+            f"Known sensitivities: {list(KNOWN_SENSITIVITIES)}"
+        )
     if path.suffix.lower() not in {".yaml", ".yml"}:
         raise ValueError(
             f"Sensitivity files must be YAML files (.yaml or .yml), got '{path.name}'."
