@@ -277,9 +277,11 @@ class DataSet:
     notes : tuple[str, ...]
         Any additional notes about the dataset, such as details of the analysis
         or assumptions made about k-bins.
-    key : str
-        A unique key for the dataset, automatically generated from the author and
-        year (e.g. ``'Paciga2013'``). This is used for referencing the dataset.
+    key : str | None
+        A unique key for the dataset, used for referencing it (e.g. in the plotting
+        options). When loaded from a file, it defaults to the file name without its
+        suffix (e.g. ``'Paciga2013'``) unless the file sets ``key``. It is ``None``
+        for a DataSet created without one.
     """
 
     telescope: str = attrs.field(converter=str)
@@ -290,12 +292,7 @@ class DataSet:
     notes: tuple[str, ...] = attrs.field(
         default=(), validator=attrs.validators.instance_of(tuple)
     )
-    _key: str = attrs.field(converter=str)
-
-    @_key.default
-    def _default_key(self) -> str:
-        """Generate a default key based on the author and year."""
-        return f"{self.author}{self.year}"
+    _key: str | None = attrs.field(default=None, converter=optconv(str))
 
     def __repr__(self) -> str:
         """Return a string representation of the DataSet, including metadata."""
@@ -358,6 +355,7 @@ class DataSet:
 
         with path.open("r", encoding="utf-8") as fl:
             yaml_data = yaml.safe_load(fl)
+        yaml_data.setdefault("key", path.stem)
 
         return converter.structure(yaml_data, cls)
 
@@ -682,7 +680,7 @@ class DataSet:
         return selected
 
     @property
-    def key(self) -> str:
+    def key(self) -> str | None:
         return self._key
 
     def drop_nan(self) -> Self:

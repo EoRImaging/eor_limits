@@ -30,7 +30,6 @@ def dataset_to_yaml(dataset: DataSet) -> str:
         "author": dataset.author,
         "year": dataset.year,
         "doi": dataset.doi,
-        "key": dataset.key,
     }
     lines = [
         yaml.safe_dump(metadata, sort_keys=False, allow_unicode=True),
