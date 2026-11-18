@@ -2,11 +2,40 @@
 
 from pathlib import Path
 
-from eor_limits import KNOWN_LIMITS, KNOWN_THEORIES, plot_vs_k, plot_vs_z
+import numpy as np
+import pytest
+
+from eor_limits import (
+    KNOWN_LIMITS,
+    KNOWN_THEORIES,
+    load_sensitivity_data,
+    plot_vs_k,
+    plot_vs_z,
+)
 
 # Output directory for test PDFs
 OUTPUT_DIR = Path(__file__).parent / "figures"
 OUTPUT_DIR.mkdir(exist_ok=True)
+
+# SKA-Low sensitivities distributed with the package, keyed by plot label
+SKA_SENSITIVITIES = {
+    "SKA-AA4": "Breitman2026_AA4_deep1080h",
+    "SKA-AA*": "Breitman2026_AAstar_deep1080h",
+}
+SENSITIVITY_LIMITS = ["HERA2022", "HERA2023"]
+# Rounded redshift range of the HERA 2022 and 2023 limits (z = 7.9 and 10.4)
+HERA_Z_RANGE = (7.0, 11.0)
+
+
+def _find_lines(ax, x, y) -> list:
+    """Return the lines on ``ax`` whose x and y data equal ``x`` and ``y``."""
+    return [
+        line
+        for line in ax.get_lines()
+        if len(line.get_xdata()) == len(x)
+        and np.allclose(line.get_xdata(), x)
+        and np.allclose(line.get_ydata(), y)
+    ]
 
 
 # Tests for plot_vs_k function
@@ -371,3 +400,163 @@ def test_lib_plot_vs_z_with_legend_labeler():
     assert fig is not None
     assert legend is not None
     assert [text.get_text() for text in legend.get_texts()] == ["HERA 2023"]
+
+
+# Tests for plotting sensitivities
+
+
+def _closest_finite(k: np.ndarray, dsq: np.ndarray, k_target: float) -> float:
+    """Return the finite value of ``dsq`` at the k bin closest to ``k_target``."""
+    finite = np.isfinite(dsq)
+    return dsq[finite][np.argmin(np.abs(k[finite] - k_target))]
+
+
+def test_lib_plot_vs_k_with_sensitivities():
+    """Test that sensitivities are plotted vs k, one line per redshift in range."""
+    fig = plot_vs_k(
+        limits=SENSITIVITY_LIMITS,
+        z_range=(7.5, 8.5),
+        sensitivities=SKA_SENSITIVITIES,
+        out=OUTPUT_DIR / "test_lib_plot_vs_k_with_sensitivities.png",
+    )
+    ax = fig.axes[0]
+    for label, name in SKA_SENSITIVITIES.items():
+        expected = load_sensitivity_data(name).drop_nan().select_z_range(7.5, 8.5)
+        for k, dsq in zip(expected.data.k, expected.data.delta_squared, strict=True):
+            assert len(_find_lines(ax, k, dsq)) == 1
+        assert any(label in text.get_text() for text in ax.texts)
+
+
+def test_lib_plot_vs_k_with_sensitivity_style():
+    """Test that sensitivity style parameters are passed on to the lines."""
+    name = SKA_SENSITIVITIES["SKA-AA4"]
+    fig = plot_vs_k(
+        limits=SENSITIVITY_LIMITS,
+        sensitivities={"SKA-AA4": name},
+        sensitivity_style={"SKA-AA4": {"color": "C3", "linestyle": ":", "alpha": 0.5}},
+    )
+    ax = fig.axes[0]
+    expected = load_sensitivity_data(name).drop_nan().select_z_range(*HERA_Z_RANGE)
+    for k, dsq in zip(expected.data.k, expected.data.delta_squared, strict=True):
+        (line,) = _find_lines(ax, k, dsq)
+        assert line.get_color() == "C3"
+        assert line.get_linestyle() == ":"
+        assert line.get_alpha() == pytest.approx(0.5)
+
+
+def test_lib_plot_vs_z_with_sensitivities():
+    """Test that sensitivities are plotted vs z (issue #57).
+
+    By default the lowest finite sensitivity at each redshift is plotted.
+    """
+    fig = plot_vs_z(
+        limits=SENSITIVITY_LIMITS,
+        sensitivities=SKA_SENSITIVITIES,
+        out=OUTPUT_DIR / "test_lib_plot_vs_z_with_sensitivities.png",
+    )
+    ax = fig.axes[0]
+    for label, name in SKA_SENSITIVITIES.items():
+        expected = load_sensitivity_data(name).drop_nan().select_z_range(*HERA_Z_RANGE)
+        lowest = [np.min(dsq) for dsq in expected.data.delta_squared]
+        assert len(_find_lines(ax, expected.data.z, lowest)) == 1
+        assert any(label in text.get_text() for text in ax.texts)
+
+
+def test_lib_plot_vs_z_with_sensitivity_k():
+    """Test plotting sensitivities vs z at a chosen k."""
+    fig = plot_vs_z(
+        limits=SENSITIVITY_LIMITS,
+        sensitivities=SKA_SENSITIVITIES,
+        sensitivity_k=0.2,
+        out=OUTPUT_DIR / "test_lib_plot_vs_z_with_sensitivity_k.png",
+    )
+    ax = fig.axes[0]
+    for name in SKA_SENSITIVITIES.values():
+        expected = load_sensitivity_data(name).select_z_range(*HERA_Z_RANGE)
+        at_k = [
+            _closest_finite(k, dsq, 0.2)
+            for k, dsq in zip(expected.data.k, expected.data.delta_squared, strict=True)
+        ]
+        assert len(_find_lines(ax, expected.data.z, at_k)) == 1
+
+
+@pytest.mark.parametrize(
+    "sensitivity_k",
+    [
+        # Below the first finite k bin: the SKA files hold no sensitivity at low k.
+        0.01,
+        # Above the last k bin (1.59 h/Mpc).
+        10.0,
+    ],
+)
+def test_lib_plot_vs_z_sensitivity_k_selects_closest_finite_k(sensitivity_k):
+    """Test that sensitivity_k selects the closest k bin with a finite value."""
+    name = SKA_SENSITIVITIES["SKA-AA4"]
+    fig = plot_vs_z(
+        limits=SENSITIVITY_LIMITS,
+        sensitivities={"SKA-AA4": name},
+        sensitivity_k=sensitivity_k,
+    )
+    ax = fig.axes[0]
+    expected = load_sensitivity_data(name).select_z_range(*HERA_Z_RANGE)
+    at_k = [
+        _closest_finite(k, dsq, sensitivity_k)
+        for k, dsq in zip(expected.data.k, expected.data.delta_squared, strict=True)
+    ]
+    assert len(_find_lines(ax, expected.data.z, at_k)) == 1
+
+
+@pytest.mark.parametrize("plot_func", [plot_vs_k, plot_vs_z])
+def test_lib_plot_sensitivities_outside_z_range_are_skipped(plot_func, caplog):
+    """Test that sensitivities without a redshift in the plotted range are skipped.
+
+    The Eastwood 2019 limit is at z = 18.4, between the SKA bands at z = 16.8
+    and z = 22.7. Its values are above the default delta_squared range, which is
+    therefore widened.
+    """
+    fig = plot_func(
+        limits=["Eastwood2019"],
+        delta_squared_range=(1e0, 1e12),
+        sensitivities=SKA_SENSITIVITIES,
+    )
+    ax = fig.axes[0]
+    for label in SKA_SENSITIVITIES:
+        assert not any(label in text.get_text() for text in ax.texts)
+        assert label in caplog.text
+
+
+@pytest.mark.parametrize("plot_func", [plot_vs_k, plot_vs_z])
+def test_lib_plot_sensitivities_extend_default_delta_squared_range(plot_func):
+    """Test that the default delta_squared range includes the sensitivities.
+
+    Only the redshifts inside the redshift range set the bottom of the range, so
+    the much lower SKA values at z = 5.6 do not stretch the axis.
+    """
+    fig = plot_func(limits=SENSITIVITY_LIMITS, sensitivities=SKA_SENSITIVITIES)
+    sensitivities = [
+        load_sensitivity_data(name).drop_nan() for name in SKA_SENSITIVITIES.values()
+    ]
+    lowest_in_range = min(
+        np.min(dsq)
+        for sensitivity in sensitivities
+        for dsq in sensitivity.select_z_range(*HERA_Z_RANGE).data.delta_squared
+    )
+    lowest = min(
+        np.min(dsq)
+        for sensitivity in sensitivities
+        for dsq in sensitivity.data.delta_squared
+    )
+    ylim_low = fig.axes[0].get_ylim()[0]
+    assert ylim_low <= lowest_in_range
+    assert ylim_low > lowest
+
+
+@pytest.mark.parametrize("plot_func", [plot_vs_k, plot_vs_z])
+def test_lib_plot_sensitivity_kind_is_rejected(plot_func):
+    """Test that the removed sensitivity_kind style option raises an error."""
+    with pytest.raises(ValueError, match="sensitivity_kind"):
+        plot_func(
+            limits=SENSITIVITY_LIMITS,
+            sensitivities=SKA_SENSITIVITIES,
+            sensitivity_style={"SKA-AA4": {"sensitivity_kind": "thermal"}},
+        )
