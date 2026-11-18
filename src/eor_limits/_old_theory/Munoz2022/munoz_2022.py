@@ -6,7 +6,7 @@
 import numpy as np
 
 from eor_limits._datatypes import Data
-from eor_limits.theory._base import THEORY_PATH, BaseTheoryProcessor
+from eor_limits._old_theory._base import THEORY_PATH, BaseTheoryProcessor
 
 all_galaxies_path = THEORY_PATH / "Munoz2022" / "allgalaxies/"
 optimistic_path = THEORY_PATH / "Munoz2022" / "optimistic/"

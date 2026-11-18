@@ -8,7 +8,7 @@ import yaml
 from eor_limits._datatypes import DataSet
 from eor_limits.data import DATA_PATH, KNOWN_LIMITS
 from eor_limits.sensitivities import KNOWN_SENSITIVITIES
-from eor_limits.theory import KNOWN_THEORIES, __all_theories__
+from eor_limits.theory import KNOWN_THEORIES
 
 __all__ = [
     "_normalize_dataset_name",
@@ -38,7 +38,7 @@ def load_theory_model(name: str) -> DataSet:
         raise ValueError(
             f"Theory '{name}' not found. Available theories: {KNOWN_THEORIES.keys()}"
         )
-    return __all_theories__[name].load_as_dataset()
+    return DataSet.load(KNOWN_THEORIES[name])
 
 
 def load_limit_data(name: str | Path) -> DataSet:

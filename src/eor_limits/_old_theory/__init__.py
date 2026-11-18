@@ -1,4 +1,9 @@
-"""Module for dealing with theory datasets."""
+"""Original theory data files and the processors that read them.
+
+These are no longer used by ``eor_limits`` at runtime. The theory models are now
+stored as YAML files in ``eor_limits/theory/``, generated from these processors
+by ``python -m eor_limits._old_theory.write_yaml``.
+"""
 
 from ._base import KNOWN_THEORIES, THEORY_PATH, __all_theories__
 

@@ -355,7 +355,7 @@ class DataSet:
 
         path = _normalize_dataset_name(path)
 
-        with path.open("r") as fl:
+        with path.open("r", encoding="utf-8") as fl:
             yaml_data = yaml.safe_load(fl)
 
         return converter.structure(yaml_data, cls)

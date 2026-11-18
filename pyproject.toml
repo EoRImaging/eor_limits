@@ -41,6 +41,11 @@ build-backend = "hatchling.build"
 [tool.hatch.version]
 source = "uv-dynamic-versioning"
 
+[tool.hatch.build.targets.wheel]
+# The original theory data and processors are kept in the repository for
+# provenance only; the package loads the YAML files in eor_limits/theory/.
+exclude = ["src/eor_limits/_old_theory"]
+
 [dependency-groups]
 dev = [
     "coverage>=7.13.2",
