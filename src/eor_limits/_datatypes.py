@@ -351,9 +351,10 @@ class DataSet:
         DataSet
             The loaded dataset as a DataSet object.
         """
-        from ._data_loading import _normalize_dataset_name
+        from ._data_loading import _resolve_dataset_path
+        from .data import KNOWN_LIMITS
 
-        path = _normalize_dataset_name(path)
+        path = _resolve_dataset_path(path, KNOWN_LIMITS)
 
         with path.open("r", encoding="utf-8") as fl:
             yaml_data = yaml.safe_load(fl)

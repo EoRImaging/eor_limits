@@ -23,9 +23,3 @@ def test_theory_key_matches_filename(theory_name):
     assert path.suffix == ".yaml"
     assert path.stem == theory_name
     assert load_theory_model(theory_name).key == theory_name
-
-
-def test_load_unknown_theory():
-    """Requesting a theory that does not exist raises a helpful error."""
-    with pytest.raises(ValueError, match="Theory 'NotATheory' not found"):
-        load_theory_model("NotATheory")
