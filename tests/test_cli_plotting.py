@@ -568,5 +568,3 @@ def test_cli_plot_vs_z_with_sensitivity_k():
         expect_success=True,
     )
     _assert_images_match("plot_vs_z", "with_sensitivity_k", out)
-
-
