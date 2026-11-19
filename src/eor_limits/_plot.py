@@ -186,8 +186,8 @@ def plot_vs_z(
     sensitivity_style : dict[str, dict[str, Any]] | None (default: ``None``)
         Dictionary of style parameters for plotting sensitivities. The keys are
         labels for each sensitivity estimate, and the values are dictionaries with
-        style parameters passed to :meth:`matplotlib.axes.Axes.plot`,
-        e.g. ``{'color': 'k', 'linestyle': '--', 'linewidth': 3}``.
+        style parameters for plotting, e.g. ``{'color': 'k', 'linestyle': '--',
+        'linewidth': 3}``.
     color_by : {"year", "k"} (default: ``"k"``)
         Quantity to use for coloring limits. If ``"year"``, each paper is colored by
         experiment year. If ``"k"``, plotted points are colored by their |k| values.
@@ -688,8 +688,8 @@ def plot_vs_k(
     sensitivity_style : dict[str, dict[str, Any]] | None (default: ``None``)
         Dictionary of style parameters for plotting sensitivities. The keys are
         labels for each sensitivity estimate, and the values are dictionaries with
-        style parameters passed to :meth:`matplotlib.axes.Axes.plot`,
-        e.g. ``{'color': 'k', 'linestyle': '--', 'linewidth': 3}``.
+        style parameters for plotting, e.g. ``{'color': 'k', 'linestyle': '--',
+        'linewidth': 3}``.
     color_by : {"z", "year"} (default: ``"z"``)
         Quantity to use for coloring limits. If ``"z"``, limits are colored by
         redshift. If ``"year"``, each paper is colored by experiment year.

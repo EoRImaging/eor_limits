@@ -115,15 +115,16 @@ def test_cli_rejects_invalid_json(plot_calls):
     assert plot_calls == []
 
 
-def test_cli_reports_plotting_errors(monkeypatch, capsys):
+@pytest.mark.parametrize("command", ["plot-vs-k", "plot-vs-z"])
+def test_cli_reports_plotting_errors(monkeypatch, capsys, command):
     """Test that an error while plotting is shown and gives a non-zero exit code."""
 
     def fail(*args, **kwargs):
         raise ValueError("Something went wrong")
 
-    monkeypatch.setattr(_cli, "_plot_vs_k", fail)
+    monkeypatch.setattr(_cli, f"_{command.replace('-', '_')}", fail)
     monkeypatch.delenv("EOR_LIMITS_DEBUG", raising=False)
-    assert _run("plot-vs-k") == 1
+    assert _run(command) == 1
     assert "Something went wrong" in capsys.readouterr().out
 
 
