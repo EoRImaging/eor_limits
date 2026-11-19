@@ -44,6 +44,9 @@ JsonDict = Annotated[dict[str, Any] | None, Parameter(converter=_json_str_to_dic
 JsonNestedDict = Annotated[
     dict[str, dict[str, Any]] | None, Parameter(converter=_json_str_to_dict)
 ]
+JsonListDict = Annotated[
+    dict[str, list[float]] | None, Parameter(converter=_json_str_to_dict)
+]
 
 
 def plot_vs_z(
@@ -70,7 +73,7 @@ def plot_vs_z(
     # Sensitivity plotting options
     sensitivities: dict[str, str | Path] | None = None,
     sensitivity_k: float | None = None,
-    sensitivity_style: dict | None = None,
+    sensitivity_style: JsonNestedDict = None,
     # General plotting options
     color_by: Literal["year", "k"] = "k",
     show_colorbar: bool = True,
@@ -180,7 +183,7 @@ def plot_vs_z(
         redshift, the sensitivity in the finite |k| bin closest to ``sensitivity_k``
         is plotted. If not specified, the lowest sensitivity at each redshift is
         plotted, in the same way as for the limits.
-    sensitivity_style : dict | None (default: ``None``)
+    sensitivity_style : dict[str, dict[str, Any]] | None (default: ``None``)
         Dictionary of style parameters for plotting sensitivities. The keys are
         labels for each sensitivity estimate, and the values are dictionaries with
         style parameters passed to :meth:`matplotlib.axes.Axes.plot`,
@@ -568,14 +571,14 @@ def plot_vs_k(
     delta_squared_range: tuple[float, float] | None = None,
     # Theory plotting options
     theories: StrList = None,
-    theory_redshifts: dict[str, list[float]] | None = None,
+    theory_redshifts: JsonListDict = None,
     base_theory_style: JsonDict = None,
     theory_styles: JsonNestedDict = None,
     bold_theories: StrList = None,
     shade_theories: bool = True,
     # Sensitivity plotting options
     sensitivities: dict[str, str | Path] | None = None,
-    sensitivity_style: dict | None = None,
+    sensitivity_style: JsonNestedDict = None,
     # General plotting options
     color_by: Literal["z", "year"] = "z",
     show_colorbar: bool = True,
@@ -682,7 +685,7 @@ def plot_vs_k(
         limits, since they are plotted without any conversion.
         Only the redshifts inside ``z_range`` are plotted.
         If not specified, no sensitivities are plotted.
-    sensitivity_style : dict | None (default: ``None``)
+    sensitivity_style : dict[str, dict[str, Any]] | None (default: ``None``)
         Dictionary of style parameters for plotting sensitivities. The keys are
         labels for each sensitivity estimate, and the values are dictionaries with
         style parameters passed to :meth:`matplotlib.axes.Axes.plot`,
