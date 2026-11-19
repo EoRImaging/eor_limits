@@ -142,7 +142,8 @@ eor-limits plot-vs-z \
 
 We welcome contributions to this repository from the community. If you would like to contribute, please follow these guidelines:
 
-* If you would like to add new data sets or simulations, ensure that they come from peer-reviewed published papers and make a pull request to add them to the repository (see _Developer Installation_ for information on how to set up your environment). The data should be added in the form of a YAML file in the data folder, following the format of the existing files:
+* If you would like to add new data sets or simulations, ensure that they come from peer-reviewed published papers and make a pull request to add them to the repository (see _Developer Installation_ for information on how to set up your environment). The data should be added in the form of a YAML file in the data folder (for limits), sensitivities folder (for sensitivities) or the theory folder (for simulations), following the format of the existing files.
+
     ```yaml
     telescope: GMRT
     author: Paciga

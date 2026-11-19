@@ -2,7 +2,6 @@ telescope: SKA-Low AA4
 author: Breitman
 year: 2026
 doi: 10.48550/arXiv.2606.00219
-key: Breitman2026_AA4_deep1080h
 k_unit: h/Mpc
 notes:
     - Forecast 1-sigma sensitivity of the SKA-Low AA4 layout (512 stations), computed with 21cmSense for the SKA forecasts of Breitman et al. 2026 (arXiv:2606.00219, accepted by A&A).
