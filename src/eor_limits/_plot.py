@@ -2,6 +2,8 @@
 
 import json
 import logging
+import re
+import unicodedata
 from collections.abc import Sequence
 from itertools import chain
 from pathlib import Path
@@ -1608,16 +1610,32 @@ def get_latex_label(
     str
         The LaTeX label for the limit paper.
     """
+    def _with_math_accents(text: str) -> str:
+        r"""Write the accented letters in ``text`` as math accents, e.g. ñ as \tilde{n}.
+
+        LaTeX does not accept accented letters in math mode, where labels are written.
+        """
+        math_accents = {"̀": r"\grave", "́": r"\acute", "̂": r"\hat", "̃": r"\tilde",
+            "̄": r"\bar", "̆": r"\breve", "̇": r"\dot", "̈": r"\ddot", "̌": r"\check"}
+        decomposed = unicodedata.normalize("NFD", text)
+        accented = re.sub(
+            f"(.)([{''.join(math_accents)}])",
+            lambda match: rf"{math_accents[match[2]]}{{{match[1]}}}",
+            decomposed,
+        )
+        return unicodedata.normalize("NFC", accented)
     if theory:
         label_start = "$\\bf{Theory:}~\\bf{" if bold else "$\\bf{Theory:}~\\rm{"
     else:
         label_start = "$\\bf{" if bold else "$\\rm{"
     label_end = "}$"
+    telescope = _with_math_accents(paper.telescope)
+    author = _with_math_accents(paper.author)
     return (
         label_start
-        + r"\ ".join(paper.telescope.split(" "))
+        + r"\ ".join(telescope.split(" "))
         + r"\ ("
-        + paper.author
+        + r"\ ".join(author.split(" "))
         + r",\ "
         + str(paper.year)
         + ")"
