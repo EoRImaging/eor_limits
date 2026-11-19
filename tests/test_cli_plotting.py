@@ -54,8 +54,8 @@ CLI_CASES = [
     pytest.param(
         [
             "plot-vs-z",
-            "--sensitivities.SKA-AA4",
-            "Breitman2026_AA4_deep1080h",
+            "--sensitivities",
+            '{"SKA-AA4": "Breitman2026_AA4_deep1080h"}',
             "--sensitivity-k",
             "0.2",
             "--sensitivity-style",

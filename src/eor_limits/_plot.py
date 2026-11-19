@@ -71,7 +71,7 @@ def plot_vs_z(
     bold_theories: StrList = None,
     shade_theories: bool = True,
     # Sensitivity plotting options
-    sensitivities: dict[str, str | Path] | None = None,
+    sensitivities: JsonDict = None,
     sensitivity_k: float | None = None,
     sensitivity_style: JsonNestedDict = None,
     # General plotting options
@@ -577,7 +577,7 @@ def plot_vs_k(
     bold_theories: StrList = None,
     shade_theories: bool = True,
     # Sensitivity plotting options
-    sensitivities: dict[str, str | Path] | None = None,
+    sensitivities: JsonDict = None,
     sensitivity_style: JsonNestedDict = None,
     # General plotting options
     color_by: Literal["z", "year"] = "z",
