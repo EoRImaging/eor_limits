@@ -1613,13 +1613,23 @@ def get_latex_label(
     str
         The LaTeX label for the limit paper.
     """
+
     def _with_math_accents(text: str) -> str:
         r"""Write the accented letters in ``text`` as math accents, e.g. ñ as \tilde{n}.
 
         LaTeX does not accept accented letters in math mode, where labels are written.
         """
-        math_accents = {"̀": r"\grave", "́": r"\acute", "̂": r"\hat", "̃": r"\tilde",
-            "̄": r"\bar", "̆": r"\breve", "̇": r"\dot", "̈": r"\ddot", "̌": r"\check"}
+        math_accents = {
+            "̀": r"\grave",
+            "́": r"\acute",
+            "̂": r"\hat",
+            "̃": r"\tilde",
+            "̄": r"\bar",
+            "̆": r"\breve",
+            "̇": r"\dot",
+            "̈": r"\ddot",
+            "̌": r"\check",
+        }
         decomposed = unicodedata.normalize("NFD", text)
         accented = re.sub(
             f"(.)([{''.join(math_accents)}])",
@@ -1627,6 +1637,7 @@ def get_latex_label(
             decomposed,
         )
         return unicodedata.normalize("NFC", accented)
+
     if theory:
         label_start = "$\\bf{Theory:}~\\bf{" if bold else "$\\bf{Theory:}~\\rm{"
     else:
