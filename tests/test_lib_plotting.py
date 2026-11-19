@@ -1,5 +1,6 @@
 """Test the plotting functions."""
 
+import logging
 from pathlib import Path
 
 import numpy as np
@@ -127,6 +128,25 @@ def test_lib_plot_with_option(plot_func, option):
 def test_lib_plot_vs_k_with_option(option):
     """Test that each option specific to plot_vs_k draws a plot without errors."""
     _plot(plot_vs_k, f"with_{option}", **K_OPTIONS[option])
+
+
+def test_lib_plot_vs_k_limits_outside_k_range_are_skipped(caplog):
+    """Test that limits without data in the k range are skipped.
+
+    Pal2021 only has data at k = 2.36 h/Mpc.
+    """
+    caplog.set_level(logging.INFO, logger="eor_limits")
+    fig = _plot(
+        plot_vs_k,
+        "with_limits_outside_k_range",
+        limits=[*PLOTTING_ARGS["limits"], "Pal2021"],
+        k_range=(0.1, 1.0),
+    )
+    assert not any("Pal" in text for text in _legend_texts(fig))
+    assert any(
+        "Pal2021" in record.message and "k range" in record.message
+        for record in caplog.records
+    )
 
 
 @pytest.mark.parametrize(
