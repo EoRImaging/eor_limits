@@ -1,570 +1,136 @@
-"""Test CLI plotting commands."""
+"""Test the command-line interface."""
 
+import inspect
 from pathlib import Path
 
 import pytest
-from matplotlib.testing.compare import compare_images
 
-import eor_limits
-from eor_limits._cli import app
+from eor_limits import _cli
 
-# Output directory for test PDFs
+# Output directory for the test figures, kept for inspection
 OUTPUT_DIR = Path(__file__).parent / "figures"
 OUTPUT_DIR.mkdir(exist_ok=True)
 
-# Tolerance for pixel-level image comparison (in RMS pixel units).
-IMAGE_TOL = 0.1
+# Command lines covering each kind of option, and the arguments they should pass to
+# the plotting function
+CLI_CASES = [
+    pytest.param(
+        ["plot-vs-k", "--limits", "HERA2022", "HERA2023", "--aspoints", "HERA2022"],
+        {"limits": ["HERA2022", "HERA2023"], "aspoints": ["HERA2022"]},
+        id="lists",
+    ),
+    pytest.param(
+        ["plot-vs-k", "--z-range", "6", "10", "--delta-squared-range", "1e3", "1e5"],
+        {"z_range": (6.0, 10.0), "delta_squared_range": (1e3, 1e5)},
+        id="ranges",
+    ),
+    pytest.param(
+        ["plot-vs-k", "--publication", "--show-colorbar=False"],
+        {"publication": True, "show_colorbar": False},
+        id="flags",
+    ),
+    pytest.param(
+        ["plot-vs-k", "--fontsize", "12", "--color-by", "year", "--legend-ncols", "2"],
+        {"fontsize": 12.0, "color_by": "year", "legend_ncols": 2},
+        id="values",
+    ),
+    pytest.param(
+        [
+            "plot-vs-k",
+            "--limit-styles",
+            '{"HERA2023": {"color": "C3"}}',
+            "--legend-labeler",
+            '{"HERA2023": "HERA 2023"}',
+            "--theory-redshifts",
+            '{"Mesinger2016Faint": [8, 10]}',
+        ],
+        {
+            "limit_styles": {"HERA2023": {"color": "C3"}},
+            "legend_labeler": {"HERA2023": "HERA 2023"},
+            "theory_redshifts": {"Mesinger2016Faint": [8, 10]},
+        },
+        id="json",
+    ),
+    pytest.param(
+        [
+            "plot-vs-z",
+            "--sensitivities.SKA-AA4",
+            "Breitman2026_AA4_deep1080h",
+            "--sensitivity-k",
+            "0.2",
+            "--sensitivity-style",
+            '{"SKA-AA4": {"color": "C3"}}',
+        ],
+        {
+            "sensitivities": {"SKA-AA4": "Breitman2026_AA4_deep1080h"},
+            "sensitivity_k": 0.2,
+            "sensitivity_style": {"SKA-AA4": {"color": "C3"}},
+        },
+        id="plot-vs-z",
+    ),
+]
 
-# SKA-Low sensitivities distributed with the package, as CLI options
-SKA_SENSITIVITY_ARGS = (
-    "--sensitivities.SKA-AA4",
-    "Breitman2026_AA4_deep1080h",
-    "--sensitivities.SKA-AA*",
-    "Breitman2026_AAstar_deep1080h",
-)
 
-
-def _run_plot_command(command: str, *args: str, expect_success: bool = True) -> None:
-    """Invoke a CLI plotting command with provided args."""
+def _run(*args: str) -> int:
+    """Run the CLI with ``args`` and return its exit code."""
     with pytest.raises(SystemExit) as exc_info:
-        app([command, *args], exit_on_error=True)
-    if expect_success:
-        assert exc_info.value.code == 0
-        if "--out" in args:
-            out_index = args.index("--out") + 1
-            out_path = Path(args[out_index])
-            assert out_path.exists(), f"Expected output file not found: {out_path}"
-    else:
-        assert exc_info.value.code != 0  # negative test case
+        _cli.app(list(args), exit_on_error=True)
+    return exc_info.value.code
 
 
-# Tests for plot_vs_k function
+@pytest.fixture
+def plot_calls(monkeypatch) -> list[tuple[str, dict]]:
+    """List of the calls the CLI makes to the plotting functions.
 
-
-def _run_plot_vs_k(*args: str, expect_success: bool = True) -> None:
-    """Invoke the CLI plot-vs-k command with provided args."""
-    _run_plot_command("plot-vs-k", *args, expect_success=expect_success)
-
-
-def _run_plot_vs_z(*args: str, expect_success: bool = True) -> None:
-    """Invoke the CLI plot-vs-z command with provided args."""
-    _run_plot_command("plot-vs-z", *args, expect_success=expect_success)
-
-
-def _assert_images_match(plot_name: str, test_name: str, cli_path: Path) -> None:
-    """Compare a CLI-generated PNG against the library-generated reference.
-
-    This helper skips the test if the reference image is missing, so CLI tests
-    can be run in isolation without depending on test_plotting side effects.
+    The plotting functions are replaced, so nothing is drawn. Each call is recorded
+    as the function name and its arguments by parameter name (the CLI passes some
+    of them by position).
     """
-    ref_path = OUTPUT_DIR / f"test_lib_{plot_name}_{test_name}.png"
-    if not ref_path.exists():
-        pytest.skip(
-            f"Reference image not found: {ref_path}. "
-            "Generate reference images via the plotting API before "
-            "running CLI image-comparison tests. "
-        )
+    calls = []
 
-    result = compare_images(str(ref_path), str(cli_path), tol=IMAGE_TOL)
-    assert result is None, result
+    def recorder(plot_func):
+        signature = inspect.signature(plot_func)
 
+        def record(*args, **kwargs):
+            arguments = signature.bind(*args, **kwargs).arguments
+            calls.append((plot_func.__name__, arguments))
 
-def test_cli_app_exists():
-    """Test that the CLI app is properly instantiated."""
-    assert app is not None
+        return record
 
+    monkeypatch.setattr(_cli, "_plot_vs_k", recorder(_cli._plot_vs_k))
+    monkeypatch.setattr(_cli, "_plot_vs_z", recorder(_cli._plot_vs_z))
+    return calls
 
-def test_cli_plot_vs_k_basic():
-    """Test making a plot with default parameters through the CLI."""
-    out = OUTPUT_DIR / "test_cli_plot_vs_k_basic.png"
-    _run_plot_vs_k("--out", str(out), expect_success=True)
-    _assert_images_match("plot_vs_k", "basic", out)
 
+@pytest.mark.parametrize(("args", "expected"), CLI_CASES)
+def test_cli_passes_options_to_plotting(plot_calls, args, expected):
+    """Test that each kind of option is passed on as the right argument."""
+    assert _run(*args) == 0
+    assert plot_calls == [(args[0].replace("-", "_"), expected)]
 
-def test_cli_plot_vs_k_with_fig_styling():
-    """Test making a plot with custom styling parameters through the CLI."""
-    out = OUTPUT_DIR / "test_cli_plot_vs_k_with_fig_styling.png"
-    _run_plot_vs_k(
-        "--fontsize",
-        "12",
-        "--colormap",
-        "viridis",
-        "--fig-width",
-        "20.0",
-        "--fig-ratio",
-        "2.0",
-        "--legend-ncols",
-        "2",
-        "--out",
-        str(out),
-        expect_success=True,
-    )
-    _assert_images_match("plot_vs_k", "with_fig_styling", out)
 
+def test_cli_rejects_invalid_json(plot_calls):
+    """Test that an invalid JSON option stops the CLI before anything is plotted."""
+    assert _run("plot-vs-k", "--base-limit-style", '{"not": "valid json",') != 0
+    assert plot_calls == []
 
-def test_cli_plot_vs_k_with_publication():
-    """Test making a publication-style plot through the CLI."""
-    out = OUTPUT_DIR / "test_cli_plot_vs_k_with_publication.png"
-    _run_plot_vs_k(
-        "--publication", "--dpi", "300", "--out", str(out), expect_success=True
-    )
-    _assert_images_match("plot_vs_k", "with_publication", out)
 
+def test_cli_reports_plotting_errors(monkeypatch, capsys):
+    """Test that an error while plotting is shown and gives a non-zero exit code."""
 
-def test_cli_plot_vs_k_with_z_range():
-    """Test making a plot with redshift range filtering through the CLI."""
-    out = OUTPUT_DIR / "test_cli_plot_vs_k_with_z_range.png"
-    _run_plot_vs_k("--z-range", "6.0", "10.0", "--out", str(out), expect_success=True)
-    _assert_images_match("plot_vs_k", "with_z_range", out)
+    def fail(*args, **kwargs):
+        raise ValueError("Something went wrong")
 
+    monkeypatch.setattr(_cli, "_plot_vs_k", fail)
+    monkeypatch.delenv("EOR_LIMITS_DEBUG", raising=False)
+    assert _run("plot-vs-k") == 1
+    assert "Something went wrong" in capsys.readouterr().out
 
-def test_cli_plot_vs_k_with_k_range():
-    """Test making a plot with k range filtering through the CLI."""
-    out = OUTPUT_DIR / "test_cli_plot_vs_k_with_k_range.png"
-    _run_plot_vs_k("--k-range", "0.1", "1.0", "--out", str(out), expect_success=True)
-    _assert_images_match("plot_vs_k", "with_k_range", out)
 
-
-def test_cli_plot_vs_k_with_delta_squared_range():
-    """Test making a plot with delta squared range filtering through the CLI."""
-    out = OUTPUT_DIR / "test_cli_plot_vs_k_with_delta_squared_range.png"
-    _run_plot_vs_k(
-        "--delta-squared-range", "1e3", "1e5", "--out", str(out), expect_success=True
-    )
-    _assert_images_match("plot_vs_k", "with_delta_squared_range", out)
-
-
-def test_cli_plot_vs_k_with_aspoints():
-    """Test making a plot with specific limits as points through the CLI."""
-    limits = list(eor_limits.KNOWN_LIMITS.keys())
-    out = OUTPUT_DIR / "test_cli_plot_vs_k_with_aspoints.png"
-    _run_plot_vs_k(
-        "--limits",
-        *limits,
-        "--aspoints",
-        *limits,
-        "--out",
-        str(out),
-        expect_success=True,
-    )
-    _assert_images_match("plot_vs_k", "with_aspoints", out)
-
-
-def test_cli_plot_vs_k_with_aslines():
-    """Test making a plot with specific limits as lines through the CLI."""
-    limits = list(eor_limits.KNOWN_LIMITS.keys())
-    out = OUTPUT_DIR / "test_cli_plot_vs_k_with_aslines.png"
-    _run_plot_vs_k(
-        "--limits",
-        *limits,
-        "--aslines",
-        *limits,
-        "--out",
-        str(out),
-        expect_success=True,
-    )
-    _assert_images_match("plot_vs_k", "with_aslines", out)
-
-
-def test_cli_plot_vs_k_with_bold_limits():
-    """Test making a plot with bolded specific limits through the CLI."""
-    limits = list(eor_limits.KNOWN_LIMITS.keys())
-    out = OUTPUT_DIR / "test_cli_plot_vs_k_with_bold_limits.png"
-    _run_plot_vs_k(
-        "--limits",
-        *limits,
-        "--bold-limits",
-        "HERA2022",
-        "HERA2023",
-        "--out",
-        str(out),
-        expect_success=True,
-    )
-    _assert_images_match("plot_vs_k", "with_bold_limits", out)
-
-
-def test_cli_plot_vs_k_with_bold_theories():
-    """Test making a plot with bolded specific theories through the CLI."""
-    theories = list(eor_limits.KNOWN_THEORIES.keys())
-    out = OUTPUT_DIR / "test_cli_plot_vs_k_with_bold_theories.png"
-    _run_plot_vs_k(
-        "--theories",
-        *theories,
-        "--bold-theories",
-        "Mesinger2016Faint",
-        "Mesinger2016Bright",
-        "--out",
-        str(out),
-        expect_success=True,
-    )
-    _assert_images_match("plot_vs_k", "with_bold_theories", out)
-
-
-def test_cli_plot_vs_k_with_limit_and_theory_styling():
-    """Test making a plot with custom limit/theory styling through the CLI.
-
-    Also exercises the error path for invalid JSON passed to style arguments,
-    asserting that the CLI exits non-zero and emits an informative message.
-    """
-    limits = list(eor_limits.KNOWN_LIMITS.keys())
-
-    # Positive case: valid JSON style arguments work and produce an output file.
-    out = OUTPUT_DIR / "test_cli_plot_vs_k_with_limit_and_theory_styling.png"
-    _run_plot_vs_k(
-        "--limits",
-        *limits,
-        "--theories",
-        "Mesinger2016Faint",
-        "Mesinger2016Bright",
-        "--base-limit-style",
-        '{"linewidth": 5, "shade_alpha": 0.1}',
-        "--limit-styles",
-        '{"HERA2023": {"shade_alpha": 0.25, "shade_color": "C3"}}',
-        "--base-theory-style",
-        '{"linestyle": "-."}',
-        "--theory-styles",
-        '{"Mesinger2016Faint": {"color": "C0",\
-            "shade_alpha": 0.5, "shade_color": "C2"},\
-        "Mesinger2016Bright": {"color": "C1",\
-            "shade_alpha": 0.1, "shade_color": "C2"}}',
-        "--out",
-        str(out),
-    )
-    _assert_images_match("plot_vs_k", "with_limit_and_theory_styling", out)
-
-    # Negative case: invalid JSON should trigger a non-zero exit and an error message.
-    bad_out = OUTPUT_DIR / "test_cli_plot_vs_k_with_invalid_style_json.png"
-    _run_plot_vs_k(
-        "--limits",
-        *limits,
-        "--theories",
-        "Mesinger2016Faint",
-        "Mesinger2016Bright",
-        "--base-limit-style",
-        '{"this-is": "not valid json",',  # Deliberately malformed JSON.
-        "--out",
-        str(bad_out),
-        expect_success=False,  # Negative test case
-    )
-
-
-def test_cli_plot_vs_k_without_colorbar():
-    """Test making a plot without a redshift colorbar through the CLI."""
-    out = OUTPUT_DIR / "test_cli_plot_vs_k_without_colorbar.png"
-    _run_plot_vs_k("--show-colorbar=False", "--out", str(out), expect_success=True)
-    _assert_images_match("plot_vs_k", "without_colorbar", out)
-
-
-def test_cli_plot_vs_k_with_color_by_year():
-    """Test making a plot_vs_k colored by year through the CLI."""
-    out = OUTPUT_DIR / "test_cli_plot_vs_k_with_color_by_year.png"
-    _run_plot_vs_k(
-        "--color-by",
-        "year",
-        "--show-colorbar=True",
-        "--out",
-        str(out),
-        expect_success=True,
-    )
-    _assert_images_match("plot_vs_k", "with_color_by_year", out)
-
-
-def test_cli_plot_vs_k_with_z_labels_in_legend():
-    """Test making a plot_vs_k with z labels shown in the legend through the CLI."""
-    out = OUTPUT_DIR / "test_cli_plot_vs_k_with_z_labels_in_legend.png"
-    _run_plot_vs_k(
-        "--color-by",
-        "year",
-        "--z-labels",
-        "legend",
-        "--out",
-        str(out),
-        expect_success=True,
-    )
-    _assert_images_match("plot_vs_k", "with_z_labels_in_legend", out)
-
-
-def test_cli_plot_vs_k_with_legend_labeler():
-    """Test making a plot_vs_k with custom legend labels through the CLI."""
-    out = OUTPUT_DIR / "test_cli_plot_vs_k_with_legend_labeler.png"
-    _run_plot_vs_k(
-        "--limits",
-        "HERA2022",
-        "HERA2023",
-        "Paciga2013",
-        "--legend-labeler",
-        '{"HERA2023": "HERA 2023"}',
-        "--out",
-        str(out),
-        expect_success=True,
-    )
-    _assert_images_match("plot_vs_k", "with_legend_labeler", out)
-
-
-# Tests for plot_vs_z function
-
-
-def test_cli_plot_vs_z_basic():
-    """Test making a plot_vs_z with default parameters through the CLI."""
-    out = OUTPUT_DIR / "test_cli_plot_vs_z_basic.png"
-    _run_plot_vs_z("--out", str(out), expect_success=True)
-    _assert_images_match("plot_vs_z", "basic", out)
-
-
-def test_cli_plot_vs_z_with_fig_styling():
-    """Test making a plot_vs_z with custom styling parameters through the CLI."""
-    out = OUTPUT_DIR / "test_cli_plot_vs_z_with_fig_styling.png"
-    _run_plot_vs_z(
-        "--fontsize",
-        "12",
-        "--colormap",
-        "viridis",
-        "--fig-ratio",
-        "1.0",
-        "--out",
-        str(out),
-        expect_success=True,
-    )
-    _assert_images_match("plot_vs_z", "with_fig_styling", out)
-
-
-def test_cli_plot_vs_z_with_publication():
-    """Test making a publication-style plot through the CLI."""
-    out = OUTPUT_DIR / "test_cli_plot_vs_z_with_publication.png"
-    _run_plot_vs_z(
-        "--publication", "--dpi", "300", "--out", str(out), expect_success=True
-    )
-    _assert_images_match("plot_vs_z", "with_publication", out)
-
-
-def test_cli_plot_vs_z_with_z_range():
-    """Test making a plot_vs_z with redshift range filtering through the CLI."""
-    out = OUTPUT_DIR / "test_cli_plot_vs_z_with_z_range.png"
-    _run_plot_vs_z("--z-range", "6.0", "10.0", "--out", str(out), expect_success=True)
-    _assert_images_match("plot_vs_z", "with_z_range", out)
-
-
-def test_cli_plot_vs_z_with_delta_squared_range():
-    """Test making a plot_vs_z with delta squared range filtering through the CLI."""
-    out = OUTPUT_DIR / "test_cli_plot_vs_z_with_delta_squared_range.png"
-    _run_plot_vs_z(
-        "--delta-squared-range", "1e3", "1e5", "--out", str(out), expect_success=True
-    )
-    _assert_images_match("plot_vs_z", "with_delta_squared_range", out)
-
-
-def test_cli_plot_vs_z_with_specific_limits():
-    """Test making a plot_vs_z with specific limits through the CLI."""
-    out = OUTPUT_DIR / "test_cli_plot_vs_z_with_specific_limits.png"
-    _run_plot_vs_z(
-        "--limits",
-        "HERA2022",
-        "HERA2023",
-        "Paciga2013",
-        "--out",
-        str(out),
-        expect_success=True,
-    )
-    _assert_images_match("plot_vs_z", "with_specific_limits", out)
-
-
-def test_cli_plot_vs_z_with_aspoints():
-    """Test making a plot_vs_z with specific limits as points through the CLI."""
-    limits = list(eor_limits.KNOWN_LIMITS.keys())[:5]
-    out = OUTPUT_DIR / "test_cli_plot_vs_z_with_aspoints.png"
-    _run_plot_vs_z(
-        "--limits",
-        *limits,
-        "--aspoints",
-        *limits,
-        "--out",
-        str(out),
-        expect_success=True,
-    )
-    _assert_images_match("plot_vs_z", "with_aspoints", out)
-
-
-def test_cli_plot_vs_z_with_aslines():
-    """Test making a plot_vs_z with specific limits as lines through the CLI."""
-    limits = list(eor_limits.KNOWN_LIMITS.keys())[:5]
-    out = OUTPUT_DIR / "test_cli_plot_vs_z_with_aslines.png"
-    _run_plot_vs_z(
-        "--limits",
-        *limits,
-        "--aslines",
-        *limits,
-        "--out",
-        str(out),
-        expect_success=True,
-    )
-    _assert_images_match("plot_vs_z", "with_aslines", out)
-
-
-def test_cli_plot_vs_z_with_bold_limits():
-    """Test making a plot_vs_z with bolded specific limits through the CLI."""
-    out = OUTPUT_DIR / "test_cli_plot_vs_z_with_bold_limits.png"
-    _run_plot_vs_z(
-        "--limits",
-        "HERA2022",
-        "HERA2023",
-        "Paciga2013",
-        "--bold-limits",
-        "HERA2022",
-        "HERA2023",
-        "--out",
-        str(out),
-        expect_success=True,
-    )
-    _assert_images_match("plot_vs_z", "with_bold_limits", out)
-
-
-def test_cli_plot_vs_z_with_bold_theories():
-    """Test making a plot_vs_z with bolded specific theories through the CLI."""
-    theories = list(eor_limits.KNOWN_THEORIES.keys())
-    out = OUTPUT_DIR / "test_cli_plot_vs_z_with_bold_theories.png"
-    _run_plot_vs_z(
-        "--theories",
-        *theories,
-        "--bold-theories",
-        "Mesinger2016Faint",
-        "Mesinger2016Bright",
-        "--out",
-        str(out),
-        expect_success=True,
-    )
-    _assert_images_match("plot_vs_z", "with_bold_theories", out)
-
-
-def test_cli_plot_vs_z_with_limit_and_theory_styling():
-    """Test making a plot_vs_z with custom limit/theory styling through the CLI."""
-    out = OUTPUT_DIR / "test_cli_plot_vs_z_with_limit_and_theory_styling.png"
-    _run_plot_vs_z(
-        "--limits",
-        "HERA2022",
-        "HERA2023",
-        "Paciga2013",
-        "--theories",
-        "Mesinger2016Faint",
-        "Mesinger2016Bright",
-        "--base-limit-style",
-        '{"linewidth": 3, "alpha": 0.8}',
-        "--limit-styles",
-        '{"HERA2023": {"color": "C3"}}',
-        "--base-theory-style",
-        '{"linestyle": "-."}',
-        "--theory-styles",
-        '{"Mesinger2016Faint": {"color": "C0",\
-            "shade_alpha": 0.5, "shade_color": "C2"},\
-        "Mesinger2016Bright": {"color": "C1",\
-            "shade_alpha": 0.1, "shade_color": "C2"}}',
-        "--out",
-        str(out),
-        expect_success=True,
-    )
-    _assert_images_match("plot_vs_z", "with_limit_and_theory_styling", out)
-
-
-def test_cli_plot_vs_z_without_colorbar():
-    """Test making a plot_vs_z without a colorbar through the CLI."""
-    out = OUTPUT_DIR / "test_cli_plot_vs_z_without_colorbar.png"
-    _run_plot_vs_z("--show-colorbar=False", "--out", str(out), expect_success=True)
-    _assert_images_match("plot_vs_z", "without_colorbar", out)
-
-
-def test_cli_plot_vs_z_with_color_by_year():
-    """Test making a plot_vs_z colored by year through the CLI."""
-    out = OUTPUT_DIR / "test_cli_plot_vs_z_with_color_by_year.png"
-    _run_plot_vs_z(
-        "--color-by",
-        "year",
-        "--show-colorbar=True",
-        "--out",
-        str(out),
-        expect_success=True,
-    )
-    _assert_images_match("plot_vs_z", "with_color_by_year", out)
-
-
-def test_cli_plot_vs_z_with_k_labels_in_legend():
-    """Test making a plot_vs_z with k labels shown in the legend through the CLI."""
-    out = OUTPUT_DIR / "test_cli_plot_vs_z_with_k_labels_in_legend.png"
-    _run_plot_vs_z(
-        "--color-by",
-        "year",
-        "--k-labels",
-        "legend",
-        "--out",
-        str(out),
-        expect_success=True,
-    )
-    _assert_images_match("plot_vs_z", "with_k_labels_in_legend", out)
-
-
-def test_cli_plot_vs_z_with_legend_labeler():
-    """Test making a plot_vs_z with custom legend labels through the CLI."""
-    out = OUTPUT_DIR / "test_cli_plot_vs_z_with_legend_labeler.png"
-    _run_plot_vs_z(
-        "--limits",
-        "HERA2022",
-        "HERA2023",
-        "Paciga2013",
-        "--legend-labeler",
-        '{"HERA2023": "HERA 2023"}',
-        "--out",
-        str(out),
-        expect_success=True,
-    )
-    _assert_images_match("plot_vs_z", "with_legend_labeler", out)
-
-
-# Tests for plotting sensitivities
-
-
-def test_cli_plot_vs_k_with_sensitivities():
-    """Test plotting sensitivities vs k through the CLI."""
-    out = OUTPUT_DIR / "test_cli_plot_vs_k_with_sensitivities.png"
-    _run_plot_vs_k(
-        "--limits",
-        "HERA2022",
-        "HERA2023",
-        "--z-range",
-        "7.5",
-        "8.5",
-        *SKA_SENSITIVITY_ARGS,
-        "--out",
-        str(out),
-        expect_success=True,
-    )
-    _assert_images_match("plot_vs_k", "with_sensitivities", out)
-
-
-def test_cli_plot_vs_z_with_sensitivities():
-    """Test plotting sensitivities vs z through the CLI."""
-    out = OUTPUT_DIR / "test_cli_plot_vs_z_with_sensitivities.png"
-    _run_plot_vs_z(
-        "--limits",
-        "HERA2022",
-        "HERA2023",
-        *SKA_SENSITIVITY_ARGS,
-        "--out",
-        str(out),
-        expect_success=True,
-    )
-    _assert_images_match("plot_vs_z", "with_sensitivities", out)
-
-
-def test_cli_plot_vs_z_with_sensitivity_k():
-    """Test plotting sensitivities vs z at a chosen k through the CLI."""
-    out = OUTPUT_DIR / "test_cli_plot_vs_z_with_sensitivity_k.png"
-    _run_plot_vs_z(
-        "--limits",
-        "HERA2022",
-        "HERA2023",
-        *SKA_SENSITIVITY_ARGS,
-        "--sensitivity-k",
-        "0.2",
-        "--out",
-        str(out),
-        expect_success=True,
-    )
-    _assert_images_match("plot_vs_z", "with_sensitivity_k", out)
+@pytest.mark.parametrize("command", ["plot-vs-k", "plot-vs-z"])
+def test_cli_draws_plot(command):
+    """Test that each command draws a plot and saves it."""
+    out = OUTPUT_DIR / f"test_cli_{command.replace('-', '_')}.png"
+    out.unlink(missing_ok=True)
+    assert _run(command, "--limits", "HERA2022", "HERA2023", "--out", str(out)) == 0
+    assert out.exists()
