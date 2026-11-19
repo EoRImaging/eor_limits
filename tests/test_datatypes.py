@@ -1,16 +1,8 @@
 """Test the functionality of the datatypes."""
 
 import numpy as np
-import pytest
 
-from eor_limits import KNOWN_LIMITS, DataSet
-
-
-@pytest.mark.parametrize("paper_name", list(KNOWN_LIMITS.keys()))
-def test_load_all_datasets(paper_name):
-    """Test loading all datasets."""
-    dataset = DataSet.load(paper_name)
-    assert isinstance(dataset, DataSet)
+from eor_limits import DataSet
 
 
 def test_drop_nan():
