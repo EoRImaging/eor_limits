@@ -2229,8 +2229,6 @@ def plot_theories_vs_z(
             zorder=1,
             **theory_style,
         )
-
-        if label is not None:
-            lines.append(line)
+        lines.append(line)
 
     return lines
