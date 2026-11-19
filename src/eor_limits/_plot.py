@@ -437,7 +437,9 @@ def plot_vs_z(
     # SENSITIVITIES
 
     # Build styles for sensitivity lines, applying any overrides specified by the user.
-    sensitivity_style = _build_sensitivity_styles(sensitivities, sensitivity_style)
+    sensitivity_style = _build_sensitivity_styles(
+        sensitivities, sensitivity_style, sizes
+    )
 
     # Keep only the redshifts inside the plotted range.
     sensitivities = _select_sensitivities_z_range(sensitivities, z_range)
@@ -944,7 +946,9 @@ def plot_vs_k(
     # SENSITIVITIES
 
     # Build styles for sensitivity lines, applying any overrides specified by the user.
-    sensitivity_style = _build_sensitivity_styles(sensitivities, sensitivity_style)
+    sensitivity_style = _build_sensitivity_styles(
+        sensitivities, sensitivity_style, sizes
+    )
 
     # Keep only the redshifts inside the plotted range.
     sensitivities = _select_sensitivities_z_range(sensitivities, z_range)
@@ -1396,6 +1400,7 @@ def _select_sensitivities_z_range(
 def _build_sensitivity_styles(
     sensitivities: dict[str, DataSet],
     sensitivity_style: dict[str, dict[str, Any]] | None,
+    sizes: dict[str, Any],
 ) -> dict[str, dict[str, Any]]:
     """Build a dictionary of styles to use for each sensitivity curve.
 
@@ -1407,6 +1412,8 @@ def _build_sensitivity_styles(
         A dictionary mapping sensitivity names to their datasets.
     sensitivity_style : dict[str, dict[str, Any]] | None
         A dictionary of style overrides for each sensitivity curve.
+    sizes : dict[str, Any]
+        A dictionary of size defaults.
 
     Returns
     -------
@@ -1417,7 +1424,7 @@ def _build_sensitivity_styles(
     for name in sensitivities:
         style = {
             "linestyle": "--",
-            "linewidth": 3,
+            "linewidth": 1.5 * sizes["linewidth"],
             "color": "k",
         }
         style |= sensitivity_style.get(name, {}) if sensitivity_style else {}
