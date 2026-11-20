@@ -8,10 +8,6 @@ import pytest
 
 from eor_limits import load_sensitivity_data, plot_vs_k, plot_vs_z
 
-# Output directory for the test figures, kept for inspection
-OUTPUT_DIR = Path(__file__).parent / "figures"
-OUTPUT_DIR.mkdir(exist_ok=True)
-
 PLOT_FUNCS = [plot_vs_k, plot_vs_z]
 
 # The limits and theories that every plot below starts from
@@ -89,10 +85,9 @@ SKA_SENSITIVITIES = {
 SENSITIVITY_Z_RANGE = (7.0, 11.0)
 
 
-def _plot(plot_func, name: str, **kwargs):
-    """Draw ``plot_func`` with PLOTTING_ARGS and ``kwargs``, saving the figure."""
-    out = OUTPUT_DIR / f"test_lib_{plot_func.__name__}_{name}.png"
-    return plot_func(**{**PLOTTING_ARGS, **kwargs}, out=out)
+def _plot(plot_func, tmp_path: Path, **kwargs):
+    """Draw ``plot_func`` with PLOTTING_ARGS and ``kwargs``, saved to ``tmp_path``."""
+    return plot_func(**{**PLOTTING_ARGS, **kwargs}, out=tmp_path / "plot.png")
 
 
 def _legend_texts(fig) -> list[str]:
@@ -112,25 +107,25 @@ def _find_lines(ax, x, y) -> list:
 
 
 @pytest.mark.parametrize("plot_func", PLOT_FUNCS)
-def test_lib_plot_defaults(plot_func):
+def test_lib_plot_defaults(plot_func, tmp_path):
     """Test plotting with no arguments, which draws every known limit."""
-    plot_func(out=OUTPUT_DIR / f"test_lib_{plot_func.__name__}_basic.png")
+    plot_func(out=tmp_path / "plot.png")
 
 
 @pytest.mark.parametrize("plot_func", PLOT_FUNCS)
 @pytest.mark.parametrize("option", OPTIONS)
-def test_lib_plot_with_option(plot_func, option):
+def test_lib_plot_with_option(plot_func, option, tmp_path):
     """Test that each plotting option draws a plot without errors."""
-    _plot(plot_func, f"with_{option}", **OPTIONS[option])
+    _plot(plot_func, tmp_path, **OPTIONS[option])
 
 
 @pytest.mark.parametrize("option", K_OPTIONS)
-def test_lib_plot_vs_k_with_option(option):
+def test_lib_plot_vs_k_with_option(option, tmp_path):
     """Test that each option specific to plot_vs_k draws a plot without errors."""
-    _plot(plot_vs_k, f"with_{option}", **K_OPTIONS[option])
+    _plot(plot_vs_k, tmp_path, **K_OPTIONS[option])
 
 
-def test_lib_plot_vs_k_limits_outside_k_range_are_skipped(caplog):
+def test_lib_plot_vs_k_limits_outside_k_range_are_skipped(caplog, tmp_path):
     """Test that limits without data in the k range are skipped.
 
     Pal2021 only has data at k = 2.36 h/Mpc.
@@ -138,7 +133,7 @@ def test_lib_plot_vs_k_limits_outside_k_range_are_skipped(caplog):
     caplog.set_level(logging.INFO, logger="eor_limits")
     fig = _plot(
         plot_vs_k,
-        "with_limits_outside_k_range",
+        tmp_path,
         limits=[*PLOTTING_ARGS["limits"], "Pal2021"],
         k_range=(0.1, 1.0),
     )
@@ -158,17 +153,17 @@ def test_lib_plot_vs_k_limits_outside_k_range_are_skipped(caplog):
         (plot_vs_z, "year", "Year"),
     ],
 )
-def test_lib_plot_colorbar(plot_func, color_by, label):
+def test_lib_plot_colorbar(plot_func, color_by, label, tmp_path):
     """Test that the colorbar label matches what the lines are coloured by."""
-    fig = _plot(plot_func, f"with_color_by_{color_by}", color_by=color_by)
+    fig = _plot(plot_func, tmp_path, color_by=color_by)
     assert len(fig.axes) == 2
     assert fig.axes[1].get_ylabel() == label
 
 
 @pytest.mark.parametrize("plot_func", PLOT_FUNCS)
-def test_lib_plot_without_colorbar(plot_func):
+def test_lib_plot_without_colorbar(plot_func, tmp_path):
     """Test that the colorbar can be turned off."""
-    fig = _plot(plot_func, "without_colorbar", show_colorbar=False)
+    fig = _plot(plot_func, tmp_path, show_colorbar=False)
     assert len(fig.axes) == 1
 
 
@@ -176,32 +171,28 @@ def test_lib_plot_without_colorbar(plot_func):
     ("plot_func", "option", "text"),
     [(plot_vs_k, "z_labels", "z"), (plot_vs_z, "k_labels", "h/Mpc")],
 )
-def test_lib_plot_ranges_in_legend(plot_func, option, text):
+def test_lib_plot_ranges_in_legend(plot_func, option, text, tmp_path):
     """Test that each limit's z (or k) range can be shown in the legend."""
-    fig = _plot(
-        plot_func, f"with_{option}_in_legend", color_by="year", **{option: "legend"}
-    )
+    fig = _plot(plot_func, tmp_path, color_by="year", **{option: "legend"})
     limit_texts = [t for t in _legend_texts(fig) if "Theory" not in t]
     assert limit_texts
     assert all(text in t for t in limit_texts)
 
 
 @pytest.mark.parametrize("plot_func", PLOT_FUNCS)
-def test_lib_plot_with_legend_labeler(plot_func):
+def test_lib_plot_with_legend_labeler(plot_func, tmp_path):
     """Test that only the datasets given custom labels appear in the legend."""
-    fig = _plot(
-        plot_func, "with_legend_labeler", legend_labeler={"HERA2023": "HERA 2023"}
-    )
+    fig = _plot(plot_func, tmp_path, legend_labeler={"HERA2023": "HERA 2023"})
     assert _legend_texts(fig) == ["HERA 2023"]
 
 
 # Tests for plotting sensitivities
 
 
-def _plot_sensitivities(plot_func, name: str, **kwargs):
+def _plot_sensitivities(plot_func, tmp_path: Path, **kwargs):
     """Draw ``plot_func`` with the SKA sensitivities over SENSITIVITY_Z_RANGE."""
     defaults = {"sensitivities": SKA_SENSITIVITIES, "z_range": SENSITIVITY_Z_RANGE}
-    return _plot(plot_func, name, **{**defaults, **kwargs})
+    return _plot(plot_func, tmp_path, **{**defaults, **kwargs})
 
 
 def _expected_sensitivity_lines(plot_func, name: str) -> list:
@@ -225,14 +216,14 @@ def _closest_finite(k: np.ndarray, dsq: np.ndarray, k_target: float) -> float:
 
 
 @pytest.mark.parametrize("plot_func", PLOT_FUNCS)
-def test_lib_plot_with_sensitivities(plot_func):
+def test_lib_plot_with_sensitivities(plot_func, tmp_path):
     """Test that the sensitivities are drawn, labelled and kept within the axis.
 
     Without a delta_squared_range, the bottom of the axis is lowered to the lowest
     sensitivity inside the redshift range, but not to the much lower SKA values
     at z = 5.6.
     """
-    ax = _plot_sensitivities(plot_func, "with_sensitivities").axes[0]
+    ax = _plot_sensitivities(plot_func, tmp_path).axes[0]
     for label, name in SKA_SENSITIVITIES.items():
         for x, y in _expected_sensitivity_lines(plot_func, name):
             assert len(_find_lines(ax, x, y)) == 1
@@ -255,12 +246,10 @@ def test_lib_plot_with_sensitivities(plot_func):
 
 
 @pytest.mark.parametrize("plot_func", PLOT_FUNCS)
-def test_lib_plot_with_sensitivity_style(plot_func):
+def test_lib_plot_with_sensitivity_style(plot_func, tmp_path):
     """Test that sensitivity style parameters are passed on to the lines."""
     style = {"SKA-AA4": {"color": "C3", "linestyle": ":", "alpha": 0.5}}
-    ax = _plot_sensitivities(
-        plot_func, "with_sensitivity_style", sensitivity_style=style
-    ).axes[0]
+    ax = _plot_sensitivities(plot_func, tmp_path, sensitivity_style=style).axes[0]
     for x, y in _expected_sensitivity_lines(plot_func, SKA_SENSITIVITIES["SKA-AA4"]):
         (line,) = _find_lines(ax, x, y)
         assert line.get_color() == "C3"
@@ -278,11 +267,9 @@ def test_lib_plot_with_sensitivity_style(plot_func):
         10.0,
     ],
 )
-def test_lib_plot_vs_z_with_sensitivity_k(sensitivity_k):
+def test_lib_plot_vs_z_with_sensitivity_k(sensitivity_k, tmp_path):
     """Test that sensitivity_k selects the closest k bin with a finite value."""
-    ax = _plot_sensitivities(
-        plot_vs_z, f"with_sensitivity_k_{sensitivity_k}", sensitivity_k=sensitivity_k
-    ).axes[0]
+    ax = _plot_sensitivities(plot_vs_z, tmp_path, sensitivity_k=sensitivity_k).axes[0]
     for name in SKA_SENSITIVITIES.values():
         data = load_sensitivity_data(name).select_z_range(*SENSITIVITY_Z_RANGE).data
         at_k = [
@@ -293,7 +280,9 @@ def test_lib_plot_vs_z_with_sensitivity_k(sensitivity_k):
 
 
 @pytest.mark.parametrize("plot_func", PLOT_FUNCS)
-def test_lib_plot_sensitivities_outside_z_range_are_skipped(plot_func, caplog):
+def test_lib_plot_sensitivities_outside_z_range_are_skipped(
+    plot_func, caplog, tmp_path
+):
     """Test that sensitivities without a redshift in the plotted range are skipped.
 
     The SKA files have no redshift between z = 16.8 and z = 22.7. The HERA 2026 and
@@ -302,7 +291,7 @@ def test_lib_plot_sensitivities_outside_z_range_are_skipped(plot_func, caplog):
     """
     ax = _plot_sensitivities(
         plot_func,
-        "with_sensitivities_outside_z_range",
+        tmp_path,
         z_range=(17.0, 22.0),
         delta_squared_range=(1e0, 1e12),
     ).axes[0]
@@ -312,8 +301,8 @@ def test_lib_plot_sensitivities_outside_z_range_are_skipped(plot_func, caplog):
 
 
 @pytest.mark.parametrize("plot_func", PLOT_FUNCS)
-def test_lib_plot_sensitivity_kind_is_rejected(plot_func):
+def test_lib_plot_sensitivity_kind_is_rejected(plot_func, tmp_path):
     """Test that the removed sensitivity_kind style option raises an error."""
     style = {"SKA-AA4": {"sensitivity_kind": "thermal"}}
     with pytest.raises(ValueError, match="sensitivity_kind"):
-        _plot_sensitivities(plot_func, "with_sensitivity_kind", sensitivity_style=style)
+        _plot_sensitivities(plot_func, tmp_path, sensitivity_style=style)

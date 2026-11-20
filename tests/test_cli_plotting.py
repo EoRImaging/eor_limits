@@ -1,15 +1,10 @@
 """Test the command-line interface."""
 
 import inspect
-from pathlib import Path
 
 import pytest
 
 from eor_limits import _cli
-
-# Output directory for the test figures, kept for inspection
-OUTPUT_DIR = Path(__file__).parent / "figures"
-OUTPUT_DIR.mkdir(exist_ok=True)
 
 # Command lines covering each kind of option, and the arguments they should pass to
 # the plotting function
@@ -129,9 +124,8 @@ def test_cli_reports_plotting_errors(monkeypatch, capsys, command):
 
 
 @pytest.mark.parametrize("command", ["plot-vs-k", "plot-vs-z"])
-def test_cli_draws_plot(command):
+def test_cli_draws_plot(command, tmp_path):
     """Test that each command draws a plot and saves it."""
-    out = OUTPUT_DIR / f"test_cli_{command.replace('-', '_')}.png"
-    out.unlink(missing_ok=True)
+    out = tmp_path / "plot.png"
     assert _run(command, "--limits", "HERA2022", "HERA2023", "--out", str(out)) == 0
     assert out.exists()
