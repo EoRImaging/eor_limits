@@ -1,8 +1,8 @@
 # eor-limits
 
-`eor-limits` is a small utility that provides a compendium of published upper limits on the 21-cm power spectrum from the Epoch of Reionization (EoR) and Cosmic Dawn. It also provides functionality to plot these limits as a function of scale $k$ and redshift $z$, along with some theoretical predictions from simulations.
+`eor-limits` is a small utility that provides a compendium of published upper limits on the 21-cm power spectrum from the Epoch of Reionization (EoR) and Cosmic Dawn. It also provides functionality to plot these limits as a function of scale $k$ and redshift $z$. The observational limits are bundled alongside several theoretical predictions from simulations and experimental sensitivity estimates to allow for easy comparison.
 
-The published limits are included in human-readable yaml files in the data folder, and the plotting functionality is highly customizable through keywords. It is possible to read in custom yaml files to add new limits or simulations, and we welcome pull requests to add new data sets or simulations from published papers.
+The published limits are included in human-readable YAML files in the `data` folder, alongside the theoretical predictions in the `theory` folder and sensitivity estimates in the `sensitivities` folder. It is also possible to read in custom YAML files, and we welcome pull requests to add new observational data or theory models from published papers.
 
 To use the code, check out the _Usage and examples_. For users who want to quickly explore the limits and make plots without needing to install anything, check out the new online interface: [eorlimits.streamlit.app](https://eorlimits.streamlit.app/)!
 
@@ -12,7 +12,7 @@ To use the code, check out the _Usage and examples_. For users who want to quick
 
 ### User installation
 
-* Clone the repository using ```git clone https://github.com/EoRImaging/eor_limits```
+* Clone the repository using ```git clone https://GitHub.com/EoRImaging/eor_limits```
 
 * For a simple user installation, change directories into the `eor_limits` folder and run ```pip install .``` (including the dot).
 
@@ -22,13 +22,13 @@ To use the code, check out the _Usage and examples_. For users who want to quick
 
 * **pip installation**: Developers who would like to contribute to the code can install the package as: ```pip install -e .``` (including the dot). This will install the package in editable mode, which allows you to make changes to the code and have them immediately reflected when you import the package.
 
-* **uv installation**: If you prefer to use `uv` to manage your environment, you can install the package in editable mode with the development dependencies using: ```uv sync --all-extras --editable```
+* **uv installation**: If you prefer to use `uv` to manage your environment, you can install the package in editable mode with the development dependencies using: ```uv sync```. To also install the dependencies for building the documentation, use ```uv sync --group docs```.
 
 * **Using pre-commit**: To use pre-commit to prevent committing code that does not follow our style, you'll need to run `pre-commit install` in the top level `eor_limits` directory.
 
 * **Testing**: To run the tests, you can use the command `pytest` from the top level `eor_limits` directory. If you have `uv` installed, you can also run the tests with the development dependencies using `uv run pytest`.
 
-* **CLI debugging**: To debug the CLI, append the environment variable `EOR_LIMITS_DEBUG=1` to the command you want to run, e.g. ```EOR_LIMITS_DEBUG=1 eor-limits plot-vs-k --out=MyPlot.pdf```. This will print out richly-formatted tracebacks instead of the high-level error messages.
+* **CLI debugging**: To debug the CLI, prefix the command you want to run with the environment variable `EOR_LIMITS_DEBUG=1`, e.g. ```EOR_LIMITS_DEBUG=1 eor-limits plot-vs-k --out=MyPlot.pdf```. This will print out richly-formatted tracebacks instead of the high-level error messages.
 
 ## Usage and examples
 
@@ -36,14 +36,15 @@ There are three main ways to use `eor-limits`: through the online graphical user
 
 ### Using the online GUI
 
-The online GUI is the quickest way to explore published limits and generate plots without installing anything locally. It is built with [Streamlit](https://streamlit.io/) and lets you select data sets, apply filters, customize the display, and download both the data and resulting figures. You can access it at [eorlimits.streamlit.app](https://eorlimits.streamlit.app/). Note that the GUI may differ in its plotting style and customization options, as it sits on a different Github repository (although using this codebase as a dependency) and is maintained separately.
+The online GUI is the quickest way to explore published limits and generate plots without installing anything locally. It is built with [Streamlit](https://streamlit.io/) and lets you select datasets, apply filters, customize the display, and download both the data and resulting figures. You can access it at [eorlimits.streamlit.app](https://eorlimits.streamlit.app/). Note that the GUI may differ in its plotting style and customization options, as it sits on a different GitHub repository (although using this codebase as a dependency) and is maintained separately.
 
 ### Using the Python API
 
-The Python API provides tools for loading, filtering, and plotting the included data sets. For a more complete walkthrough, see the _Tutorial notebook_. Here we just give a brief overview. A simple example of loading the data and slicing it:
+The Python API provides tools for loading, filtering, and plotting the included datasets. For a more complete walkthrough, see the _Tutorial notebook_. Here we just give a brief overview. All datasets are loaded with `load_limit_data`, `load_theory_model`, or `load_sensitivity_data`, which return a `DataSet` object. For available datasets, see `KNOWN_LIMITS`, `KNOWN_THEORIES`, and `KNOWN_SENSITIVITIES`. A simple example of loading the data and slicing it is shown below:
 
 ```python
-from eor_limits import load_limit_data
+from eor_limits import load_limit_data, load_theory_model, load_sensitivity_data
+from eor_limits import KNOWN_LIMITS, KNOWN_THEORIES, KNOWN_SENSITIVITIES
 
 hera2026 = load_limit_data("HERA2026")  # or eor_limits.DataSet.load("HERA2026")
 print(hera2026.data.as_pandas_df())
@@ -59,45 +60,33 @@ from eor_limits import plot_vs_k, plot_vs_z
 plot_vs_k()
 ```
 
-The plotting functions accept keyword arguments to choose which limits and simulations to include, customize their styles, and save the output. For example, the following code plots the HERA limits, shades the 2023 result, bolds the HERA 2026 legend item, and adds the `Mesinger2016Faint` and `Mesinger2016Bright` simulations with custom colors and shaded regions:
+The plotting functions accept keyword arguments to choose which observational limits, theory models, and sensitivity estimates to include. You can then customize their styles. For example, the following code plots the HERA limits between redshifts 7 and 11, bolds and shades the HERA 2023 result, adds the `Mesinger2016Faint` and `Mesinger2016Bright` theory models with custom colors and shaded regions, and adds the SKA-Low AA4 sensitivity estimate in red.
 
 ```python
 from eor_limits import plot_vs_k, plot_vs_z
 
 plot_vs_k(
     limits=["HERA2022", "HERA2023", "HERA2026"],
-    bold_limits=["HERA2026"],
+    z_range=(7, 11),
+    bold_limits=["HERA2023"],
     shade_limits=True,
-    base_limit_style={"linewidth": 4, "shade_alpha": 0.08},
-    limit_styles={"HERA2023": {"shade_alpha": 0.16}},
+    base_limit_style={"shade_alpha": 0.05},
+    limit_styles={"HERA2023": {"shade_alpha": 0.5}},
     theories=["Mesinger2016Faint", "Mesinger2016Bright"],
     shade_theories=True,
-    base_theory_style={"color": "black", "linewidth": 2.5},
+    base_theory_style={"color": "black"},
     theory_styles={
         "Mesinger2016Faint": {"linestyle": "--"},
         "Mesinger2016Bright": {"linestyle": ":"},
     },
+    sensitivities={"SKA-AA4": "Breitman2026_AA4_deep1080h"},
+    sensitivity_style={"SKA-AA4": {"color": "red"}},
+    publication=True,
     out="MyPlot.pdf",
 )
 ```
 
-Sensitivity estimates (for example, from 21cmSense) can be added to both plots. The package includes the SKA-Low AA4 and AA* sensitivities of a 1080-hour deep survey from Breitman et al. 2026, named `Breitman2026_AA4_deep1080h` and `Breitman2026_AAstar_deep1080h` (see `KNOWN_SENSITIVITIES`). They include thermal noise and the sample variance of the mock signal used in that paper. Other estimates are read from YAML files in the same format as the limits files, with the sensitivity given as `delta_squared` in mK$^2$ for each redshift `z` and scale `k` in $h\,$Mpc$^{-1}$. The file also needs a top-level `k_unit: h/Mpc` entry, which states the unit of `k`; files without it are rejected. Note that 21cmSense v3 writes $k$ in Mpc$^{-1}$ (see the `k_unit` attribute of its output file), so these values must be divided by $h$. Known sensitivities and files are both read with `load_sensitivity_data`, by name or by path. In `plot_vs_k`, one curve is drawn for each redshift in the file. In `plot_vs_z`, the lowest sensitivity at each redshift is drawn, or the sensitivity in the $k$ bin closest to `sensitivity_k` if it is given.
-
-```python
-from eor_limits import load_sensitivity_data, plot_vs_k, plot_vs_z
-
-ska_aa4 = load_sensitivity_data("Breitman2026_AA4_deep1080h")
-print(ska_aa4.data.as_pandas_df())
-
-plot_vs_k(sensitivities={"SKA AA4": "Breitman2026_AA4_deep1080h"})
-plot_vs_z(
-    sensitivities={
-        "SKA AA4": "Breitman2026_AA4_deep1080h",
-        "My array": "/path/to/my_sensitivity.yaml",
-    },
-    sensitivity_k=0.2,
-)
-```
+Note that custom sensitivity files must use the same format as the limits, i.e. units of $\Delta^2(k)$ in mK$^2$ and $k$ in $h\,$Mpc$^{-1}$. 21cmSense v3 writes $k$ in Mpc$^{-1}$ (see the `k_unit` attribute of its output file), so these values must be divided by $h$. To ensure that the correct units are used, the `k_unit: h/Mpc` attribute must be present in the YAML file. Files without it are rejected.
 
 ### Using the CLI
 
@@ -109,30 +98,23 @@ For the default plot of all limits as a function of scale $k$, run:
 eor-limits plot-vs-k --out=MyPlot.pdf
 ```
 
-The CLI exposes the same plotting options as the Python API. Dictionary-style options, such as custom limit or theory styles, can be passed as JSON strings:
+The CLI exposes the same plotting options as the Python API. Dictionary-style options, such as sensitivities and custom styles, are passed as JSON strings:
 
 ```bash
 eor-limits plot-vs-k \
     --limits HERA2022 HERA2023 HERA2026 \
-    --bold-limits HERA2026 \
+    --z-range 7 11 \
+    --bold-limits HERA2023 \
     --shade-limits \
-    --base-limit-style '{"linewidth": 4, "shade_alpha": 0.08}' \
-    --limit-styles '{"HERA2023": {"shade_alpha": 0.16}}' \
+    --base-limit-style '{"shade_alpha": 0.05}' \
+    --limit-styles '{"HERA2023": {"shade_alpha": 0.5}}' \
     --theories Mesinger2016Faint Mesinger2016Bright \
     --shade-theories \
-    --base-theory-style '{"color": "black", "linewidth": 2.5}' \
+    --base-theory-style '{"color": "black"}' \
     --theory-styles '{"Mesinger2016Faint": {"linestyle": "--"}, "Mesinger2016Bright": {"linestyle": ":"}}' \
-    --out MyPlot.pdf
-```
-
-Sensitivities are passed with one `--sensitivities.<label>` option each, given by name or by path:
-
-```bash
-eor-limits plot-vs-z \
-    --limits HERA2022 HERA2023 \
-    --sensitivities.SKA-AA4 Breitman2026_AA4_deep1080h \
-    --sensitivities.MyArray /path/to/my_sensitivity.yaml \
-    --sensitivity-k 0.2 \
+    --sensitivities '{"SKA-AA4": "Breitman2026_AA4_deep1080h"}' \
+    --sensitivity-style '{"SKA-AA4": {"color": "red"}}' \
+    --publication \
     --out MyPlot.pdf
 ```
 
@@ -142,7 +124,7 @@ eor-limits plot-vs-z \
 
 We welcome contributions to this repository from the community. If you would like to contribute, please follow these guidelines:
 
-* If you would like to add new data sets or simulations, ensure that they come from peer-reviewed published papers and make a pull request to add them to the repository (see _Developer Installation_ for information on how to set up your environment). The data should be added in the form of a YAML file in the data folder (for limits), sensitivities folder (for sensitivities) or the theory folder (for simulations), following the format of the existing files.
+* If you would like to add new observational limits, theory models or sensitivities, ensure that they come from peer-reviewed published papers and make a pull request to add them to the repository (see _Developer installation_ for information on how to set up your environment). The data should be added in the form of a YAML file in the data folder (for observational limits), the theory folder (for theory models), or the sensitivities folder (for sensitivity estimates) following the format of the existing files.
 
     ```yaml
     telescope: GMRT
@@ -155,9 +137,9 @@ We welcome contributions to this repository from the community. If you would lik
         z: [8.6]
     ```
 
-* If you would like to plot or compare unpublished data, you can create a local YAML file and load it in the code using  `DataSet.load("/path/to/my_data.yaml")`.
+* If you would like to plot or compare unpublished data, you can create a local YAML file in the same format and pass its path wherever a dataset name is accepted, e.g. `plot_vs_k(limits=["HERA2026", "/path/to/my_data.yaml"])` or `load_limit_data("/path/to/my_data.yaml")`. The same works for theories (`theories=` and `load_theory_model`) and sensitivities (`sensitivities=` and `load_sensitivity_data`).
 
-* If you would like to report a bug or request a feature, please file an issue on the github repository.
+* If you would like to report a bug or request a feature, please file an issue on the GitHub repository.
 
 ### License
 
