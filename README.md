@@ -12,7 +12,7 @@ To use the code, check out the _Usage and examples_. For users who want to quick
 
 ### User installation
 
-* Clone the repository using ```git clone https://GitHub.com/EoRImaging/eor_limits```
+* Clone the repository using ```git clone https://github.com/EoRImaging/eor_limits```
 
 * For a simple user installation, change directories into the `eor_limits` folder and run ```pip install .``` (including the dot).
 
