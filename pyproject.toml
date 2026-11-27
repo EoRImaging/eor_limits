@@ -1,12 +1,13 @@
 [project]
 name = "eor-limits"
-description = "A data format and plotting utility for 21cm power spectrum upper limits."
+description = "A 21-cm power spectrum limits compendium and plotting package."
 readme = "README.md"
 authors = [
     { name = "Jiten Dhandha", email = "jitendhandha@gmail.com" },
     { name = "Steven Murray", email = "murray.steveng@gmail.com" },
-    { name = "Nichole Barry", email = "nichole.barry@unsw.edu.au"},
     { name = "Bryna Hazelton", email = "brynah@phys.washington.edu"},
+    { name = "Nichole Barry", email = "nichole.barry@unsw.edu.au"},
+    { name = "Daniela Breitman", email = "breitmandaniela@g.ecc.u-tokyo.ac.jp"},
 ]
 requires-python = ">=3.12"
 dependencies = [

@@ -18,11 +18,11 @@ import sys
 project = "eor-limits"  # The name of the project.
 master_doc = "index"  # The master toctree document.
 copyright = (  # ruff: ignore[builtin-variable-shadowing]
-    "2019 (Nichole Barry & Bryna Hazelton), "
-    "2026 (Jiten Dhandha, Steven Murray & all contributors)"
+    "2019-present, Nichole Barry, Bryna Hazelton, "
+    "Jiten Dhandha, Steven Murray, Daniela Breitman, and all contributors"
 )
 
-author = "Jiten Dhandha, Steven Murray, Nichole Barry, Bryna Hazelton"
+author = "Jiten Dhandha, Steven Murray, Bryna Hazelton, Nichole Barry, Daniela Breitman"
 try:
     from eor_limits import __version__ as version
 except ImportError:
