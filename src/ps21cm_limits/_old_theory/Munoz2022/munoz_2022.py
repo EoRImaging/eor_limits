@@ -1,12 +1,15 @@
-# Copyright (c) 2019 Nichole Barry, Bryna Hazelton
-# Licensed under the 2-clause BSD License
-# (Slightly) modified by Julian Munoz in 2021
-"""Process Munoz et al. 2021 spectra for plotting."""
+"""
+Process Munoz et al. 2021 spectra for plotting.
+
+Based on code from Nichole Barry, Bryna Hazelton.
+(Slightly) modified by Julian Munoz in 2021.
+Refactored by Steven Murray, Jiten Dhandha in 2026.
+"""
 
 import numpy as np
 
-from eor_limits._datatypes import Data
-from eor_limits._old_theory._base import THEORY_PATH, BaseTheoryProcessor
+from ps21cm_limits._datatypes import Data
+from ps21cm_limits._old_theory._base import THEORY_PATH, BaseTheoryProcessor
 
 all_galaxies_path = THEORY_PATH / "Munoz2022" / "allgalaxies/"
 optimistic_path = THEORY_PATH / "Munoz2022" / "optimistic/"

@@ -1,12 +1,13 @@
 [project]
-name = "eor-limits"
-description = "A data format and plotting utility for 21cm power spectrum upper limits."
+name = "ps21cm-limits"
+description = "A 21-cm power spectrum limits compendium and plotting package."
 readme = "README.md"
 authors = [
     { name = "Jiten Dhandha", email = "jitendhandha@gmail.com" },
     { name = "Steven Murray", email = "murray.steveng@gmail.com" },
-    { name = "Nichole Barry", email = "nichole.barry@unsw.edu.au"},
     { name = "Bryna Hazelton", email = "brynah@phys.washington.edu"},
+    { name = "Nichole Barry", email = "nichole.barry@unsw.edu.au"},
+    { name = "Daniela Breitman", email = "breitmandaniela@g.ecc.u-tokyo.ac.jp"},
 ]
 requires-python = ">=3.12"
 dependencies = [
@@ -19,20 +20,23 @@ dependencies = [
     "rich>=14.3.1",
     "scipy>=1.14.0",
 ]
-urls = { Repository = "https://github.com/EoRImaging/eor_limits"}
+urls = { Repository = "https://github.com/EoRImaging/ps21cm-limits"}
 license = { file = "LICENSE" }
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Science/Research",
     "License :: OSI Approved :: BSD License",
-    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Topic :: Scientific/Engineering :: Astronomy",
 ]
 keywords = ["cosmology"]
 dynamic = ["version"]
 
 [project.scripts]
-eor-limits = "eor_limits._cli:app"
+ps21cm-limits = "ps21cm_limits._cli:app"
 
 [build-system]
 requires = ["hatchling", "uv-dynamic-versioning"]
@@ -43,8 +47,8 @@ source = "uv-dynamic-versioning"
 
 [tool.hatch.build.targets.wheel]
 # The original theory data and processors are kept in the repository for
-# provenance only; the package loads the YAML files in eor_limits/theory/.
-exclude = ["src/eor_limits/_old_theory"]
+# provenance only; the package loads the YAML files in ps21cm_limits/theory/.
+exclude = ["src/ps21cm_limits/_old_theory"]
 
 [dependency-groups]
 dev = [

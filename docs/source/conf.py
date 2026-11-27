@@ -15,16 +15,16 @@ import sys
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-project = "eor-limits"  # The name of the project.
+project = "ps21cm-limits"  # The name of the project.
 master_doc = "index"  # The master toctree document.
 copyright = (  # ruff: ignore[builtin-variable-shadowing]
-    "2019 (Nichole Barry & Bryna Hazelton), "
-    "2026 (Jiten Dhandha, Steven Murray & all contributors)"
+    "2019-present, Nichole Barry, Bryna Hazelton, "
+    "Jiten Dhandha, Steven Murray, Daniela Breitman, and all contributors"
 )
 
-author = "Jiten Dhandha, Steven Murray, Nichole Barry, Bryna Hazelton"
+author = "Jiten Dhandha, Steven Murray, Bryna Hazelton, Nichole Barry, Daniela Breitman"
 try:
-    from eor_limits import __version__ as version
+    from ps21cm_limits import __version__ as version
 except ImportError:
     pass
 else:
@@ -114,7 +114,7 @@ html_theme = "sphinx_book_theme"
 html_theme_options = {
     "show_navbar_depth": 2,
     "show_prev_next": False,
-    "repository_url": "https://github.com/steven-murray/eor_limits",
+    "repository_url": "https://github.com/EoRImaging/ps21cm-limits",
     "repository_branch": "main",
     "path_to_docs": "docs",
     "use_repository_button": True,

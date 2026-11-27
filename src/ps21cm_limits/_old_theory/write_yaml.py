@@ -1,11 +1,11 @@
-"""Write the theory models in this folder out as YAML files in ``eor_limits/theory/``.
+"""Write the theory models in this folder as YAML files in ``ps21cm_limits/theory/``.
 
 Each processor in this sub-package reads one model's original data files. This
 script loads every model through its processor, writes it to
-``eor_limits/theory/<key>.yaml`` in the same layout as the limits in
-``eor_limits/data/``, and checks that the file loads back to identical data.
+``ps21cm_limits/theory/<key>.yaml`` in the same layout as the limits in
+``ps21cm_limits/data/``, and checks that the file loads back to identical data.
 
-Run with ``python -m eor_limits._old_theory.write_yaml``.
+Run with ``python -m ps21cm_limits._old_theory.write_yaml``.
 """
 
 from pathlib import Path
@@ -14,9 +14,9 @@ import attrs
 import numpy as np
 import yaml
 
-from eor_limits._datatypes import DataSet
-from eor_limits._old_theory import __all_theories__
-from eor_limits.theory import THEORY_PATH as OUTPUT_PATH
+from ps21cm_limits._datatypes import DataSet
+from ps21cm_limits._old_theory import __all_theories__
+from ps21cm_limits.theory import THEORY_PATH as OUTPUT_PATH
 
 # A note on the original data file(s) of each model, written into its YAML file.
 # Keys are model names, or a prefix shared by several models (all the Pagano and

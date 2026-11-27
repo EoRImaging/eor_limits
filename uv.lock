@@ -580,72 +580,6 @@ wheels = [
 ]
 
 [[package]]
-name = "eor-limits"
-source = { editable = "." }
-dependencies = [
-    { name = "cattrs" },
-    { name = "cyclopts" },
-    { name = "matplotlib" },
-    { name = "numpy" },
-    { name = "pandas" },
-    { name = "pyyaml" },
-    { name = "rich" },
-    { name = "scipy" },
-]
-
-[package.dev-dependencies]
-dev = [
-    { name = "coverage" },
-    { name = "ipykernel" },
-    { name = "pip" },
-    { name = "pre-commit" },
-    { name = "pytest" },
-    { name = "pytest-cov" },
-    { name = "ruff" },
-]
-docs = [
-    { name = "ipython" },
-    { name = "jupyter" },
-    { name = "myst-parser" },
-    { name = "nbsphinx" },
-    { name = "numpydoc" },
-    { name = "sphinx" },
-    { name = "sphinx-book-theme" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "cattrs", specifier = ">=25.3.0" },
-    { name = "cyclopts", specifier = ">=4.5.1" },
-    { name = "matplotlib", specifier = ">=3.10.8" },
-    { name = "numpy", specifier = ">=2.4.1" },
-    { name = "pandas", specifier = ">=3.0.0" },
-    { name = "pyyaml", specifier = ">=6.0.3" },
-    { name = "rich", specifier = ">=14.3.1" },
-    { name = "scipy", specifier = ">=1.14.0" },
-]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "coverage", specifier = ">=7.13.2" },
-    { name = "ipykernel", specifier = ">=7.3.0" },
-    { name = "pip", specifier = ">=26.1.2" },
-    { name = "pre-commit", specifier = ">=4.5.1" },
-    { name = "pytest", specifier = ">=9.0.2" },
-    { name = "pytest-cov", specifier = ">=7.0.0" },
-    { name = "ruff", specifier = ">=0.14.14" },
-]
-docs = [
-    { name = "ipython", specifier = ">=9.9.0" },
-    { name = "jupyter", specifier = ">=1.1.1" },
-    { name = "myst-parser", specifier = ">=5.0.0" },
-    { name = "nbsphinx", specifier = ">=0.9.8" },
-    { name = "numpydoc", specifier = ">=1.10.0" },
-    { name = "sphinx", specifier = ">=9.1.0" },
-    { name = "sphinx-book-theme", specifier = ">=1.1.4" },
-]
-
-[[package]]
 name = "executing"
 version = "2.2.1"
 source = { registry = "https://pypi.org/simple" }
@@ -1869,6 +1803,72 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/a1/96/06e01a7b38dce6fe1db213e061a4602dd6032a8a97ef6c1a862537732421/prompt_toolkit-3.0.52.tar.gz", hash = "sha256:28cde192929c8e7321de85de1ddbe736f1375148b02f2e17edd840042b1be855", size = 434198, upload-time = "2025-08-27T15:24:02.057Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/84/03/0d3ce49e2505ae70cf43bc5bb3033955d2fc9f932163e84dc0779cc47f48/prompt_toolkit-3.0.52-py3-none-any.whl", hash = "sha256:9aac639a3bbd33284347de5ad8d68ecc044b91a762dc39b7c21095fcd6a19955", size = 391431, upload-time = "2025-08-27T15:23:59.498Z" },
+]
+
+[[package]]
+name = "ps21cm-limits"
+source = { editable = "." }
+dependencies = [
+    { name = "cattrs" },
+    { name = "cyclopts" },
+    { name = "matplotlib" },
+    { name = "numpy" },
+    { name = "pandas" },
+    { name = "pyyaml" },
+    { name = "rich" },
+    { name = "scipy" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "coverage" },
+    { name = "ipykernel" },
+    { name = "pip" },
+    { name = "pre-commit" },
+    { name = "pytest" },
+    { name = "pytest-cov" },
+    { name = "ruff" },
+]
+docs = [
+    { name = "ipython" },
+    { name = "jupyter" },
+    { name = "myst-parser" },
+    { name = "nbsphinx" },
+    { name = "numpydoc" },
+    { name = "sphinx" },
+    { name = "sphinx-book-theme" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "cattrs", specifier = ">=25.3.0" },
+    { name = "cyclopts", specifier = ">=4.5.1" },
+    { name = "matplotlib", specifier = ">=3.10.8" },
+    { name = "numpy", specifier = ">=2.4.1" },
+    { name = "pandas", specifier = ">=3.0.0" },
+    { name = "pyyaml", specifier = ">=6.0.3" },
+    { name = "rich", specifier = ">=14.3.1" },
+    { name = "scipy", specifier = ">=1.14.0" },
+]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "coverage", specifier = ">=7.13.2" },
+    { name = "ipykernel", specifier = ">=7.3.0" },
+    { name = "pip", specifier = ">=26.1.2" },
+    { name = "pre-commit", specifier = ">=4.5.1" },
+    { name = "pytest", specifier = ">=9.0.2" },
+    { name = "pytest-cov", specifier = ">=7.0.0" },
+    { name = "ruff", specifier = ">=0.14.14" },
+]
+docs = [
+    { name = "ipython", specifier = ">=9.9.0" },
+    { name = "jupyter", specifier = ">=1.1.1" },
+    { name = "myst-parser", specifier = ">=5.0.0" },
+    { name = "nbsphinx", specifier = ">=0.9.8" },
+    { name = "numpydoc", specifier = ">=1.10.0" },
+    { name = "sphinx", specifier = ">=9.1.0" },
+    { name = "sphinx-book-theme", specifier = ">=1.1.4" },
 ]
 
 [[package]]

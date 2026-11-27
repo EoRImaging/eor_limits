@@ -32,9 +32,9 @@ jobs:
 
       # Check that basic features work and we didn't miss to include crucial files
       - name: Smoke test (wheel)
-        run: uv run --isolated --no-project --with dist/*.whl python -c "import eor_limits"
+        run: uv run --isolated --no-project --with dist/*.whl python -c "import ps21cm_limits"
       - name: Smoke test (source distribution)
-        run: uv run --isolated --no-project --with dist/*.tar.gz python -c "import eor_limits"
+        run: uv run --isolated --no-project --with dist/*.tar.gz python -c "import ps21cm_limits"
 
       - name: Deploy to PyPI
         if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') && success()

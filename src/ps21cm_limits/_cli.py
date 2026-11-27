@@ -1,6 +1,4 @@
-# Copyright (c) 2019 Nichole Barry, Bryna Hazelton
-# Licensed under the 2-clause BSD License
-"""CLI entry points for eor_limits."""
+"""CLI entry points for ps21cm_limits."""
 
 import functools
 import logging
@@ -26,7 +24,7 @@ app = App(
     # negative="" remove the --empty options that cyclopts adds for None-typed params
     default_parameter=Parameter(show_default=True, negative=""),
 )
-logger = logging.getLogger("eor_limits")
+logger = logging.getLogger("ps21cm_limits")
 logging.basicConfig(
     level=logging.INFO,
     format="%(message)s",
@@ -57,7 +55,7 @@ def plot_vs_k(*args, **kwargs):
     try:
         _plot_vs_k(*args, **kwargs)
     except Exception as e:
-        if os.getenv("EOR_LIMITS_DEBUG"):
+        if os.getenv("PS21CM_LIMITS_DEBUG"):
             raise
         error = CLIError(str(e), title="Error")
         console.print(error.render())
@@ -70,7 +68,7 @@ def plot_vs_z(*args, **kwargs):
     try:
         _plot_vs_z(*args, **kwargs)
     except Exception as e:
-        if os.getenv("EOR_LIMITS_DEBUG"):
+        if os.getenv("PS21CM_LIMITS_DEBUG"):
             raise
         error = CLIError(str(e), title="Error")
         console.print(error.render())

@@ -1,14 +1,16 @@
-#! /usr/bin/env python
-# Copyright (c) 2019 Nichole Barry, Bryna Hazelton
-# Licensed under the 2-clause BSD License
-"""Process Mesinger et al. 2016 EOS spectra for plotting."""
+"""
+Process Mesinger et al. 2016 EOS spectra for plotting.
+
+Originally written by Nichole Barry, Bryna Hazelton.
+Refactored by Steven Murray, Jiten Dhandha in 2026.
+"""
 
 from pathlib import Path
 
 import numpy as np
 
-from eor_limits._datatypes import Data
-from eor_limits._old_theory._base import THEORY_PATH, BaseTheoryProcessor
+from ps21cm_limits._datatypes import Data
+from ps21cm_limits._old_theory._base import THEORY_PATH, BaseTheoryProcessor
 
 faint_path = THEORY_PATH / "Mesinger2016" / "faint_galaxies/"
 bright_path = THEORY_PATH / "Mesinger2016" / "bright_galaxies/"

@@ -1,8 +1,10 @@
 """
-eor-limits: A package for plotting and comparing 21cm EoR limits and theories.
+ps21cm-limits: A 21-cm power spectrum limits compendium and plotting package.
 
-Copyright (c) 2019 Nichole Barry, Bryna Hazelton
-Licensed under the 2-clause BSD License
+This package provides tools for loading and plotting the latest observational
+limits on the 21-cm power spectrum from the Epoch of Reionization (EoR) and
+Cosmic Dawn, alongside theoretical models and sensitivities of current and
+future experiments.
 """
 
 from ._data_loading import (

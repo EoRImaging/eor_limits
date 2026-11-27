@@ -173,7 +173,7 @@ def plot_vs_z(
         Dictionary of sensitivities to plot on the figure. The keys are labels for each
         sensitivity estimate, and the values are names of known sensitivities (see
         ``KNOWN_SENSITIVITIES``) or paths to YAML files in the same format as the
-        limits files (see :func:`eor_limits.load_sensitivity_data`).
+        limits files (see :func:`ps21cm_limits.load_sensitivity_data`).
         The |k| values in these files must be in units of |h/Mpc|, as for the
         limits, since they are plotted without any conversion.
         Only the redshifts inside ``z_range`` are plotted.
@@ -682,7 +682,7 @@ def plot_vs_k(
         Dictionary of sensitivities to plot on the figure. The keys are labels for each
         sensitivity estimate, and the values are names of known sensitivities (see
         ``KNOWN_SENSITIVITIES``) or paths to YAML files in the same format as the
-        limits files (see :func:`eor_limits.load_sensitivity_data`).
+        limits files (see :func:`ps21cm_limits.load_sensitivity_data`).
         The |k| values in these files must be in units of |h/Mpc|, as for the
         limits, since they are plotted without any conversion.
         Only the redshifts inside ``z_range`` are plotted.
@@ -1099,7 +1099,7 @@ def select_k_and_z_ranges(
             try:
                 limit = limit.select_z_range(*z_range)
             except ValueError:
-                logging.getLogger("eor_limits").info(
+                logging.getLogger("ps21cm_limits").info(
                     f"{limit.key} skipped since its outside redshift range "
                     f"[{z_range[0]} < z < {z_range[1]}]"
                 )
@@ -1119,7 +1119,7 @@ def select_k_and_z_ranges(
             try:
                 limit = limit.select_k_range(*k_range)
             except ValueError:
-                logging.getLogger("eor_limits").info(
+                logging.getLogger("ps21cm_limits").info(
                     f"{limit.key} skipped since its outside k range "
                     f"[{k_range[0]} < k < {k_range[1]}]"
                 )
@@ -1139,7 +1139,7 @@ def select_k_and_z_ranges(
             try:
                 limit = limit.select_delta_squared_range(*delta_squared_range)
             except ValueError:
-                logging.getLogger("eor_limits").info(
+                logging.getLogger("ps21cm_limits").info(
                     f"{limit.key} skipped since its outside delta squared range "
                     f"[{delta_squared_range[0]} < delta^2 < {delta_squared_range[1]}]"
                 )
@@ -1390,7 +1390,7 @@ def _select_sensitivities_z_range(
         except ValueError:
             if not warn:
                 continue
-            logging.getLogger("eor_limits").warning(
+            logging.getLogger("ps21cm_limits").warning(
                 f"Sensitivity '{name}' skipped since it is outside redshift range "
                 f"[{z_range[0]} < z < {z_range[1]}]"
             )
@@ -1700,7 +1700,7 @@ def plot_limits_vs_k(
     lines = []
 
     for limit, label in zip(limits, limit_labels, strict=True):
-        logging.getLogger("eor_limits").info(f"Plotting {limit.author} {limit.year}")
+        logging.getLogger("ps21cm_limits").info(f"Plotting {limit.author} {limit.year}")
 
         limit_style = limit_styles[limit.key].copy()
 
@@ -1868,7 +1868,9 @@ def plot_theories_vs_k(
     lines = []
 
     for theory, label in zip(theories, theory_labels, strict=True):
-        logging.getLogger("eor_limits").info(f"Plotting {theory.author} {theory.year}")
+        logging.getLogger("ps21cm_limits").info(
+            f"Plotting {theory.author} {theory.year}"
+        )
 
         theory_style = theory_styles[theory.key].copy()
 
@@ -2068,7 +2070,7 @@ def plot_limits_vs_z(
     lines = []
 
     for _idx, (limit, label) in enumerate(zip(limits, limit_labels, strict=True)):
-        logging.getLogger("eor_limits").info(f"Plotting {limit.author} {limit.year}")
+        logging.getLogger("ps21cm_limits").info(f"Plotting {limit.author} {limit.year}")
 
         limit_style = limit_styles[limit.key].copy()
 
@@ -2195,7 +2197,9 @@ def plot_theories_vs_z(
         return lines
 
     for theory, label in zip(theories, theory_labels, strict=True):
-        logging.getLogger("eor_limits").info(f"Plotting {theory.author} {theory.year}")
+        logging.getLogger("ps21cm_limits").info(
+            f"Plotting {theory.author} {theory.year}"
+        )
 
         theory_style = theory_styles[theory.key].copy()
 
@@ -2216,7 +2220,7 @@ def plot_theories_vs_z(
             # Check if theory_k is within the available k range
             k_min, k_max = k_sorted[0], k_sorted[-1]
             if not (k_min <= theory_k <= k_max):
-                logging.getLogger("eor_limits").warning(
+                logging.getLogger("ps21cm_limits").warning(
                     f"theory_k={theory_k} outside k range [{k_min:.4f}, "
                     f"{k_max:.4f}] for {theory.key} at z={z_vals[z_idx]}. "
                     f"Using nearest available k value."
@@ -2239,7 +2243,7 @@ def plot_theories_vs_z(
                     dsq_vals.append(dsq_at_k)
                 except ValueError as e:
                     msg = f"CubicSpline failed for {theory.key}: {e}"
-                    logging.getLogger("eor_limits").warning(
+                    logging.getLogger("ps21cm_limits").warning(
                         f"{msg}. Using nearest neighbor interpolation."
                     )
                     nearest_idx = np.argmin(np.abs(k_sorted - theory_k))

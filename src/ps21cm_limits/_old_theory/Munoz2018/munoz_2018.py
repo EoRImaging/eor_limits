@@ -1,10 +1,14 @@
-"""Processor for Muñoz 2018 Mini-Charged DM model with f_DM=0.3."""
+"""
+Processor for Muñoz 2018 Mini-Charged DM model with f_DM=0.3.
+
+Written by Steven Murray, Jiten Dhandha in 2026.
+"""
 
 import numpy as np
 import yaml
 
-from eor_limits._datatypes import Data
-from eor_limits._old_theory._base import THEORY_PATH, BaseTheoryProcessor
+from ps21cm_limits._datatypes import Data
+from ps21cm_limits._old_theory._base import THEORY_PATH, BaseTheoryProcessor
 
 munoz_fdm3_path = THEORY_PATH / "Munoz2018" / "munoz_2018_fdm3.yaml"
 

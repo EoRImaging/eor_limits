@@ -4,8 +4,8 @@ from pathlib import Path
 
 import pytest
 
-from eor_limits import KNOWN_LIMITS, KNOWN_SENSITIVITIES, KNOWN_THEORIES, DataSet
-from eor_limits._data_loading import _resolve_dataset_path
+from ps21cm_limits import KNOWN_LIMITS, KNOWN_SENSITIVITIES, KNOWN_THEORIES, DataSet
+from ps21cm_limits._data_loading import _resolve_dataset_path
 
 KNOWN = {"Known2026": Path("/registry/Known2026.yaml")}
 BUNDLED = {**KNOWN_LIMITS, **KNOWN_THEORIES, **KNOWN_SENSITIVITIES}

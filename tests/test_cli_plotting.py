@@ -4,7 +4,7 @@ import inspect
 
 import pytest
 
-from eor_limits import _cli
+from ps21cm_limits import _cli
 
 # Command lines covering each kind of option, and the arguments they should pass to
 # the plotting function
@@ -118,7 +118,7 @@ def test_cli_reports_plotting_errors(monkeypatch, capsys, command):
         raise ValueError("Something went wrong")
 
     monkeypatch.setattr(_cli, f"_{command.replace('-', '_')}", fail)
-    monkeypatch.delenv("EOR_LIMITS_DEBUG", raising=False)
+    monkeypatch.delenv("PS21CM_LIMITS_DEBUG", raising=False)
     assert _run(command) == 1
     assert "Something went wrong" in capsys.readouterr().out
 

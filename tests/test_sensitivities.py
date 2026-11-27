@@ -3,7 +3,7 @@
 import numpy as np
 import pytest
 
-from eor_limits import KNOWN_SENSITIVITIES, load_sensitivity_data
+from ps21cm_limits import KNOWN_SENSITIVITIES, load_sensitivity_data
 
 
 def test_ska_aa4_at_least_as_sensitive_as_aastar():

@@ -1,11 +1,14 @@
-# Copyright (c) 2019 Nichole Barry, Bryna Hazelton
-# Licensed under the 2-clause BSD License
-"""Process Pagano and Liu 2020 spectra for plotting."""
+"""
+Process Pagano and Liu 2020 spectra for plotting.
+
+Originally written by Nichole Barry, Bryna Hazelton.
+Refactored by Steven Murray, Jiten Dhandha in 2026.
+"""
 
 import numpy as np
 
-from eor_limits._datatypes import Data
-from eor_limits._old_theory._base import THEORY_PATH, BaseTheoryProcessor
+from ps21cm_limits._datatypes import Data
+from ps21cm_limits._old_theory._base import THEORY_PATH, BaseTheoryProcessor
 
 # all betas are in the same file, so just load one of them to get the path
 pagano_file = THEORY_PATH / "Pagano2020" / "pagano_liu_2020.npz"
