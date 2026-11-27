@@ -1,5 +1,12 @@
 # ps21cm-limits
 
+[![Tests](https://github.com/EoRImaging/ps21cm-limits/actions/workflows/test-suite.yml/badge.svg)](https://github.com/EoRImaging/ps21cm-limits/actions/workflows/test-suite.yml)
+[![Coverage](https://codecov.io/gh/EoRImaging/ps21cm-limits/graph/badge.svg)](https://codecov.io/gh/EoRImaging/ps21cm-limits)
+[![Documentation](https://readthedocs.org/projects/ps21cm-limits/badge/?version=latest)](https://ps21cm-limits.readthedocs.io/en/latest/)
+[![PyPI](https://img.shields.io/pypi/v/ps21cm-limits)](https://pypi.org/project/ps21cm-limits/)
+[![Python versions](https://img.shields.io/pypi/pyversions/ps21cm-limits)](https://pypi.org/project/ps21cm-limits/)
+[![License](https://img.shields.io/badge/license-BSD--2--Clause-blue)](https://github.com/EoRImaging/ps21cm-limits/blob/main/LICENSE)
+
 `ps21cm-limits` is a small utility that provides a compendium of published upper limits on the 21-cm power spectrum from the Epoch of Reionization (EoR) and Cosmic Dawn. It also provides functionality to plot these limits as a function of scale $k$ and redshift $z$. The observational limits are bundled alongside several theoretical predictions from simulations and experimental sensitivity estimates to allow for easy comparison.
 
 The published limits are included in human-readable YAML files in the `data` folder, alongside the theoretical predictions in the `theory` folder and sensitivity estimates in the `sensitivities` folder. It is also possible to read in custom YAML files, and we welcome pull requests to add new observational data or theory models from published papers.
