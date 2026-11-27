@@ -1,4 +1,4 @@
-"""Init file for the directory of sensitivity estimates."""
+"""Init file for the sensitivities directory."""
 
 from pathlib import Path
 

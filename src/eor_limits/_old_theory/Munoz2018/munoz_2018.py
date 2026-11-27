@@ -1,4 +1,8 @@
-"""Processor for Muñoz 2018 Mini-Charged DM model with f_DM=0.3."""
+"""
+Processor for Muñoz 2018 Mini-Charged DM model with f_DM=0.3.
+
+Written by Steven Murray, Jiten Dhandha in 2026.
+"""
 
 import numpy as np
 import yaml

@@ -1,6 +1,9 @@
-# Copyright (c) 2019 Nichole Barry, Bryna Hazelton
-# Licensed under the 2-clause BSD License
-"""Process Pagano and Liu 2020 spectra for plotting."""
+"""
+Process Pagano and Liu 2020 spectra for plotting.
+
+Originally written by Nichole Barry, Bryna Hazelton.
+Refactored by Steven Murray, Jiten Dhandha in 2026.
+"""
 
 import numpy as np
 

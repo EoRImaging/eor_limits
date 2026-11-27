@@ -1,7 +1,9 @@
-#! /usr/bin/env python
-# Copyright (c) 2019 Nichole Barry, Bryna Hazelton
-# Licensed under the 2-clause BSD License
-"""Process Mesinger et al. 2016 EOS spectra for plotting."""
+"""
+Process Mesinger et al. 2016 EOS spectra for plotting.
+
+Originally written by Nichole Barry, Bryna Hazelton.
+Refactored by Steven Murray, Jiten Dhandha in 2026.
+"""
 
 from pathlib import Path
 

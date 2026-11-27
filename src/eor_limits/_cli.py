@@ -1,5 +1,3 @@
-# Copyright (c) 2019 Nichole Barry, Bryna Hazelton
-# Licensed under the 2-clause BSD License
 """CLI entry points for eor_limits."""
 
 import functools
