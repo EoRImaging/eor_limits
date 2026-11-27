@@ -6,7 +6,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from eor_limits import load_sensitivity_data, plot_vs_k, plot_vs_z
+from ps21cm_limits import load_sensitivity_data, plot_vs_k, plot_vs_z
 
 PLOT_FUNCS = [plot_vs_k, plot_vs_z]
 
@@ -130,7 +130,7 @@ def test_lib_plot_vs_k_limits_outside_k_range_are_skipped(caplog, tmp_path):
 
     Pal2021 only has data at k = 2.36 h/Mpc.
     """
-    caplog.set_level(logging.INFO, logger="eor_limits")
+    caplog.set_level(logging.INFO, logger="ps21cm_limits")
     fig = _plot(
         plot_vs_k,
         tmp_path,

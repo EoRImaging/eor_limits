@@ -3,7 +3,7 @@
 import numpy as np
 import pytest
 
-from eor_limits import Data, DataSet
+from ps21cm_limits import Data, DataSet
 
 
 @pytest.fixture

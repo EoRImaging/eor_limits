@@ -1,5 +1,5 @@
 """
-eor-limits: A 21-cm power spectrum limits compendium and plotting package.
+ps21cm-limits: A 21-cm power spectrum limits compendium and plotting package.
 
 This package provides tools for loading and plotting the latest observational
 limits on the 21-cm power spectrum from the Epoch of Reionization (EoR) and

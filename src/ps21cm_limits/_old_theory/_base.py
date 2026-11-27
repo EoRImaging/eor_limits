@@ -3,7 +3,7 @@
 from abc import ABC, abstractmethod
 from pathlib import Path
 
-from eor_limits._datatypes import Data, DataSet
+from ps21cm_limits._datatypes import Data, DataSet
 
 # Import paths and theory registry
 THEORY_PATH = Path(__file__).parent.resolve()

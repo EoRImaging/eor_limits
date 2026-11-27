@@ -5,9 +5,9 @@ from typing import Final
 
 import yaml
 
-from eor_limits._datatypes import DataSet
-from eor_limits.sensitivities import KNOWN_SENSITIVITIES
-from eor_limits.theory import KNOWN_THEORIES
+from ps21cm_limits._datatypes import DataSet
+from ps21cm_limits.sensitivities import KNOWN_SENSITIVITIES
+from ps21cm_limits.theory import KNOWN_THEORIES
 
 __all__ = [
     "_resolve_dataset_path",
@@ -43,7 +43,7 @@ def load_limit_data(name: str | Path) -> DataSet:
     Load observational limits data from known limits or from a YAML file.
 
     This function wraps and provides the same functionality
-    as :func:`eor_limits.DataSet.load`, see docs there for more details.
+    as :func:`ps21cm_limits.DataSet.load`, see docs there for more details.
 
     Parameters
     ----------
@@ -69,7 +69,7 @@ def load_sensitivity_data(name: str | Path) -> DataSet:
     Load a sensitivity estimate from the known sensitivities or from a YAML file.
 
     The YAML file uses the same format as the files of observational limits
-    (see :func:`eor_limits.DataSet.load`). However, the |k| values must be given
+    (see :func:`ps21cm_limits.DataSet.load`). However, the |k| values must be given
     in the default units of |h/Mpc| since the plotting functions put both on the
     same axis without conversion.
     21cmSense v3 writes |k| in units of ``1/Mpc`` (see the ``k_unit`` attribute of

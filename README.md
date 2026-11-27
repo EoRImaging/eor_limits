@@ -1,10 +1,10 @@
-# eor-limits
+# ps21cm-limits
 
-`eor-limits` is a small utility that provides a compendium of published upper limits on the 21-cm power spectrum from the Epoch of Reionization (EoR) and Cosmic Dawn. It also provides functionality to plot these limits as a function of scale $k$ and redshift $z$. The observational limits are bundled alongside several theoretical predictions from simulations and experimental sensitivity estimates to allow for easy comparison.
+`ps21cm-limits` is a small utility that provides a compendium of published upper limits on the 21-cm power spectrum from the Epoch of Reionization (EoR) and Cosmic Dawn. It also provides functionality to plot these limits as a function of scale $k$ and redshift $z$. The observational limits are bundled alongside several theoretical predictions from simulations and experimental sensitivity estimates to allow for easy comparison.
 
 The published limits are included in human-readable YAML files in the `data` folder, alongside the theoretical predictions in the `theory` folder and sensitivity estimates in the `sensitivities` folder. It is also possible to read in custom YAML files, and we welcome pull requests to add new observational data or theory models from published papers.
 
-To use the code, check out the _Usage and examples_. For users who want to quickly explore the limits and make plots without needing to install anything, check out the new online interface: [eorlimits.streamlit.app](https://eorlimits.streamlit.app/)!
+To use the code, check out the _Usage and examples_. For users who want to quickly explore the limits and make plots without needing to install anything, check out the new online interface: [ps21cmlimits.streamlit.app](https://ps21cmlimits.streamlit.app/)!
 
 ![Example EoR Limit plot](docs/source/_static/test_lib_plot_vs_k_basic.png)
 
@@ -12,9 +12,9 @@ To use the code, check out the _Usage and examples_. For users who want to quick
 
 ### User installation
 
-* Clone the repository using ```git clone https://github.com/EoRImaging/eor_limits```
+* Clone the repository using ```git clone https://github.com/EoRImaging/ps21cm-limits```
 
-* For a simple user installation, change directories into the `eor_limits` folder and run ```pip install .``` (including the dot).
+* For a simple user installation, change directories into the `ps21cm-limits` folder and run ```pip install .``` (including the dot).
 
 * To install without dependencies, run `pip install --no-deps .` (including the dot).
 
@@ -24,29 +24,29 @@ To use the code, check out the _Usage and examples_. For users who want to quick
 
 * **uv installation**: If you prefer to use `uv` to manage your environment, you can install the package in editable mode with the development dependencies using: ```uv sync```. To also install the dependencies for building the documentation, use ```uv sync --group docs```.
 
-* **Using pre-commit**: To use pre-commit to prevent committing code that does not follow our style, you'll need to run `pre-commit install` in the top level `eor_limits` directory.
+* **Using pre-commit**: To use pre-commit to prevent committing code that does not follow our style, you'll need to run `pre-commit install` in the top level `ps21cm-limits` directory.
 
-* **Testing**: To run the tests, you can use the command `pytest` from the top level `eor_limits` directory. If you have `uv` installed, you can also run the tests with the development dependencies using `uv run pytest`.
+* **Testing**: To run the tests, you can use the command `pytest` from the top level `ps21cm-limits` directory. If you have `uv` installed, you can also run the tests with the development dependencies using `uv run pytest`.
 
-* **CLI debugging**: To debug the CLI, prefix the command you want to run with the environment variable `EOR_LIMITS_DEBUG=1`, e.g. ```EOR_LIMITS_DEBUG=1 eor-limits plot-vs-k --out=MyPlot.pdf```. This will print out richly-formatted tracebacks instead of the high-level error messages.
+* **CLI debugging**: To debug the CLI, prefix the command you want to run with the environment variable `PS21CM_LIMITS_DEBUG=1`, e.g. ```PS21CM_LIMITS_DEBUG=1 ps21cm-limits plot-vs-k --out=MyPlot.pdf```. This will print out richly-formatted tracebacks instead of the high-level error messages.
 
 ## Usage and examples
 
-There are three main ways to use `eor-limits`: through the online graphical user interface (GUI), through the Python API in a notebook or script, or through the command line interface (CLI).
+There are three main ways to use `ps21cm-limits`: through the online graphical user interface (GUI), through the Python API in a notebook or script, or through the command line interface (CLI).
 
 ### Using the online GUI
 
-The online GUI is the quickest way to explore published limits and generate plots without installing anything locally. It is built with [Streamlit](https://streamlit.io/) and lets you select datasets, apply filters, customize the display, and download both the data and resulting figures. You can access it at [eorlimits.streamlit.app](https://eorlimits.streamlit.app/). Note that the GUI may differ in its plotting style and customization options, as it sits on a different GitHub repository (although using this codebase as a dependency) and is maintained separately.
+The online GUI is the quickest way to explore published limits and generate plots without installing anything locally. It is built with [Streamlit](https://streamlit.io/) and lets you select datasets, apply filters, customize the display, and download both the data and resulting figures. You can access it at [ps21cmlimits.streamlit.app](https://ps21cmlimits.streamlit.app/). Note that the GUI may differ in its plotting style and customization options, as it sits on a different GitHub repository (although using this codebase as a dependency) and is maintained separately.
 
 ### Using the Python API
 
 The Python API provides tools for loading, filtering, and plotting the included datasets. For a more complete walkthrough, see the _Tutorial notebook_. Here we just give a brief overview. All datasets are loaded with `load_limit_data`, `load_theory_model`, or `load_sensitivity_data`, which return a `DataSet` object. For available datasets, see `KNOWN_LIMITS`, `KNOWN_THEORIES`, and `KNOWN_SENSITIVITIES`. A simple example of loading the data and slicing it is shown below:
 
 ```python
-from eor_limits import load_limit_data, load_theory_model, load_sensitivity_data
-from eor_limits import KNOWN_LIMITS, KNOWN_THEORIES, KNOWN_SENSITIVITIES
+from ps21cm_limits import load_limit_data, load_theory_model, load_sensitivity_data
+from ps21cm_limits import KNOWN_LIMITS, KNOWN_THEORIES, KNOWN_SENSITIVITIES
 
-hera2026 = load_limit_data("HERA2026")  # or eor_limits.DataSet.load("HERA2026")
+hera2026 = load_limit_data("HERA2026")  # or ps21cm_limits.DataSet.load("HERA2026")
 print(hera2026.data.as_pandas_df())
 hera2026_trunc = hera2026.select_z_range(7, 10).select_k_range(0.1, 1)
 hera2026_lowest = hera2026.select_lowest_delta_squared(per_z=True, per_tag=False)
@@ -55,7 +55,7 @@ hera2026_lowest = hera2026.select_lowest_delta_squared(per_z=True, per_tag=False
 The two main plotting functions are `plot_vs_k` and `plot_vs_z`, which show limits as a function of scale $k$ and redshift $z$, respectively. To make the default plot versus $k$, run:
 
 ```python
-from eor_limits import plot_vs_k, plot_vs_z
+from ps21cm_limits import plot_vs_k, plot_vs_z
 
 plot_vs_k()
 ```
@@ -63,7 +63,7 @@ plot_vs_k()
 The plotting functions accept keyword arguments to choose which observational limits, theory models, and sensitivity estimates to include. You can then customize their styles. For example, the following code plots the HERA limits between redshifts 7 and 11, bolds and shades the HERA 2023 result, adds the `Mesinger2016Faint` and `Mesinger2016Bright` theory models with custom colors and shaded regions, and adds the SKA-Low AA4 sensitivity estimate in red.
 
 ```python
-from eor_limits import plot_vs_k, plot_vs_z
+from ps21cm_limits import plot_vs_k, plot_vs_z
 
 plot_vs_k(
     limits=["HERA2022", "HERA2023", "HERA2026"],
@@ -90,18 +90,18 @@ Note that custom sensitivity files must use the same format as the limits, i.e. 
 
 ### Using the CLI
 
-After installation, you can use the `eor-limits` command to make plots from the terminal. Run `eor-limits -h`, `eor-limits plot-vs-k -h`, or `eor-limits plot-vs-z -h` to see the available options.
+After installation, you can use the `ps21cm-limits` command to make plots from the terminal. Run `ps21cm-limits -h`, `ps21cm-limits plot-vs-k -h`, or `ps21cm-limits plot-vs-z -h` to see the available options.
 
 For the default plot of all limits as a function of scale $k$, run:
 
 ```bash
-eor-limits plot-vs-k --out=MyPlot.pdf
+ps21cm-limits plot-vs-k --out=MyPlot.pdf
 ```
 
 The CLI exposes the same plotting options as the Python API. Dictionary-style options, such as sensitivities and custom styles, are passed as JSON strings:
 
 ```bash
-eor-limits plot-vs-k \
+ps21cm-limits plot-vs-k \
     --limits HERA2022 HERA2023 HERA2026 \
     --z-range 7 11 \
     --bold-limits HERA2023 \

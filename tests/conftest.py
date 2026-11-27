@@ -1,4 +1,4 @@
-"""Pytest fixtures for eor_limits tests."""
+"""Pytest fixtures for ps21cm_limits tests."""
 
 import matplotlib.pyplot as plt
 import pytest

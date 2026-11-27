@@ -6,10 +6,10 @@ API Reference
     :toctree: _autosummary
     :recursive:
 
-    eor_limits.Data
-    eor_limits.DataSet
-    eor_limits.load_limit_data
-    eor_limits.load_sensitivity_data
-    eor_limits.load_theory_model
-    eor_limits.plot_vs_k
-    eor_limits.plot_vs_z
+    ps21cm_limits.Data
+    ps21cm_limits.DataSet
+    ps21cm_limits.load_limit_data
+    ps21cm_limits.load_sensitivity_data
+    ps21cm_limits.load_theory_model
+    ps21cm_limits.plot_vs_k
+    ps21cm_limits.plot_vs_z

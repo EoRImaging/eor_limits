@@ -1,4 +1,4 @@
-"""A module defining the data types used in eor-limits."""
+"""A module defining the data types used in ps21cm-limits."""
 
 from pathlib import Path
 from typing import Any, Self
@@ -256,9 +256,9 @@ class DataSet:
     Class representing a dataset, including metadata and the data itself.
 
     The metadata includes the telescope,author, year and DOI of the dataset,
-    as well as any additional notes. The data is stored in a :class:`~eor_limits.Data`
-    object, which contains arrays of redshifts |z|, scales |k| (in units of
-    |h/Mpc|) and |dsq| (in units of |mK^2|).
+    as well as any additional notes. The data is stored in a
+    :class:`~ps21cm_limits.Data` object, which contains arrays of redshifts |z|,
+    scales |k| (in units of |h/Mpc|) and |dsq| (in units of |mK^2|).
 
     Attributes
     ----------
